@@ -469,6 +469,17 @@ test('14. a tangential work renders at half opacity, and unchecking Show tangent
   await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(300);
 });
 
+test('the legend has edges, clusters, and tangential works, and no action-type or level groups', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  const legend = page.getByRole('complementary', { name: 'Legend' });
+  await expect(legend).toContainText('Edges');
+  await expect(legend).toContainText('Show tangential works');
+  await expect(legend.getByRole('heading', { name: 'Actions' })).toHaveCount(0);
+  await expect(legend.getByRole('heading', { name: 'Levels' })).toHaveCount(0);
+  await expect(legend.locator('.action-icon')).toHaveCount(0);
+  await expect(legend.locator('.level-chip')).toHaveCount(0);
+});
+
 test('the list view ends with tangential works grouped by type', async ({ page }) => {
   await page.goto('/#/methods?view=list');
   const groups = page.locator('[data-testid^="list-group-"]');

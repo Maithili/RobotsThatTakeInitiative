@@ -2,7 +2,7 @@
 import { brushX, type BrushBehavior } from 'd3-brush';
 import { select } from 'd3-selection';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ActionIcon, KnownsChips } from '../../components/Chip.tsx';
+import { KnownsChips } from '../../components/Chip.tsx';
 import { tx } from '../../data.ts';
 import { EDGE_LABEL, EDGE_TYPES, edgeParam, parseEdgeTypes, type EdgeType } from '../../lib/edges.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
@@ -332,17 +332,6 @@ function Legend({ clusters, families }: { clusters: string[]; families: Record<s
           </li>
         </ul>
       </div>
-      <div className="lgd__group">
-        <h2 className="strip__title">Levels</h2>
-        <ul className="plain lgd lgd--row">
-          {BAND_LEVELS.map((l) => (
-            <li key={l}>
-              <span className={`level-chip level-chip--${l}`}>{l}</span>
-              <span className="small">{l === 'L2' ? 'Unprompted' : 'Collaborative'}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
       {TANGENTS_IN_GRAPH && (
         <div className="lgd__group">
           <h2 className="strip__title">Tangential works</h2>
@@ -358,16 +347,6 @@ function Legend({ clusters, families }: { clusters: string[]; families: Record<s
           </label>
         </div>
       )}
-      <div className="lgd__group">
-        <h2 className="strip__title">Actions</h2>
-        <ul className="plain lgd lgd--row">
-          {Object.entries(tx.action_types).map(([id, a]) => (
-            <li key={id}>
-              <ActionIcon type={id} /> <span className="small">{a.label}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
     </aside>
   );
 }
