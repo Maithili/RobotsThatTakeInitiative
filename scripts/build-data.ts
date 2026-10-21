@@ -3,6 +3,9 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import yaml from 'js-yaml';
+import { inLiteratureGraph, layoutPapers } from '../src/lib/literatureLayout.ts';
+import { GRAPH_LEVELS, TANGENTS_IN_GRAPH } from '../src/pages/methods/constants.ts';
+import { SYNTHETIC_FAMILIES, syntheticPapers } from '../src/pages/methods/synthetic.ts';
 import { buildDb, type SourceFile } from '../src/validate.ts';
 
 const root = join(import.meta.dirname, '..');
@@ -59,8 +62,20 @@ const summary = `${db.papers.length} papers, ${db.datasets.length} datasets, ${r
 if (checkOnly) {
   console.log(`✓ data is valid: ${summary}`);
 } else {
+  // Literature graph layout (SPEC §7.2): computed once here, stored as x, y per paper.
+  const t0 = performance.now();
+  const inGraph = (p: Parameters<typeof inLiteratureGraph>[0]) => inLiteratureGraph(p, GRAPH_LEVELS, TANGENTS_IN_GRAPH);
+  const pos = layoutPapers(db.papers.filter(inGraph), Object.keys(db.taxonomy.families));
+  for (const p of db.papers) Object.assign(p, pos.get(p.id) ?? {});
+  // The synthetic fixture (?synthetic=1) gets its layout the same way, in its own file.
+  const synthetic = syntheticPapers();
+  const synthPos = layoutPapers(synthetic.filter(inGraph), Object.keys(SYNTHETIC_FAMILIES));
+  const ms = performance.now() - t0;
+
   mkdirSync(join(root, 'src/generated'), { recursive: true });
   const json = JSON.stringify(db);
   writeFileSync(join(root, 'src/generated/db.json'), json);
+  writeFileSync(join(root, 'src/generated/synthetic-layout.json'), JSON.stringify(Object.fromEntries([...synthPos].map(([id, p]) => [id, [p.x, p.y]]))));
   console.log(`✓ wrote src/generated/db.json (${(json.length / 1024).toFixed(1)} KB): ${summary}`);
+  console.log(`✓ laid out ${pos.size} graph papers and ${synthPos.size} synthetic ones in ${Math.round(ms)} ms`);
 }

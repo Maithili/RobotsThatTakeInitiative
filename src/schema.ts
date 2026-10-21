@@ -274,6 +274,9 @@ export interface DbPaper extends Paper {
   cites: string[];
   cited_by: string[];
   search: string;
+  /** Literature graph position at zoom 1, from the build-time layout (SPEC §7.2). Only papers in the graph have one. */
+  x?: number;
+  y?: number;
 }
 
 export interface DbDataset extends Dataset {

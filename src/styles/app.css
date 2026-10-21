@@ -2090,151 +2090,448 @@ tr.clickable:hover td {
   gap: 8px 12px;
 }
 
-/* cluster tints: soft hues that work on both themes */
+/* ---------- methods page: literature graph (SPEC §7.2) ---------- */
+/* Family hues, each a ramp from a light stop (oldest) to a dark stop (newest), plus an ink for text on the page.
+   0 teal (Goal Inference), 1 coral (Temporal Imitation), 2 and 3 for new families, none (purple) for no family. */
 :root {
-  --cluster-0: #2f9e8f;
-  --cluster-1: #d08a1e;
-  --cluster-2: #8a5cc7;
-  --cluster-3: #c94f7c;
-  --cluster-4: #4f7fd0;
-  --cluster-5: #6c9a2d;
+  --graph-bg: var(--surface);
+  --edge: #a1a6b0;
+  --edge-cites: #c3c7cf;
+  --fam-0-light: #a9ded5;
+  --fam-0-dark: #0b6f64;
+  --fam-0-ink: #0b6a60;
+  --fam-1-light: #f9c6b6;
+  --fam-1-dark: #c2442a;
+  --fam-1-ink: #b03c23;
+  --fam-2-light: #bcd0f4;
+  --fam-2-dark: #2b5ab3;
+  --fam-2-ink: #2853a6;
+  --fam-3-light: #d2e2a9;
+  --fam-3-dark: #4f7812;
+  --fam-3-ink: #47700f;
+  --fam-none-light: #dacdf3;
+  --fam-none-dark: #6b3eb6;
+  --fam-none-ink: #6337ab;
+  --tangent-fill: #b7bac2;
+  --tangent-stroke: #737782;
+  --hull-opacity: 0.075;
 }
-.swatch--cluster-0 { background: var(--cluster-0); }
-.swatch--cluster-1 { background: var(--cluster-1); }
-.swatch--cluster-2 { background: var(--cluster-2); }
-.swatch--cluster-3 { background: var(--cluster-3); }
-.swatch--cluster-4 { background: var(--cluster-4); }
-.swatch--cluster-5 { background: var(--cluster-5); }
-.swatch[class*='swatch--cluster'] {
-  opacity: 0.55;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --edge: #686d79;
+    --edge-cites: #4f5460;
+    --fam-0-light: #8ccfc4;
+    --fam-0-dark: #1a8a7d;
+    --fam-0-ink: #63d1c3;
+    --fam-1-light: #f5b9a6;
+    --fam-1-dark: #cf5638;
+    --fam-1-ink: #ff9d84;
+    --fam-2-light: #a9c2f2;
+    --fam-2-dark: #3d6cc9;
+    --fam-2-ink: #93b3ff;
+    --fam-3-light: #c3d995;
+    --fam-3-dark: #5c8c19;
+    --fam-3-ink: #abd56e;
+    --fam-none-light: #cbb9f1;
+    --fam-none-dark: #8155d2;
+    --fam-none-ink: #c3a6ff;
+    --tangent-fill: #6f737d;
+    --tangent-stroke: #a3a7b1;
+    --hull-opacity: 0.12;
+  }
+}
+:root[data-theme='dark'] {
+  --edge: #686d79;
+  --edge-cites: #4f5460;
+  --fam-0-light: #8ccfc4;
+  --fam-0-dark: #1a8a7d;
+  --fam-0-ink: #63d1c3;
+  --fam-1-light: #f5b9a6;
+  --fam-1-dark: #cf5638;
+  --fam-1-ink: #ff9d84;
+  --fam-2-light: #a9c2f2;
+  --fam-2-dark: #3d6cc9;
+  --fam-2-ink: #93b3ff;
+  --fam-3-light: #c3d995;
+  --fam-3-dark: #5c8c19;
+  --fam-3-ink: #abd56e;
+  --fam-none-light: #cbb9f1;
+  --fam-none-dark: #8155d2;
+  --fam-none-ink: #c3a6ff;
+  --tangent-fill: #6f737d;
+  --tangent-stroke: #a3a7b1;
+  --hull-opacity: 0.12;
 }
 
-/* ---------- methods page: literature graph (SPEC §7.2) ---------- */
 .litg {
   position: relative;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
-  padding: 8px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow: hidden;
+  background: var(--graph-bg);
+}
+.litg__viewport {
+  position: relative;
+  overflow: clip;
+  border-radius: inherit;
 }
 .litg__svg {
   display: block;
-  max-width: 100%;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
 }
-.litg__note {
-  margin: 0 12px 4px;
-  align-self: flex-start;
+.litg__svg:active {
+  cursor: grabbing;
 }
+.litg__bg {
+  fill: transparent;
+}
+
+/* hulls */
 .litg__hull {
-  stroke-width: 1.2;
-  fill-opacity: 0.1;
-  stroke-opacity: 0.45;
+  fill-opacity: var(--hull-opacity);
+  stroke-opacity: 0.16;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
-.litg__hull--0 { fill: var(--cluster-0); stroke: var(--cluster-0); }
-.litg__hull--1 { fill: var(--cluster-1); stroke: var(--cluster-1); }
-.litg__hull--2 { fill: var(--cluster-2); stroke: var(--cluster-2); }
-.litg__hull--3 { fill: var(--cluster-3); stroke: var(--cluster-3); }
-.litg__hull--4 { fill: var(--cluster-4); stroke: var(--cluster-4); }
-.litg__hull--5 { fill: var(--cluster-5); stroke: var(--cluster-5); }
+.litg__hull--0 { fill: var(--fam-0-dark); stroke: var(--fam-0-dark); }
+.litg__hull--1 { fill: var(--fam-1-dark); stroke: var(--fam-1-dark); }
+.litg__hull--2 { fill: var(--fam-2-dark); stroke: var(--fam-2-dark); }
+.litg__hull--3 { fill: var(--fam-3-dark); stroke: var(--fam-3-dark); }
 .litg__hull-label {
-  font-size: 12.5px;
+  font-size: 1.08em;
   font-weight: 650;
-  fill: var(--text-2);
+  letter-spacing: 0.01em;
   cursor: help;
   outline: none;
+  paint-order: stroke;
+  stroke: var(--graph-bg);
+  stroke-width: 0.3em;
+  stroke-linejoin: round;
 }
+.litg__hull-label--0 { fill: var(--fam-0-ink); }
+.litg__hull-label--1 { fill: var(--fam-1-ink); }
+.litg__hull-label--2 { fill: var(--fam-2-ink); }
+.litg__hull-label--3 { fill: var(--fam-3-ink); }
 .litg__hull-label:focus-visible {
   text-decoration: underline;
 }
+
+/* edges: thin gray curves; builds solid, benchmarks dashed, cites dotted and lighter (SPEC §5.5).
+   Fading uses stroke-opacity and faded arrowheads rather than opacity, so hundreds of edges fade without each
+   needing its own compositing layer; that keeps hover and pan fast on the 330-node fixture. */
 .litg__edge {
   fill: none;
-  stroke: var(--text-3);
+  stroke: var(--edge);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+  transition: stroke-opacity 150ms;
 }
 .litg__edge--builds {
-  stroke: var(--text);
-  stroke-width: 2;
+  stroke-width: 1.4;
+  marker-end: url(#litg-arrow-builds);
 }
 .litg__edge--benchmarks {
-  stroke: var(--text-2);
-  stroke-width: 1.5;
-  stroke-dasharray: 6 4;
+  stroke-dasharray: 5 3;
+  marker-end: url(#litg-arrow-benchmarks);
 }
 .litg__edge--cites {
-  stroke: var(--text-3);
-  stroke-width: 1;
-  stroke-dasharray: 1 3;
-  stroke-linecap: round;
-  opacity: 0.75;
+  stroke: var(--edge-cites);
+  stroke-width: 1.1;
+  stroke-dasharray: 1.2 2.6;
+  marker-end: url(#litg-arrow-cites);
 }
+.litg__arrow {
+  fill: var(--edge);
+}
+.litg__arrow--cites {
+  fill: var(--edge-cites);
+}
+.litg__arrow.is-hot {
+  fill: var(--hot, var(--text-2));
+}
+.litg__arrow.is-half { fill-opacity: 0.5; }
+.litg__arrow.is-faint { fill-opacity: 0.2; }
+.litg__arrow.is-ghost { fill-opacity: 0.08; }
+.litg__edge.is-tangent { stroke-opacity: 0.5; }
+.litg__edge--builds.is-tangent { marker-end: url(#litg-arrow-builds-half); }
+.litg__edge--benchmarks.is-tangent { marker-end: url(#litg-arrow-benchmarks-half); }
+.litg__edge--cites.is-tangent { marker-end: url(#litg-arrow-cites-half); }
+.litg__edge.is-dim { stroke-opacity: 0.2; }
+.litg__edge--builds.is-dim { marker-end: url(#litg-arrow-builds-faint); }
+.litg__edge--benchmarks.is-dim { marker-end: url(#litg-arrow-benchmarks-faint); }
+.litg__edge--cites.is-dim { marker-end: url(#litg-arrow-cites-faint); }
+.litg.is-hovering .litg__edge:not(.is-hl) { stroke-opacity: 0.08; }
+.litg.is-hovering .litg__edge--builds:not(.is-hl) { marker-end: url(#litg-arrow-builds-ghost); }
+.litg.is-hovering .litg__edge--benchmarks:not(.is-hl) { marker-end: url(#litg-arrow-benchmarks-ghost); }
+.litg.is-hovering .litg__edge--cites:not(.is-hl) { marker-end: url(#litg-arrow-cites-ghost); }
+.litg__edge.is-hl {
+  stroke: var(--hot, var(--text-2));
+  stroke-width: 1.6;
+  stroke-opacity: 1;
+}
+.litg__edge--builds.is-hl { marker-end: url(#litg-arrow-builds-hot); }
+.litg__edge--benchmarks.is-hl { marker-end: url(#litg-arrow-benchmarks-hot); }
+.litg__edge--cites.is-hl { marker-end: url(#litg-arrow-cites-hot); }
 .litg__edge-hit {
   fill: none;
-  stroke: transparent;
-  stroke-width: 10;
+  stroke: #000;
+  stroke-width: 8;
+  vector-effect: non-scaling-stroke;
+  visibility: hidden;
   pointer-events: stroke;
+  cursor: default;
 }
-.litg__arrow--builds { fill: var(--text); }
-.litg__arrow--benchmarks { fill: var(--text-2); }
-.litg__arrow--cites { fill: var(--text-3); }
-.litg__edges .is-dim,
-.litg__node.is-dim {
-  opacity: 0.2;
-}
+
+/* nodes: dots with a thin outline in the background color */
 .litg__node {
   cursor: pointer;
   outline: none;
-  transition: opacity 200ms;
+  transition: opacity 150ms;
 }
-.litg__pill {
-  fill: var(--surface);
-  stroke: var(--border-strong);
+.litg__dot,
+.litg__ring {
+  transition: fill-opacity 150ms, stroke-opacity 150ms;
+}
+.litg__dot {
+  stroke: var(--graph-bg);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.litg__node.is-tangent {
+  opacity: 0.5;
+}
+.litg__node.is-tangent .litg__dot {
+  fill: var(--tangent-fill);
+  stroke: var(--tangent-stroke);
   stroke-width: 1;
+  stroke-dasharray: 2 1.5;
 }
-.litg__stripe {
-  fill: var(--level-none);
+.litg__ring {
+  fill: none;
+  stroke: var(--fam-none-dark);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
-.litg__node--L2 .litg__stripe { fill: var(--level-L2); }
-.litg__node--L1 .litg__stripe { fill: var(--level-L1); }
-.litg__node--L0 .litg__stripe { fill: var(--level-L0); }
-.litg__name {
-  font-size: 12px;
-  font-weight: 600;
-  fill: var(--text);
+.litg__node.is-dim .litg__dot,
+.litg__node.is-dim .litg__ring {
+  fill-opacity: 0.2;
+  stroke-opacity: 0.2;
 }
-.litg__year {
-  font-size: 10.5px;
-  font-weight: 500;
-  fill: var(--text-3);
+.litg.is-hovering .litg__node:not(.is-hl) .litg__dot,
+.litg.is-hovering .litg__node:not(.is-hl) .litg__ring {
+  fill-opacity: 0.15;
+  stroke-opacity: 0.15;
 }
-.litg__icon {
-  font-size: 11px;
-  fill: var(--text-2);
+.litg__node.is-hl .litg__dot,
+.litg__node.is-hl .litg__ring {
+  fill-opacity: 1;
+  stroke-opacity: 1;
 }
-.litg__node:hover .litg__pill,
-.litg__node.is-hover .litg__pill {
-  stroke: var(--accent);
+.litg__node.is-tangent.is-hl,
+.litg__node.is-tangent:focus-visible {
+  opacity: 1;
+}
+.litg__node.is-hover .litg__dot {
+  stroke: var(--text);
   stroke-width: 2;
 }
-.litg__node:focus-visible .litg__pill {
-  stroke: var(--focus);
-  stroke-width: 2.5;
+.litg__node.is-tangent.is-hover .litg__dot {
+  stroke-dasharray: none;
 }
-.litg__node.is-focus .litg__pill {
+.litg__node.is-focus .litg__dot {
   stroke: var(--text);
   stroke-width: 2.5;
 }
-.litg__node.is-lit .litg__pill {
-  stroke: var(--accent);
-}
-.litg__node.pulse .litg__pill {
+.litg__node:focus-visible .litg__dot {
   stroke: var(--focus);
-  stroke-width: 3;
+  stroke-width: 2.5;
+}
+.litg__pulse {
+  fill: none;
+  stroke: var(--focus);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: litg-pulse 1.2s ease-out 1 forwards;
+}
+@keyframes litg-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+/* labels: plain text right of the dot, 12 px on screen at every zoom; the year muted */
+.litg__text {
+  font-family: var(--font);
+}
+.litg__label {
+  fill: var(--text);
+  font-weight: 500;
+  paint-order: stroke;
+  stroke: var(--graph-bg);
+  stroke-width: 0.28em;
+  stroke-linejoin: round;
+  cursor: pointer;
+  transition: fill-opacity 150ms, stroke-opacity 150ms;
+}
+.litg__label-year {
+  fill: var(--text-3);
+  font-size: 0.92em;
+  font-weight: 400;
+}
+.litg__label.is-tangent {
+  fill: var(--text-2);
+  fill-opacity: 0.8;
+}
+.litg__label.is-dim {
+  fill-opacity: 0.3;
+  stroke-opacity: 0.3;
+}
+.litg.is-hovering .litg__label:not(.is-hl) {
+  fill-opacity: 0.15;
+  stroke-opacity: 0.15;
+}
+.litg__label.is-hl {
+  fill-opacity: 1;
+  stroke-opacity: 1;
+}
+
+/* zoom controls and the wheel hint */
+.litg__controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.litg__ctl {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.litg__ctl + .litg__ctl {
+  border-top: 1px solid var(--border);
+}
+.litg__ctl svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.litg__ctl:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.litg__ctl:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.litg__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  opacity: 0.92;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: calc(100% - 24px);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .litg .hovercard {
   pointer-events: none;
+}
+
+/* legend marks for the graph (SPEC §7.1) */
+.lgd__edge {
+  flex: none;
+}
+.lgd__edge .litg__edge {
+  marker-end: none;
+}
+.lgd__dot {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.lgd__dot--0 { background: color-mix(in oklab, var(--fam-0-dark) 60%, var(--fam-0-light)); }
+.lgd__dot--1 { background: color-mix(in oklab, var(--fam-1-dark) 60%, var(--fam-1-light)); }
+.lgd__dot--2 { background: color-mix(in oklab, var(--fam-2-dark) 60%, var(--fam-2-light)); }
+.lgd__dot--3 { background: color-mix(in oklab, var(--fam-3-dark) 60%, var(--fam-3-light)); }
+.lgd__dot--none { background: color-mix(in oklab, var(--fam-none-dark) 60%, var(--fam-none-light)); }
+.lgd__dot--ring {
+  box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--fam-none-dark);
+  margin: 0 2px;
+}
+.lgd__dot--tangent {
+  width: 9px;
+  height: 9px;
+  background: var(--tangent-fill);
+  border: 1px dashed var(--tangent-stroke);
+  opacity: 0.6;
+}
+.lgd__sizes {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+.lgd__sizes span {
+  display: block;
+  border-radius: 50%;
+  background: var(--text-3);
+  opacity: 0.6;
+}
+.lgd__sizes span:nth-child(1) { width: 5px; height: 5px; }
+.lgd__sizes span:nth-child(2) { width: 8px; height: 8px; }
+.lgd__sizes span:nth-child(3) { width: 11px; height: 11px; }
+.lgd__ramp {
+  display: inline-block;
+  flex: none;
+  width: 28px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--fam-0-light), var(--fam-0-dark));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .litg__pulse {
+    animation: none;
+    transform: scale(1.8);
+  }
+  .litg__node,
+  .litg__edge,
+  .litg__label {
+    transition: none;
+  }
 }
 
 @media (max-width: 899px) {
@@ -2387,38 +2684,3 @@ tr.clickable:hover td {
   background: color-mix(in srgb, var(--framework) 14%, transparent);
 }
 
-/* ---------- tangential works (SPEC §7.2) ---------- */
-.litg__node.is-tangent {
-  opacity: 0.5;
-}
-.litg__node.is-tangent .litg__pill {
-  stroke-dasharray: 3 2;
-}
-.litg__node.is-tangent:hover,
-.litg__node.is-tangent:focus-visible,
-.litg__node.is-tangent.is-hover {
-  opacity: 1;
-}
-.litg__node.is-tangent.is-dim {
-  opacity: 0.2;
-}
-.litg__edges .is-tangent {
-  opacity: 0.5;
-}
-.litg__edges .is-tangent.is-hot {
-  opacity: 1;
-}
-.litg__edges .is-tangent.is-dim {
-  opacity: 0.2;
-}
-.lgd__tangent {
-  display: inline-block;
-  width: 22px;
-  height: 12px;
-  border: 1px dashed var(--border-strong);
-  border-radius: 6px;
-  opacity: 0.6;
-}
-.litg__node--none .litg__stripe {
-  fill: var(--level-none);
-}

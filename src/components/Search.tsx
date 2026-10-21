@@ -4,10 +4,12 @@ import { search } from '../lib/search.ts';
 import { useUrl } from '../state/url.ts';
 import { LevelChip } from './Chip.tsx';
 
-/** Scrolls the element for a paper into view and pulses it once (Methods node, Subproblems row). */
+/** Scrolls the element for a paper into view and pulses it once (Methods node, Subproblems row).
+ *  The Methods graph handles `rti:locate` itself: it zooms to the node and pulses it. */
 export function locatePaper(id: string) {
   requestAnimationFrame(() =>
     requestAnimationFrame(() => {
+      if (!window.dispatchEvent(new CustomEvent('rti:locate', { detail: { id }, cancelable: true }))) return;
       const el = document.querySelector<HTMLElement>(`[data-locate="${CSS.escape(id)}"]`);
       if (!el) return;
       el.scrollIntoView({ block: 'center', inline: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
