@@ -87,8 +87,9 @@ test('4. hovering a timeline chip highlights the graph node; GAP sits outside bo
   await expect(page.getByTestId('tchip-nopa')).toHaveAttribute('data-hover', 'true');
   await expect(page.getByTestId('tchip-slate-pro')).toHaveAttribute('data-hover', 'false');
 
-  const hulls = page.locator('[data-testid^="hull-"]');
-  await expect(hulls).toHaveCount(2);
+  // One hull per family with papers in the graph (two in the seed); GAP sits outside every one.
+  const hulls = page.locator('path[data-testid^="hull-"]');
+  expect(await hulls.count()).toBeGreaterThanOrEqual(2);
   const inside = await page.evaluate(() => {
     const node = document.querySelector<SVGGElement>('[data-testid="node-gap"]')!;
     const cx = Number(node.getAttribute('data-cx'));
@@ -97,9 +98,10 @@ test('4. hovering a timeline chip highlights the graph node; GAP sits outside bo
     const pt = svg.createSVGPoint();
     pt.x = cx;
     pt.y = cy;
-    return [...document.querySelectorAll<SVGPathElement>('[data-testid^="hull-"]')].map((h) => h.isPointInFill(pt));
+    return [...document.querySelectorAll<SVGPathElement>('path[data-testid^="hull-"]')].map((h) => h.isPointInFill(pt));
   });
-  expect(inside).toEqual([false, false]);
+  expect(inside.length).toBeGreaterThanOrEqual(2);
+  expect(inside.every((x) => !x)).toBe(true);
   // Cluster members do sit inside their own hull.
   const own = await page.evaluate(() => {
     const node = document.querySelector<SVGGElement>('[data-testid="node-slate-pro"]')!;
@@ -186,7 +188,7 @@ test('the literature graph lays out the synthetic fixture: 300 L2 papers in 4 cl
   await page.goto('/#/methods?view=graph&synthetic=1');
   await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
   await expect(page.locator('[data-testid^="node-synthetic-t"]')).toHaveCount(30);
-  await expect(page.locator('[data-testid^="hull-"]')).toHaveCount(4);
+  await expect(page.locator('path[data-testid^="hull-"]')).toHaveCount(4);
   // Dots never overlap, and the labels shown at the fitted zoom overlap neither each other nor other dots.
   const overlaps = await page.evaluate(() => {
     const hit = (a: DOMRect, b: DOMRect) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
@@ -448,4 +450,76 @@ test('the list view ends with tangential works grouped by type', async ({ page }
   const groups = page.locator('[data-testid^="list-group-"]');
   await expect(groups.last()).toHaveAttribute('data-testid', 'list-group-tangent:hri');
   await expect(groups.last()).toContainText('Koch van den Broek 2024');
+});
+
+test('a semi-tangential family draws at 75% opacity (dots, hull, name, label, edges) until hovered, and the legend says so', async ({ page }) => {
+  // Synthetic family D is semi-tangential; synthetic-3 is one of its papers.
+  await page.goto('/#/methods?view=graph&synthetic=1&edges=builds,benchmarks,cites');
+  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
+  const node = page.getByTestId('node-synthetic-3');
+  await expect(node).toHaveClass(/is-semi/);
+  await expect(node).toHaveCSS('opacity', '0.75');
+  await expect(page.getByTestId('hull-synthetic_d')).toHaveCSS('opacity', '0.75');
+  await expect(page.getByTestId('hull-label-synthetic_d')).toHaveCSS('opacity', '0.75');
+  await expect(page.getByTestId('hull-synthetic_a')).toHaveCSS('opacity', '1');
+  await expect(page.getByTestId('node-synthetic-0')).toHaveCSS('opacity', '1');
+  const semiEdges = page.locator('.litg__edges .litg__edge.is-semi');
+  expect(await semiEdges.count()).toBeGreaterThan(0);
+  await expect(semiEdges.first()).toHaveCSS('stroke-opacity', '0.75');
+  // Tangential works keep half opacity.
+  await expect(page.getByTestId('node-synthetic-t0')).toHaveCSS('opacity', '0.5');
+  await expect(page.getByTestId('legend-family-synthetic_d')).toContainText('semi-tangential');
+  await expect(page.getByTestId('legend-family-synthetic_d').locator('.lgd__dot')).toHaveCSS('opacity', '0.75');
+  await expect(page.getByTestId('legend-family-synthetic_a')).not.toContainText('semi-tangential');
+
+  // Hovering a paper brings its cluster to full opacity.
+  await node.hover();
+  await expect(node).toHaveCSS('opacity', '1');
+  await expect(page.getByTestId('hull-synthetic_d')).toHaveCSS('opacity', '1');
+  await page.mouse.move(2, 2);
+  await expect(node).toHaveCSS('opacity', '0.75');
+  // So does hovering the family name.
+  await page.getByTestId('hull-label-synthetic_d').hover();
+  await expect(page.getByTestId('hull-synthetic_d')).toHaveCSS('opacity', '1');
+  await expect(node).toHaveCSS('opacity', '1');
+  await expect(page.locator('.hovercard')).toContainText('Semi-tangential');
+});
+
+test('the metrics list shows direction and unit, and metric chips name the direction', async ({ page }) => {
+  await page.goto('/#/evaluations');
+  await expect(page.getByTestId('metric-dir-perturbed_actions')).toContainText('↓');
+  await expect(page.getByTestId('metric-dir-perturbed_actions')).toContainText('%');
+  await expect(page.getByTestId('metric-dir-perturbed_actions').getByRole('img', { name: 'Lower is better' })).toBeVisible();
+  await expect(page.getByTestId('metric-dir-f1')).toContainText('↑');
+  await expect(page.getByTestId('metric-dir-f1')).toContainText('fraction');
+  const chip = page.getByTestId('protocol-table').locator('.chip--metric').first();
+  await expect(chip).toHaveAttribute('title', /(higher|lower) is better · unit: /);
+});
+
+test('tangential datasets sit under the Tangential divider at 60% opacity', async ({ page }) => {
+  await page.goto('/#/evaluations');
+  const table = page.getByTestId('dataset-table');
+  await expect(table).toBeVisible();
+  const tangential = table.locator('tr[data-tangent="true"]');
+  const n = await tangential.count();
+  // The component test (tests/dataset-table.test.ts) covers this with a fixture; here, the real data.
+  if (!n) {
+    await expect(table.getByTestId('ds-tangent-divider')).toHaveCount(0);
+    return;
+  }
+  const group = table.getByTestId('ds-group-tangent');
+  await expect(group.locator('tr').first()).toHaveAttribute('data-testid', 'ds-tangent-divider');
+  await expect(group.getByTestId('ds-tangent-divider')).toContainText('Tangential');
+  await expect(group.locator('tr[data-tangent="true"]')).toHaveCount(n);
+  await expect(table.getByTestId('ds-group-core').locator('tr[data-tangent="true"]')).toHaveCount(0);
+  await expect(tangential.first()).toHaveCSS('opacity', '0.6');
+});
+
+test('the drawer shows where each citation comes from on hover', async ({ page }) => {
+  await page.goto('/#/methods?paper=nakahashi-2015-subgoal');
+  const cites = page.getByTestId('drawer-cites').getByRole('button');
+  expect(await cites.count()).toBeGreaterThan(0);
+  await expect(cites.first()).toHaveAttribute('title', /^Sources?: \S/);
+  await page.goto('/#/methods?paper=baker-2009-inverse-planning');
+  await expect(page.getByTestId('drawer-cited-by').getByRole('button').first()).toHaveAttribute('title', /^Sources?: \S/);
 });

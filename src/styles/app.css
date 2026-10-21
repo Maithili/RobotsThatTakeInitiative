@@ -795,6 +795,19 @@ tr.pulse {
   font-weight: 600;
   font-size: 12.5px;
 }
+/* tangential datasets: their own group at the bottom, part-way transparent (SPEC §8.5) */
+.ds-divider th {
+  border-top: 2px solid var(--border-strong);
+  color: var(--text-2);
+}
+.table tr.is-tangent {
+  opacity: 0.6;
+  transition: opacity 150ms;
+}
+.table tr.is-tangent:hover,
+.table tr.is-tangent:focus-within {
+  opacity: 1;
+}
 tr.clickable {
   cursor: pointer;
 }
@@ -1527,6 +1540,22 @@ tr.clickable:hover td {
 .metric-row__def {
   color: var(--text-2);
 }
+.metric-row__head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.metric-row__arrow {
+  font-weight: 700;
+  color: var(--text);
+}
+.metric-row__note {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-3);
+  font-style: italic;
+}
 .kind {
   font-size: 11px;
   border-radius: 3px;
@@ -2213,6 +2242,12 @@ tr.clickable:hover td {
   stroke-opacity: 0.16;
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
+  transition: opacity 150ms;
+}
+/* semi-tangential families: hull, name, dots, labels, and edges at 75% until hovered (SPEC §7.2) */
+.litg__hull.is-semi,
+.litg__hull-label.is-semi {
+  opacity: 0.75;
 }
 .litg__hull--0 { fill: var(--fam-0-dark); stroke: var(--fam-0-dark); }
 .litg__hull--1 { fill: var(--fam-1-dark); stroke: var(--fam-1-dark); }
@@ -2270,9 +2305,14 @@ tr.clickable:hover td {
 .litg__arrow.is-hot {
   fill: var(--hot, var(--text-2));
 }
+.litg__arrow.is-semi { fill-opacity: 0.75; }
 .litg__arrow.is-half { fill-opacity: 0.5; }
 .litg__arrow.is-faint { fill-opacity: 0.2; }
 .litg__arrow.is-ghost { fill-opacity: 0.08; }
+.litg__edge.is-semi { stroke-opacity: 0.75; }
+.litg__edge--builds.is-semi { marker-end: url(#litg-arrow-builds-semi); }
+.litg__edge--benchmarks.is-semi { marker-end: url(#litg-arrow-benchmarks-semi); }
+.litg__edge--cites.is-semi { marker-end: url(#litg-arrow-cites-semi); }
 .litg__edge.is-tangent { stroke-opacity: 0.5; }
 .litg__edge--builds.is-tangent { marker-end: url(#litg-arrow-builds-half); }
 .litg__edge--benchmarks.is-tangent { marker-end: url(#litg-arrow-benchmarks-half); }
@@ -2321,6 +2361,9 @@ tr.clickable:hover td {
 .litg__node.is-tangent {
   opacity: 0.5;
 }
+.litg__node.is-semi {
+  opacity: 0.75;
+}
 .litg__node.is-tangent .litg__dot {
   fill: var(--tangent-fill);
   stroke: var(--tangent-stroke);
@@ -2349,7 +2392,9 @@ tr.clickable:hover td {
   stroke-opacity: 1;
 }
 .litg__node.is-tangent.is-hl,
-.litg__node.is-tangent:focus-visible {
+.litg__node.is-tangent:focus-visible,
+.litg__node.is-semi.is-hl,
+.litg__node.is-semi:focus-visible {
   opacity: 1;
 }
 .litg__node.is-hover .litg__dot {
@@ -2410,6 +2455,12 @@ tr.clickable:hover td {
 .litg__label.is-tangent {
   fill: var(--text-2);
   fill-opacity: 0.8;
+}
+.litg__label.is-semi {
+  opacity: 0.75;
+}
+.litg__label.is-semi.is-hl {
+  opacity: 1;
 }
 .litg__label.is-dim {
   fill-opacity: 0.3;
@@ -2511,6 +2562,9 @@ tr.clickable:hover td {
 .lgd__dot--ring {
   box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--fam-none-dark);
   margin: 0 2px;
+}
+.lgd__dot--semi {
+  opacity: 0.75;
 }
 .lgd__dot--tangent {
   width: 9px;

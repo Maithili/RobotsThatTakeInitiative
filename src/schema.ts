@@ -18,6 +18,7 @@ export const CAPS = {
   human_model: 60,
   span: 40,
   notes: 140,
+  mapping_note: 160,
 } as const;
 
 const capped = (field: keyof typeof CAPS) =>
@@ -66,6 +67,8 @@ export const TaxonomySchema = z.object({
       strength: z.string().optional(),
       limitations: z.array(z.string()).optional(),
       note: z.string().optional(),
+      /** Drawn part-way transparent in the literature graph (SPEC §7.2). Its papers count as L2 everywhere else. */
+      semi_tangential: z.boolean().optional(),
     }),
   ),
   action_types: z.record(defn),
@@ -88,6 +91,11 @@ export const TaxonomySchema = z.object({
       definition: z.string(),
       terms: z.array(z.string()),
       kind: z.string(),
+      /** Whether a higher or a lower value is better. */
+      direction: z.enum(['higher', 'lower']),
+      unit: z.string().min(1),
+      /** One line on why the metric serves its terms. */
+      mapping_note: capped('mapping_note').optional(),
     }),
   ),
   loop_types: z.record(
@@ -229,6 +237,8 @@ export const DatasetSchema = z
     human_models: z.array(capped('human_model')).optional(),
     loops: z.array(z.string()).optional(),
     notes: capped('notes').nullable().optional(),
+    /** Default false. Tangential datasets form their own group at the bottom of the datasets table (SPEC §8.5). */
+    tangent: z.boolean().optional(),
     provenance: capped('provenance'),
   })
   .strict();
@@ -246,6 +256,29 @@ export const CitationsSchema = z
   })
   .strict();
 export type Citations = z.infer<typeof CitationsSchema>;
+
+// ---------- hand-curated citations (data/citations-manual.yaml) ----------
+
+/** One hand-curated citation: `from` cites `to`, both paper ids (SPEC §5.5). */
+export const ManualCitationSchema = z
+  .object({
+    from: z.string().min(1),
+    to: z.string().min(1),
+    /** Who checked it, such as "Librarian, Oct 21 2026". */
+    source: z.string().min(1),
+    /** The location in `from`'s text. */
+    where: z.string().min(1).nullable().optional(),
+  })
+  .strict();
+export const ManualCitationsSchema = z.array(ManualCitationSchema);
+export type ManualCitation = z.infer<typeof ManualCitationSchema>;
+
+/** Where one citation pair comes from: data/citations.json (fetched) or data/citations-manual.yaml (manual). */
+export interface CitationSource {
+  kind: 'fetched' | 'manual';
+  source: string;
+  where?: string;
+}
 
 // ---------- derived database ----------
 
@@ -270,9 +303,11 @@ export interface DbPaper extends Paper {
   /** Papers in the database this paper compares against (from its evaluations' baselines). */
   benchmarks_against: string[];
   benchmarked_in: string[];
-  /** Papers in the database this paper cites, from data/citations.json. */
+  /** Papers in the database this paper cites, from data/citations.json and data/citations-manual.yaml. */
   cites: string[];
   cited_by: string[];
+  /** Sources of each pair in `cites`, keyed by the cited paper's id. The build always fills it. */
+  cite_sources?: Record<string, CitationSource[]>;
   search: string;
   /** Literature graph position at zoom 1, from the build-time layout (SPEC §7.2). Only papers in the graph have one. */
   x?: number;
@@ -293,5 +328,5 @@ export interface Db {
   subproblem_counts: Record<SubproblemId, Record<'addresses' | 'assumes' | 'skips', number>>;
   /** One entry per pair of papers with every relation between them (SPEC §5.5). */
   edges: PairEdge[];
-  citations: { generated_at: string | null; source: string; unresolved: string[]; resolved: number };
+  citations: { generated_at: string | null; source: string; unresolved: string[]; resolved: number; manual: number };
 }

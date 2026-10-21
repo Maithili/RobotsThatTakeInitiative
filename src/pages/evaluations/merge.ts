@@ -85,3 +85,8 @@ export function rowMatches(r: PaperEvalRow, f: RowFilters): boolean {
       (!f.dataset || e.environment === f.dataset || (e.datasets ?? []).includes(f.dataset)),
   );
 }
+
+/** Datasets table groups (SPEC §8.5): tangential datasets form their own group at the bottom. Order is kept. */
+export function datasetGroups<T extends { tangent?: boolean }>(rows: readonly T[]): { core: T[]; tangent: T[] } {
+  return { core: rows.filter((d) => !d.tangent), tangent: rows.filter((d) => !!d.tangent) };
+}

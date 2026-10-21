@@ -11,11 +11,12 @@ function rng(seed: number) {
   };
 }
 
-export const SYNTHETIC_FAMILIES: Record<string, { name: string; definition: string; scope_line?: string }> = {
+/** Family D is semi-tangential, so the fixture exercises that treatment too (SPEC §7.2). */
+export const SYNTHETIC_FAMILIES: Record<string, { name: string; definition: string; scope_line?: string; semi_tangential?: boolean }> = {
   synthetic_a: { name: 'Synthetic family A', definition: 'Layout test fixture.' },
   synthetic_b: { name: 'Synthetic family B', definition: 'Layout test fixture.' },
   synthetic_c: { name: 'Synthetic family C', definition: 'Layout test fixture.' },
-  synthetic_d: { name: 'Synthetic family D', definition: 'Layout test fixture.' },
+  synthetic_d: { name: 'Synthetic family D', definition: 'Layout test fixture.', semi_tangential: true },
 };
 
 const FAMILIES = [...Object.keys(SYNTHETIC_FAMILIES)];
@@ -24,7 +25,7 @@ const INPUTS = ['object_relocations', 'scene_graph', 'video', 'language'];
 export const SYNTHETIC_COUNT = 300;
 export const SYNTHETIC_UNCLUSTERED = 8;
 export const SYNTHETIC_TANGENTS = 30;
-const TANGENT_TYPES = ['hri', 'conversational'];
+const TANGENT_TYPES = ['hri', 'conversational', 'search'];
 const NAMES = ['Atlas', 'Beacon', 'Cairn', 'Delta', 'Ember', 'Fable', 'Garnet', 'Harbor', 'Iris', 'Juniper', 'Kestrel', 'Lumen', 'Meridian', 'Nimbus', 'Orbit', 'Pilot', 'Quill', 'Rover', 'Sable', 'Tandem', 'Umber', 'Vesper', 'Willow', 'Yarrow', 'Zephyr'];
 
 /** Picks up to n distinct items, favoring the first list. */

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { tx } from '../data.ts';
+import { metricTooltip } from '../lib/metrics.ts';
 import type { LevelId } from '../schema.ts';
 
 export function Chip({
@@ -100,7 +101,7 @@ export function MetricChip({ id, onHover }: { id: string; onHover?: (id: string 
   return (
     <span
       className="chip chip--metric"
-      title={m ? `${m.definition} (${m.kind})` : id}
+      title={m ? metricTooltip(m) : id}
       tabIndex={onHover ? 0 : undefined}
       onMouseEnter={onHover && (() => onHover(id))}
       onMouseLeave={onHover && (() => onHover(null))}

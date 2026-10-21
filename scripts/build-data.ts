@@ -43,6 +43,7 @@ try {
     papers: loadDir(join(dataDir, 'papers')),
     datasets: loadDir(join(dataDir, 'datasets')),
     citations: existsSync(join(dataDir, 'citations.json')) ? JSON.parse(readFileSync(join(dataDir, 'citations.json'), 'utf8')) : undefined,
+    manualCitations: existsSync(join(dataDir, 'citations-manual.yaml')) ? yaml.load(readFileSync(join(dataDir, 'citations-manual.yaml'), 'utf8')) : undefined,
     repoFiles: listFiles(root),
   });
 } catch (e) {

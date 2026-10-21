@@ -100,3 +100,10 @@ export async function buildCitations(
   }
   return { generated_at: now(), source, papers: out, unresolved: unresolved.sort() };
 }
+
+/** Hover text for one citation pair in the drawer (SPEC §5.5): every source, with the location for hand-curated ones. */
+export function citationSourceText(sources: readonly { source: string; where?: string }[] | undefined): string | undefined {
+  if (!sources?.length) return undefined;
+  const parts = sources.map((s) => (s.where ? `${s.source} (${s.where})` : s.source));
+  return `${parts.length > 1 ? 'Sources' : 'Source'}: ${parts.join('; ')}`;
+}

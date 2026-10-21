@@ -24,4 +24,6 @@ export interface FamilyInfo {
   scope_line?: string;
   strength?: string;
   limitations?: string[];
+  /** Drawn at 75% opacity in the literature graph (SPEC §7.2). */
+  semi_tangential?: boolean;
 }

@@ -28,6 +28,10 @@ families:                     # L2 only, from RTI §III-B
     strength: Predicts minutes to hours ahead, with no need for close collaboration.
     limitations:
       - Discards the intentional structure of behavior that a goal-level model can exploit.
+  implicit_cues:
+    name: Implicit Cues
+    definition: Reacts to implicit cues in the scene or from people, without a stated goal.
+    semi_tangential: true     # per Maithili, Oct 21 2026. Drawn part-way transparent (SPEC §7.2).
 
 action_types:                 # RTI §II
   act:      {label: Acts, definition: Executes actions that serve anticipated needs.}
@@ -121,6 +125,7 @@ themes:                       # cross-cutting, RTI §III-A
 tangent_types:                # works next to the algorithmic core. Maithili adds more.
   hri:            {label: HRI studies, definition: "HRI work on proactivity, such as user studies on its desirability and reviews of the field."}
   conversational: {label: Conversational proactivity, definition: Proactivity in conversational settings.}
+  search:         {label: Search in changing homes, definition: "Finds objects or people in homes that change over time, given what to find."}
 
 statuses:
   addresses: {glyph: "●", label: Addresses}
@@ -140,7 +145,7 @@ net_value:                    # RTI §II-A
     dC_added: {label: "ΔC↑ · human cost added", tex: '\Delta C_h\uparrow',   definition: An incorrect robot action forces the user to undo or redo actions.}
     Cr:       {label: "C_r · robot cost",       tex: 'C_r',             definition: Physical wear and charge consumption, often assumed zero.}
 
-metric_kinds:
+metric_kinds:                 # each metric also carries direction (higher or lower is better), unit, and a one-line `mapping_note` on why it serves its terms
   direct:    Measures one or more terms.
   proxy:     Mixes terms or measures them indirectly.
   unrelated: Does not map to ΔV − ΔC.
@@ -151,16 +156,22 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     definition: Skipped user actions minus undo actions, as a percentage of baseline user actions.
     terms: [dC_saved, dC_added]
     kind: direct
+    direction: higher
+    unit: "%"
   perturbed_actions:
     label: Perturbed actions
     definition: User actions corrected because of a wrong robot action, as a percentage of baseline user actions.
     terms: [dC_added]
     kind: direct
+    direction: lower
+    unit: "%"
   f1:
     label: F1
     definition: Skipped actions as true positives, undo and corrected as false positives, done as-is as false negatives.
     terms: [dC_saved, dC_added]
     kind: proxy
+    direction: higher
+    unit: fraction
 
 loop_types:                   # ordered
   offline_replay:

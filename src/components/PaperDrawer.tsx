@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { datasetById, fixUrl, pagesFor, paperById, paperLabel, SUBS, tx } from '../data.ts';
+import { citationSourceText } from '../lib/citations.ts';
 import { inMethodsGraph } from '../lib/scope.ts';
 import type { DbPaper } from '../schema.ts';
 import { applyParams, useUrl } from '../state/url.ts';
@@ -19,13 +20,14 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function PaperLinks({ ids, empty }: { ids: string[]; empty?: ReactNode }) {
+/** `sourceOf` gives each link's hover text, such as where a citation comes from (SPEC §5.5). */
+function PaperLinks({ ids, empty, sourceOf }: { ids: string[]; empty?: ReactNode; sourceOf?: (id: string) => string | undefined }) {
   const url = useUrl();
   if (!ids.length) return <>{empty ?? <span className="muted">—</span>}</>;
   return (
     <span className="link-list">
       {ids.map((id) => (
-        <button key={id} type="button" className="linkish" onClick={() => url.openPaper(id)}>
+        <button key={id} type="button" className="linkish" title={sourceOf?.(id)} onClick={() => url.openPaper(id)}>
           {paperLabel(id)}
         </button>
       ))}
@@ -250,12 +252,12 @@ function DrawerBody({ p }: { p: DbPaper }) {
             <PaperLinks ids={p.benchmarked_in} />
           </dd>
           <dt>Cites</dt>
-          <dd>
-            <PaperLinks ids={p.cites} />
+          <dd data-testid="drawer-cites">
+            <PaperLinks ids={p.cites} sourceOf={(id) => citationSourceText(p.cite_sources?.[id])} />
           </dd>
           <dt>Cited by</dt>
-          <dd>
-            <PaperLinks ids={p.cited_by} />
+          <dd data-testid="drawer-cited-by">
+            <PaperLinks ids={p.cited_by} sourceOf={(id) => citationSourceText(paperById.get(id)?.cite_sources?.[p.id])} />
           </dd>
         </dl>
       </Section>

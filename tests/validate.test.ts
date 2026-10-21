@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
+import { citationSourceText } from '../src/lib/citations.ts';
+import { metricTooltip } from '../src/lib/metrics.ts';
+import { datasetGroups } from '../src/pages/evaluations/merge.ts';
 import { deriveLevel } from '../src/schema.ts';
 import { buildDb, findCycle, isPdfUrl, type SourceFile } from '../src/validate.ts';
 
@@ -227,6 +230,165 @@ describe('citations', () => {
     expect(r.db!.edges[0].relations.map((x) => x.type)).toEqual(['builds', 'benchmarks', 'cites']);
     expect(r.db!.edges[0].relations[0]).toEqual({ type: 'builds', from: 'a', to: 'b' });
     expect(r.db!.citations.resolved).toBe(2);
+  });
+});
+
+describe('hand-curated citations (data/citations-manual.yaml)', () => {
+  const cit = (papers: Record<string, { s2_id: string | null; cites: string[] }>) => ({ generated_at: 'T', source: 'OpenAlex', papers, unresolved: [] });
+  const runM = (ps: Record<string, unknown>[], manualCitations: unknown, citations: unknown = cit({})) =>
+    buildDb({ taxonomy: bareTaxonomy(), papers: ps.map((p) => ({ name: p.id as string, data: p })), datasets: [], citations, manualCitations });
+  const two = [base('a', { method: { ...L2K } }), base('b', { year: 2022, method: { ...L2K } })];
+  const LIB = 'Librarian, Oct 21 2026';
+
+  it('accepts an empty list, a missing file, and an empty file', () => {
+    for (const m of [[], undefined, null]) {
+      const r = runM(two, m);
+      expect(r.errors).toEqual([]);
+      expect(r.db!.citations.manual).toBe(0);
+    }
+  });
+
+  it('rejects entries that do not match the schema', () => {
+    expectError(runM(two, { from: 'b', to: 'a', source: LIB }) as ReturnType<typeof run>, /citations-manual.yaml/);
+    expectError(runM(two, [{ from: 'b', to: 'a' }]) as ReturnType<typeof run>, /citations-manual.yaml: 0.source/);
+    expectError(runM(two, [{ from: 'b', to: 'a', source: '' }]) as ReturnType<typeof run>, /citations-manual.yaml: 0.source/);
+    expectError(runM(two, [{ from: 'b', to: 'a', source: LIB, page: 3 }]) as ReturnType<typeof run>, /Unrecognized key/);
+  });
+
+  it('rejects unknown ids', () => {
+    expectError(runM(two, [{ from: 'ghost', to: 'a', source: LIB }]) as ReturnType<typeof run>, /entry 1 \(ghost cites a\): from "ghost" does not exist/);
+    expectError(runM(two, [{ from: 'b', to: 'ghost', source: LIB }]) as ReturnType<typeof run>, /entry 1 \(b cites ghost\): to "ghost" does not exist/);
+  });
+
+  it('rejects a self-citation', () => {
+    expectError(runM(two, [{ from: 'a', to: 'a', source: LIB }]) as ReturnType<typeof run>, /a paper cannot cite itself/);
+  });
+
+  it('rejects duplicates within the file', () => {
+    expectError(
+      runM(two, [
+        { from: 'b', to: 'a', source: LIB },
+        { from: 'b', to: 'a', source: 'Someone else', where: '§2' },
+      ]) as ReturnType<typeof run>,
+      /entry 2 \(b cites a\): duplicates entry 1/,
+    );
+    // The reverse pair is a different citation.
+    expect(runM(two, [{ from: 'b', to: 'a', source: LIB }, { from: 'a', to: 'b', source: LIB }]).errors).toEqual([]);
+  });
+
+  it('merges with citations.json into cites, cited_by, and edges, keeping every source for each pair', () => {
+    const three = [...two, base('c', { year: 2024, method: { ...L2K } })];
+    const r = runM(
+      three,
+      [
+        { from: 'b', to: 'a', source: LIB, where: '§2, ref. [14]' },
+        { from: 'c', to: 'a', source: LIB },
+      ],
+      cit({ a: { s2_id: null, cites: [] }, b: { s2_id: 'x', cites: ['a'] }, c: { s2_id: 'y', cites: ['b'] } }),
+    );
+    expect(r.errors).toEqual([]);
+    const get = (id: string) => r.db!.papers.find((p) => p.id === id)!;
+    expect(get('b').cites).toEqual(['a']);
+    expect(get('c').cites).toEqual(['a', 'b']);
+    expect(get('a').cited_by).toEqual(['b', 'c']);
+    expect(get('b').cited_by).toEqual(['c']);
+    // b cites a in both files: one pair, both sources.
+    expect(get('b').cite_sources).toEqual({
+      a: [
+        { kind: 'fetched', source: 'OpenAlex' },
+        { kind: 'manual', source: LIB, where: '§2, ref. [14]' },
+      ],
+    });
+    expect(get('c').cite_sources).toEqual({ a: [{ kind: 'manual', source: LIB }], b: [{ kind: 'fetched', source: 'OpenAlex' }] });
+    expect(get('a').cite_sources).toEqual({});
+    // One cites relation per pair, pointing from the cited (earlier) paper to the citing one.
+    const cites = r.db!.edges.flatMap((e) => e.relations).filter((x) => x.type === 'cites');
+    expect(cites).toEqual(
+      expect.arrayContaining([
+        { type: 'cites', from: 'a', to: 'b' },
+        { type: 'cites', from: 'a', to: 'c' },
+        { type: 'cites', from: 'b', to: 'c' },
+      ]),
+    );
+    expect(cites).toHaveLength(3);
+    expect(r.db!.citations.manual).toBe(2);
+  });
+
+  it('works without citations.json', () => {
+    const r = runM(two, [{ from: 'b', to: 'a', source: LIB }], undefined);
+    expect(r.errors).toEqual([]);
+    expect(r.db!.papers.find((p) => p.id === 'b')!.cites).toEqual(['a']);
+  });
+
+  it('describes the sources on hover', () => {
+    expect(citationSourceText(undefined)).toBeUndefined();
+    expect(citationSourceText([])).toBeUndefined();
+    expect(citationSourceText([{ source: 'OpenAlex' }])).toBe('Source: OpenAlex');
+    expect(citationSourceText([{ source: 'OpenAlex' }, { source: LIB, where: '§2' }])).toBe(`Sources: OpenAlex; ${LIB} (§2)`);
+  });
+});
+
+describe('taxonomy additions: semi-tangential families, search tangents, metric direction and unit', () => {
+  it('ships Implicit Cues as semi-tangential, the search tangent type, and direction and unit on every metric', () => {
+    const r = run([], { datasets: [] });
+    expect(r.errors).toEqual([]);
+    const t = r.db!.taxonomy;
+    expect(t.families.implicit_cues).toMatchObject({ name: 'Implicit Cues', semi_tangential: true });
+    expect(t.families.goal_inference.semi_tangential).toBeUndefined();
+    expect(t.tangent_types.search.label).toBe('Search in changing homes');
+    expect(t.metrics.net_actions_saved).toMatchObject({ direction: 'higher', unit: '%' });
+    expect(t.metrics.perturbed_actions).toMatchObject({ direction: 'lower', unit: '%' });
+    expect(t.metrics.f1).toMatchObject({ direction: 'higher', unit: 'fraction' });
+  });
+
+  it('accepts papers in a semi-tangential family and search tangents', () => {
+    const r = run([base('a', { method: { ...L2K, family: 'implicit_cues' } }), base('b', { tangent: 'search' })]);
+    expect(r.errors).toEqual([]);
+  });
+
+  it('rejects a non-boolean semi_tangential', () => {
+    const t = bareTaxonomy();
+    t.families.implicit_cues.semi_tangential = 'yes';
+    expectError(run([], { taxonomy: t, datasets: [] }), /taxonomy.yaml: families.implicit_cues.semi_tangential/);
+  });
+
+  it('rejects a metric without direction or unit, with a bad direction, or with a long mapping_note', () => {
+    const variant = (edit: (m: Record<string, unknown>) => void) => {
+      const t = bareTaxonomy();
+      edit(t.metrics.f1);
+      return run([], { taxonomy: t, datasets: [] });
+    };
+    expectError(variant((m) => delete m.direction), /metrics.f1.direction/);
+    expectError(variant((m) => (m.direction = 'up')), /metrics.f1.direction/);
+    expectError(variant((m) => delete m.unit), /metrics.f1.unit/);
+    expectError(variant((m) => (m.unit = '')), /metrics.f1.unit/);
+    expectError(variant((m) => (m.mapping_note = 'x'.repeat(161))), /mapping_note exceeds 160/);
+    expect(variant((m) => (m.mapping_note = 'x'.repeat(160))).errors).toEqual([]);
+  });
+
+  it('shows direction and unit in metric chip tooltips', () => {
+    expect(metricTooltip({ definition: 'D.', kind: 'direct', direction: 'lower', unit: '%' })).toBe('D. (direct) · ↓ lower is better · unit: %');
+    expect(metricTooltip({ definition: 'D.', kind: 'proxy', direction: 'higher', unit: 'fraction' })).toContain('↑ higher is better');
+  });
+});
+
+describe('tangential datasets', () => {
+  it('accepts tangent: true and keeps it in the database', () => {
+    const r = run([], { datasets: [sim, { ...ds, tangent: true }] });
+    expect(r.errors).toEqual([]);
+    expect(r.db!.datasets.find((d) => d.id === 'ds')!.tangent).toBe(true);
+  });
+
+  it('rejects a non-boolean tangent', () => {
+    expectError(run([], { datasets: [sim, { ...ds, tangent: 'yes' }] }), /datasets\/ds.yaml: tangent/);
+    expectError(run([], { datasets: [sim, { ...ds, tangent: 'search' }] }), /datasets\/ds.yaml: tangent/);
+  });
+
+  it('groups tangential datasets after the others, keeping order', () => {
+    const rows = [{ id: 'x', tangent: true }, { id: 'y' }, { id: 'z', tangent: false }, { id: 'w', tangent: true }];
+    const g = datasetGroups(rows);
+    expect(g.core.map((d) => d.id)).toEqual(['y', 'z']);
+    expect(g.tangent.map((d) => d.id)).toEqual(['x', 'w']);
   });
 });
 

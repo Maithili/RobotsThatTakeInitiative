@@ -4,6 +4,7 @@ import { mergeEdges, type Relation } from './lib/edges.ts';
 import {
   CitationsSchema,
   DatasetSchema,
+  ManualCitationsSchema,
   PaperSchema,
   SUBPROBLEM_IDS,
   TaxonomySchema,
@@ -17,6 +18,8 @@ import {
   type SubproblemId,
   type Taxonomy,
   type Citations,
+  type CitationSource,
+  type ManualCitation,
 } from './schema.ts';
 
 export interface SourceFile {
@@ -31,6 +34,8 @@ export interface BuildInput {
   datasets: SourceFile[];
   /** Parsed data/citations.json, or undefined if the file does not exist yet. */
   citations?: unknown;
+  /** Parsed data/citations-manual.yaml: a list of {from, to, source, where?}. Undefined or null counts as empty. */
+  manualCitations?: unknown;
   /** Repo-relative paths of every file in the repo, to reject PDFs. */
   repoFiles?: string[];
 }
@@ -232,6 +237,26 @@ export function buildDb(input: BuildInput): BuildResult {
     }
   }
 
+  // ---- hand-curated citations (SPEC §5.5) ----
+  let manual: ManualCitation[] = [];
+  if (input.manualCitations != null) {
+    const mc = ManualCitationsSchema.safeParse(input.manualCitations);
+    if (!mc.success) errors.push(...zodMessages('citations-manual.yaml', mc.error));
+    else {
+      manual = mc.data;
+      const seen = new Map<string, number>();
+      manual.forEach((c, i) => {
+        const at = `citations-manual.yaml: entry ${i + 1} (${c.from} cites ${c.to})`;
+        if (!paperById.has(c.from)) errors.push(`${at}: from "${c.from}" does not exist`);
+        if (!paperById.has(c.to)) errors.push(`${at}: to "${c.to}" does not exist`);
+        if (c.from === c.to) errors.push(`${at}: a paper cannot cite itself`);
+        const key = `${c.from}>${c.to}`;
+        if (seen.has(key)) errors.push(`${at}: duplicates entry ${seen.get(key)}`);
+        else seen.set(key, i + 1);
+      });
+    }
+  }
+
   const cycle = findCycle(new Map(papers.map((p) => [p.id, p.method?.builds_on ?? []])));
   if (cycle) errors.push(`builds_on contains a cycle: ${cycle.join(' → ')}`);
 
@@ -298,10 +323,23 @@ export function buildDb(input: BuildInput): BuildResult {
   const builtUponBy = new Map<string, string[]>();
   const benchmarkedIn = new Map<string, Set<string>>();
   const citedBy = new Map<string, Set<string>>();
-  const citesOf = new Map<string, string[]>();
+  // Citations from data/citations.json and data/citations-manual.yaml, one entry per pair with every source.
+  const citeSources = new Map<string, Map<string, CitationSource[]>>(); // citing id -> cited id -> sources
+  const addCite = (citing: string, cited: string, src: CitationSource) => {
+    if (!paperById.has(citing) || !paperById.has(cited) || citing === cited) return;
+    if (!citeSources.has(citing)) citeSources.set(citing, new Map());
+    const byCited = citeSources.get(citing)!;
+    const list = byCited.get(cited) ?? [];
+    if (!list.some((s) => s.kind === src.kind && s.source === src.source && s.where === src.where)) list.push(src);
+    byCited.set(cited, list);
+  };
   for (const [id, entry] of Object.entries(citations?.papers ?? {})) {
-    if (!paperById.has(id)) continue;
-    const cs = [...new Set(entry.cites)].filter((c) => paperById.has(c) && c !== id);
+    for (const c of entry.cites) addCite(id, c, { kind: 'fetched', source: citations!.source });
+  }
+  for (const c of manual) addCite(c.from, c.to, { kind: 'manual', source: c.source, ...(c.where ? { where: c.where } : {}) });
+  const citesOf = new Map<string, string[]>();
+  for (const [id, byCited] of citeSources) {
+    const cs = [...byCited.keys()].sort();
     citesOf.set(id, cs);
     for (const c of cs) {
       if (!citedBy.has(c)) citedBy.set(c, new Set());
@@ -344,6 +382,7 @@ export function buildDb(input: BuildInput): BuildResult {
       benchmarked_in: [...(benchmarkedIn.get(p.id) ?? [])],
       cites: citesOf.get(p.id) ?? [],
       cited_by: [...(citedBy.get(p.id) ?? [])].sort(),
+      cite_sources: Object.fromEntries(citeSources.get(p.id) ?? []),
       search: searchString(p),
     }))
     .sort((a, b) => a.year - b.year || a.id.localeCompare(b.id));
@@ -370,6 +409,7 @@ export function buildDb(input: BuildInput): BuildResult {
         source: citations?.source ?? 'none',
         unresolved: citations?.unresolved ?? [],
         resolved: Object.values(citations?.papers ?? {}).filter((e) => e.s2_id).length,
+        manual: manual.length,
       },
     },
   };

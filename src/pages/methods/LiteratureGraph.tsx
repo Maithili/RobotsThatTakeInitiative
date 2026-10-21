@@ -55,6 +55,8 @@ interface GNode {
   hue: string;
   tangent: boolean;
   cluster: string | null;
+  /** In a semi-tangential family: drawn at 75% opacity until its cluster is hovered (SPEC §7.2). */
+  semi: boolean;
 }
 
 interface Geometry {
@@ -209,6 +211,8 @@ export function LiteratureGraph({
   const [searched, setSearched] = useState<string | null>(null);
   const [pulse, setPulse] = useState<{ id: string; n: number } | null>(null);
   const [hint, setHint] = useState(false);
+  /** Family whose name is hovered or focused. */
+  const [hullHot, setHullHot] = useState<string | null>(null);
 
   // ---- data: nodes, edges, clusters (positions are fixed, so this changes only with the data) ----
   const nodes = useMemo(() => {
@@ -230,6 +234,7 @@ export function LiteratureGraph({
         hue: familyHue(families, fam),
         tangent,
         cluster: fam,
+        semi: !!(fam && families[fam]?.semi_tangential),
       });
     }
     return out;
@@ -329,6 +334,11 @@ export function LiteratureGraph({
     if (!hovered) return null;
     return new Set([hovered, ...[...(neighbors.get(hovered) ?? [])].filter(isShown)]);
   }, [hovered, neighbors, isShown]);
+  // Semi-tangential families draw at 75% opacity; hovering the family name or one of its papers brings the
+  // whole cluster to full opacity (SPEC §7.2).
+  const hotCluster = hullHot ?? (hovered ? nodes.get(hovered)?.cluster ?? null : null);
+  const isSemi = (n: GNode) => n.semi && n.cluster !== hotCluster;
+  const semiFamily = (fam: string) => !!families[fam]?.semi_tangential && fam !== hotCluster;
 
   // ---- year ramp: darker means newer, over the years in view ----
   const [yr0, yr1] = useMemo(() => {
@@ -583,6 +593,7 @@ export function LiteratureGraph({
     showTip(c.cx, c.top - 4, (
       <>
         <strong>{fam?.name ?? c.id}</strong>
+        {fam?.semi_tangential && <span className="tag">Semi-tangential</span>}
         {fam?.scope_line && <span className="small">{fam.scope_line}</span>}
         {fam?.strength && (
           <span className="small">
@@ -617,11 +628,14 @@ export function LiteratureGraph({
   const touches = (e: PairEdge, id: string | null) => !!id && e.key.split('|').includes(id);
   const edgeEls: ReactNode[] = [];
   const drawEdge = (e: PairEdge, r: Relation) => {
-    const tangentEdge = nodes.get(r.from)!.tangent || nodes.get(r.to)!.tangent;
+    const a = nodes.get(r.from)!;
+    const b = nodes.get(r.to)!;
+    const tangentEdge = a.tangent || b.tangent;
+    const semiEdge = !tangentEdge && (isSemi(a) || isSemi(b));
     const hot = !!hovered && (r.from === hovered || r.to === hovered);
     const dim =
       !matches.has(r.from) || !matches.has(r.to) || (!!lit && !(lit.has(r.from) && lit.has(r.to)) && r.from !== focus && r.to !== focus);
-    const cls = `${dim ? ' is-dim' : ''}${tangentEdge ? ' is-tangent' : ''}${hot ? ' is-hl' : ''}`;
+    const cls = `${dim ? ' is-dim' : ''}${tangentEdge ? ' is-tangent' : ''}${semiEdge ? ' is-semi' : ''}${hot ? ' is-hl' : ''}`;
     edgeEls.push(<Edge key={`${e.key}:${r.type}`} id={e.key} rel={r} geo={geometry(r)} cls={cls} />);
   };
   for (const e of pairs) {
@@ -718,7 +732,7 @@ export function LiteratureGraph({
         >
           <defs>
             {(['builds', 'benchmarks', 'cites'] as EdgeType[]).flatMap((t) =>
-              ['', '-hot', '-half', '-faint', '-ghost'].map((h) => (
+              ['', '-hot', '-semi', '-half', '-faint', '-ghost'].map((h) => (
                 <marker
                   key={t + h}
                   id={`litg-arrow-${t}${h}`}
@@ -739,14 +753,14 @@ export function LiteratureGraph({
           <g ref={viewRef}>
             <g className="litg__hulls">
               {clusters.map((c) => (
-                <path key={c.id} d={c.d} className={`litg__hull litg__hull--${c.hue}`} data-testid={`hull-${c.id}`} />
+                <path key={c.id} d={c.d} className={`litg__hull litg__hull--${c.hue}${semiFamily(c.id) ? ' is-semi' : ''}`} data-testid={`hull-${c.id}`} />
               ))}
             </g>
             <g className="litg__edges">{edgeEls}</g>
             <g className="litg__nodes">
               {ordered.map((n) => {
                 const dim = !matches.has(n.id) || (lit !== null && !lit.has(n.id));
-                const cls = `litg__node${n.tangent ? ' is-tangent' : ''}${n.id === FRAMEWORK_PAPER ? ' is-framework' : ''}${dim ? ' is-dim' : ''}${focus === n.id ? ' is-focus' : ''}${
+                const cls = `litg__node${n.tangent ? ' is-tangent' : ''}${isSemi(n) ? ' is-semi' : ''}${n.id === FRAMEWORK_PAPER ? ' is-framework' : ''}${dim ? ' is-dim' : ''}${focus === n.id ? ' is-focus' : ''}${
                   lit?.has(n.id) && focus !== n.id ? ' is-lit' : ''
                 }${hl?.has(n.id) ? ' is-hl' : ''}${hoverId === n.id ? ' is-hover' : ''}`;
                 const aria = `${n.p.short_name}, ${n.p.year}${
@@ -763,12 +777,25 @@ export function LiteratureGraph({
                   y={c.top}
                   dy="-0.5em"
                   textAnchor="middle"
-                  className={`litg__hull-label litg__hull-label--${c.hue}`}
+                  className={`litg__hull-label litg__hull-label--${c.hue}${semiFamily(c.id) ? ' is-semi' : ''}`}
+                  data-testid={`hull-label-${c.id}`}
                   tabIndex={0}
-                  onMouseEnter={() => familyTip(c)}
-                  onFocus={() => familyTip(c)}
-                  onMouseLeave={() => setTip(null)}
-                  onBlur={() => setTip(null)}
+                  onMouseEnter={() => {
+                    setHullHot(c.id);
+                    familyTip(c);
+                  }}
+                  onFocus={() => {
+                    setHullHot(c.id);
+                    familyTip(c);
+                  }}
+                  onMouseLeave={() => {
+                    setHullHot(null);
+                    setTip(null);
+                  }}
+                  onBlur={() => {
+                    setHullHot(null);
+                    setTip(null);
+                  }}
                 >
                   {families[c.id]?.name ?? c.id}
                 </text>
@@ -781,7 +808,7 @@ export function LiteratureGraph({
                     y={n.y}
                     dx="0.34em"
                     dy="0.35em"
-                    className={`litg__label${n.tangent ? ' is-tangent' : ''}${hl?.has(n.id) ? ' is-hl' : ''}${
+                    className={`litg__label${n.tangent ? ' is-tangent' : ''}${isSemi(n) ? ' is-semi' : ''}${hl?.has(n.id) ? ' is-hl' : ''}${
                       !tier0.has(n.id) && (!matches.has(n.id) || (lit && !lit.has(n.id))) ? ' is-dim' : ''
                     }`}
                     data-id={n.id}

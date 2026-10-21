@@ -1,0 +1,5 @@
+# Hand-curated citations (SPEC §5.5), checked against each paper's reference list. The build merges these
+# with data/citations.json. One entry per pair, `from` cites `to`, both paper ids:
+#   - {from: citing-paper-id, to: cited-paper-id, source: "Librarian, Oct 21 2026", where: "§2, ref. [14]"}
+# `source` names who checked it. `where` (optional) gives the location in `from`'s text.
+[]

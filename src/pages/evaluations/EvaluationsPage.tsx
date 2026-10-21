@@ -1,13 +1,15 @@
-import { Fragment, useMemo, useState } from 'react';
-import { InputChip, LoopPill, MetricChip, TermDot } from '../../components/Chip.tsx';
+import { useMemo, useState } from 'react';
+import { LoopPill, MetricChip, TermDot } from '../../components/Chip.tsx';
 import { EmptyState } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
 import { Math as TeX } from '../../components/Math.tsx';
 import { CaptureGlyph } from '../../components/StatusGlyph.tsx';
 import { datasetById, db, FRAMEWORK_PAPER, paperById, paperLabel, papers, RTI_URL, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
+import { DIRECTION } from '../../lib/metrics.ts';
 import { inEvaluations } from '../../lib/scope.ts';
 import { useUrl } from '../../state/url.ts';
+import { DatasetTable } from './DatasetTable.tsx';
 import { FeaturedChart } from './FeaturedChart.tsx';
 import { furthestLoop, mergePaper, rowMatches, type PaperEvalRow } from './merge.ts';
 import { RealismPlot } from './RealismPlot.tsx';
@@ -277,222 +279,6 @@ function CapturesLegend() {
   );
 }
 
-// ---------- 8.5 datasets and evaluation setups ----------
-
-const KIND_LABEL: Record<string, string> = { dataset: 'Dataset', evaluation_setup: 'Setup' };
-const RELATION_LABEL: Record<string, string> = { extends: 'Extends', uses: 'Uses', validates_against: 'Validated against' };
-
-function DatasetTable() {
-  const url = useUrl();
-  const [kind, setKind] = useState('');
-  const [sim, setSim] = useState('');
-  const [goal, setGoal] = useState('');
-  const [exec, setExec] = useState('');
-  const [info, setInfo] = useState<string | null>(null);
-  const [flash, setFlash] = useState<string | null>(null);
-  // Simulators never show as rows, only in the environment column (SPEC §8.5).
-  const rows = db.datasets.filter(
-    (d) =>
-      d.kind !== 'simulator' &&
-      (!kind || d.kind === kind) &&
-      (!sim || d.sim_or_real === sim) &&
-      (!goal || (d.goal_annotations ?? 'unknown') === goal) &&
-      (!exec || (d.executable ?? 'unknown') === exec),
-  );
-  const sel = (label: string, value: string, set: (v: string) => void, opts: [string, string][]) => (
-    <label className="colfilter">
-      <select value={value} onChange={(e) => set(e.target.value)} aria-label={`Filter ${label}`}>
-        <option value="">All</option>
-        {opts.map(([v, l]) => (
-          <option key={v} value={v}>
-            {l}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-  const plain = (vs: string[]) => vs.map((v) => [v, v] as [string, string]);
-  const yn = (v: string | null | undefined) => v ?? <span className="muted">—</span>;
-  const jump = (id: string) => {
-    setKind('');
-    setSim('');
-    setGoal('');
-    setExec('');
-    setFlash(id);
-    requestAnimationFrame(() => document.getElementById(`ds-${id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }));
-    window.setTimeout(() => setFlash((f) => (f === id ? null : f)), 1400);
-  };
-  const COLS = 12;
-  return (
-    <section aria-labelledby="ds-title" className="stack-sm">
-      <div className="section-title">
-        <h2 id="ds-title">Datasets and evaluation setups</h2>
-        <span className="small muted">Closed-loop evaluation needs executable user actions; goal inference needs goal annotations.</span>
-      </div>
-      <div className="scroll-x">
-        <table className="table" data-testid="dataset-table">
-          <thead>
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Kind</th>
-              <th scope="col">Environment</th>
-              <th scope="col">Based on</th>
-              <th scope="col">Sim or real</th>
-              <th scope="col">Span</th>
-              <th scope="col">Households or users</th>
-              <th scope="col">Observations</th>
-              <th scope="col">Goal annotations</th>
-              <th scope="col">Executable</th>
-              <th scope="col">Human models and loops</th>
-              <th scope="col">Used by</th>
-            </tr>
-            <tr className="filter-row">
-              <td />
-              <td>{sel('kind', kind, setKind, [['dataset', 'Dataset'], ['evaluation_setup', 'Setup']])}</td>
-              <td />
-              <td />
-              <td>{sel('sim or real', sim, setSim, plain(['sim', 'real', 'both']))}</td>
-              <td />
-              <td />
-              <td />
-              <td>{sel('goal annotations', goal, setGoal, plain(['yes', 'partial', 'no', 'unknown']))}</td>
-              <td>{sel('executable', exec, setExec, plain(['yes', 'no', 'unknown']))}</td>
-              <td />
-              <td />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((d) => {
-              const users = [...new Set(d.used_by.filter(inScope).map((u) => u.paper))];
-              const active = url.get('dataset') === d.id;
-              return (
-                <Fragment key={d.id}>
-                  <tr id={`ds-${d.id}`} className={flash === d.id ? 'pulse' : undefined} data-testid={`ds-row-${d.id}`}>
-                    <td>
-                      <span className="ds-name">
-                        {d.links.home ? (
-                          <a href={d.links.home} target="_blank" rel="noreferrer" className="strong">
-                            {d.name} ↗
-                          </a>
-                        ) : (
-                          <strong>{d.name}</strong>
-                        )}
-                        <button
-                          type="button"
-                          className="info-btn"
-                          aria-label={`About ${d.name}`}
-                          aria-expanded={info === d.id}
-                          onClick={() => setInfo((i) => (i === d.id ? null : d.id))}
-                        >
-                          i
-                        </button>
-                      </span>
-                    </td>
-                    <td>{KIND_LABEL[d.kind] ?? d.kind}</td>
-                    <td>{d.environment ? <span className="chip chip--dataset">{datasetById.get(d.environment)?.name ?? d.environment}</span> : <span className="muted">—</span>}</td>
-                    <td>
-                      {(d.based_on ?? []).length ? (
-                        <ul className="plain small">
-                          {d.based_on!.map((b) => (
-                            <li key={`${b.relation}:${b.id}`}>
-                              {RELATION_LABEL[b.relation]}{' '}
-                              <button type="button" className="linkish" onClick={() => jump(b.id)}>
-                                {datasetById.get(b.id)?.name ?? b.id}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span className="muted">—</span>
-                      )}
-                    </td>
-                    <td>{d.sim_or_real}</td>
-                    <td>{yn(d.span)}</td>
-                    <td className="num">{d.households_or_users ?? <span className="muted">—</span>}</td>
-                    <td>{(d.observations ?? []).length ? d.observations!.map((o) => <InputChip key={o} id={o} />) : <span className="muted">—</span>}</td>
-                    <td>{yn(d.goal_annotations)}</td>
-                    <td>{yn(d.executable)}</td>
-                    <td>
-                      {d.kind === 'evaluation_setup' ? (
-                        <span className="stack-xs small">
-                          <span>{(d.human_models ?? []).join('; ') || <span className="muted">—</span>}</span>
-                          <span className="chips">
-                            {(d.loops ?? []).map((l) => (
-                              <LoopPill key={l} loop={l} />
-                            ))}
-                          </span>
-                        </span>
-                      ) : (
-                        <span className="muted">—</span>
-                      )}
-                    </td>
-                    <td>
-                      {users.length ? (
-                        <button
-                          type="button"
-                          className={active ? 'btn btn--sm is-on' : 'btn btn--sm'}
-                          aria-pressed={active}
-                          onClick={() => url.set({ dataset: active ? null : d.id })}
-                          title="Filter the protocols table to evaluations that use this"
-                        >
-                          {users.map(paperLabel).join(', ')}
-                        </button>
-                      ) : (
-                        <span className="muted">—</span>
-                      )}
-                    </td>
-                  </tr>
-                  {info === d.id && (
-                    <tr className="info-row">
-                      <td colSpan={COLS}>
-                        <div className="info-panel small">
-                          <p>{d.notes ?? <span className="muted">No notes.</span>}</p>
-                          <p>
-                            Introduced in:{' '}
-                            {d.introduced_in ? (
-                              <button type="button" className="linkish" onClick={() => url.openPaper(d.introduced_in!)}>
-                                {paperLabel(d.introduced_in)}
-                              </button>
-                            ) : (
-                              <span className="muted">—</span>
-                            )}
-                            {d.basis_of.length > 0 && (
-                              <>
-                                {' '}
-                                · Basis of{' '}
-                                {d.basis_of.map((b, i) => (
-                                  <span key={b.id}>
-                                    {i > 0 && ', '}
-                                    <button type="button" className="linkish" onClick={() => jump(b.id)}>
-                                      {datasetById.get(b.id)?.name ?? b.id}
-                                    </button>
-                                  </span>
-                                ))}
-                              </>
-                            )}
-                          </p>
-                          <p className="muted">Source: {d.provenance}</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-            {!rows.length && (
-              <tr>
-                <td colSpan={COLS}>
-                  <EmptyState compact>No dataset or setup matches these column filters.</EmptyState>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
 // ---------- 8.6 metrics ----------
 
 function MetricsList({ onHoverMetric }: { onHoverMetric: (m: string | null) => void }) {
@@ -513,6 +299,7 @@ function MetricsList({ onHoverMetric }: { onHoverMetric: (m: string | null) => v
           {shown.map((m) => {
             const M = tx.metrics[m];
             const on = metric === m;
+            const dir = DIRECTION[M.direction];
             return (
               <li key={m}>
                 <button
@@ -526,8 +313,19 @@ function MetricsList({ onHoverMetric }: { onHoverMetric: (m: string | null) => v
                   onBlur={() => onHoverMetric(null)}
                   data-testid={`metric-${m}`}
                 >
-                  <strong className="metric-row__label">{M.label}</strong>
-                  <span className="metric-row__def small">{M.definition}</span>
+                  <span className="metric-row__head">
+                    <strong className="metric-row__label">{M.label}</strong>
+                    <span className="metric-row__dir small" data-testid={`metric-dir-${m}`}>
+                      <span className="metric-row__arrow" role="img" aria-label={dir.label} title={dir.label}>
+                        {dir.glyph}
+                      </span>{' '}
+                      <span className="muted">{M.unit}</span>
+                    </span>
+                  </span>
+                  <span className="metric-row__def small">
+                    {M.definition}
+                    {M.mapping_note && <span className="metric-row__note">{M.mapping_note}</span>}
+                  </span>
                   <span className="chips">
                     {M.terms.map((t) => (
                       <span key={t} className="chip">

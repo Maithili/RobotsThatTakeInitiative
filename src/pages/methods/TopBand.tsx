@@ -303,11 +303,15 @@ function Legend({ clusters, families }: { clusters: string[]; families: Record<s
       <div className="lgd__group">
         <h2 className="strip__title">Papers</h2>
         <ul className="plain lgd">
-          {clusters.map((c) => (
-            <li key={c}>
-              <span className={`lgd__dot lgd__dot--${familyHue(families, c)}`} aria-hidden="true" /> {families[c]?.name ?? c}
-            </li>
-          ))}
+          {clusters.map((c) => {
+            const semi = !!families[c]?.semi_tangential;
+            return (
+              <li key={c} data-testid={`legend-family-${c}`} title={semi ? 'Semi-tangential family: drawn lighter until hovered' : undefined}>
+                <span className={`lgd__dot lgd__dot--${familyHue(families, c)}${semi ? ' lgd__dot--semi' : ''}`} aria-hidden="true" /> {families[c]?.name ?? c}
+                {semi && <span className="muted small">· semi-tangential, drawn lighter</span>}
+              </li>
+            );
+          })}
           <li>
             <span className="lgd__dot lgd__dot--none" aria-hidden="true" /> No family
           </li>
