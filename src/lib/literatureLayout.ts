@@ -1,6 +1,6 @@
 // Deterministic force layout for the Methods literature graph (SPEC §7.2).
 // Pure: the same data always gives the same positions. Filters never reach this function.
-import { forceLink, forceRadial, forceSimulation, forceX, forceY, type SimulationLinkDatum, type SimulationNodeDatum } from 'd3-force';
+import { forceLink, forceSimulation, forceX, forceY, type SimulationLinkDatum, type SimulationNodeDatum } from 'd3-force';
 import { polygonCentroid, polygonContains, polygonHull } from 'd3-polygon';
 
 export const NODE_H = 26;
@@ -150,7 +150,11 @@ export function layoutLiterature(
   const sizes = Object.fromEntries(clusters.map((c) => [c, sorted.filter((n) => n.cluster === c).length]));
   const centers = clusterCenters(clusters, sizes);
   const spread = Math.max(80, ...clusters.map((c) => 46 * Math.sqrt(sizes[c]) + 70));
-  const ring = Math.max(0, ...[...centers.values()].map(([x, y]) => Math.hypot(x, y))) + spread + 130;
+  // The ring for tangential works hugs the clusters: a circle when clusters sit around a circle, flattened
+  // when one or two clusters sit on a line. The hull-exclusion force keeps tangential pills out of the hulls.
+  const centerR = Math.max(0, ...[...centers.values()].map(([x, y]) => Math.hypot(x, y)));
+  const ringX = centerR + 0.6 * spread + 40;
+  const ringY = clusters.length > 2 ? ringX : 0.9 * spread + 30;
 
   const nodes: SimNode[] = sorted.map((n) => {
     const tangent = !!n.tangent;
@@ -158,7 +162,8 @@ export function layoutLiterature(
     const [tx, ty] = (cluster && centers.get(cluster)) || [0, 0];
     const r = mulberry32(hash(n.id));
     const a = r() * 2 * Math.PI;
-    const d = tangent ? ring : 20 + r() * 60;
+    if (tangent) return { id: n.id, cluster, tangent, w: pillWidth(`${n.label}`, n.icons), h: NODE_H, tx, ty, x: ringX * Math.cos(a), y: ringY * Math.sin(a) };
+    const d = 20 + r() * 60;
     return { id: n.id, cluster, tangent, w: pillWidth(`${n.label}`, n.icons), h: NODE_H, tx, ty, x: tx + d * Math.cos(a), y: ty + d * Math.sin(a) };
   });
   const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -190,11 +195,21 @@ export function layoutLiterature(
     }
   };
 
+  // Weak pull of each tangential work toward the nearest point of the ring (an ellipse with radii ringX, ringY).
+  const ringForce = (alpha: number) => {
+    for (const n of nodes) {
+      if (!n.tangent) continue;
+      const t = Math.atan2(n.y / ringY, n.x / ringX);
+      n.vx = (n.vx ?? 0) + (ringX * Math.cos(t) - n.x) * 0.05 * alpha;
+      n.vy = (n.vy ?? 0) + (ringY * Math.sin(t) - n.y) * 0.05 * alpha;
+    }
+  };
+
   const sim = forceSimulation<SimNode>(nodes)
     .randomSource(mulberry32(42))
     .force('x', forceX<SimNode>((d) => d.tx).strength((d) => (d.tangent ? 0 : d.cluster ? 0.09 : 0.2)))
     .force('y', forceY<SimNode>((d) => d.ty).strength((d) => (d.tangent ? 0 : d.cluster ? 0.09 : 0.2)))
-    .force('ring', forceRadial<SimNode>(ring, 0, 0).strength((d) => (d.tangent ? 0.05 : 0)))
+    .force('ring', ringForce)
     .force(
       'link',
       forceLink<SimNode, SimulationLinkDatum<SimNode>>(simLinks)
