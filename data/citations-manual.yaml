@@ -2,4 +2,52 @@
 # with data/citations.json. One entry per pair, `from` cites `to`, both paper ids:
 #   - {from: citing-paper-id, to: cited-paper-id, source: "Librarian, Oct 21 2026", where: "§2, ref. [14]"}
 # `source` names who checked it. `where` (optional) gives the location in `from`'s text.
-[]
+#
+# Oct 21, 2026: every confirmed citation between two papers in the database, from the librarian's answers
+# (each paper's citations section and the corrections table). Rudra et al. and Dhakal et al. 2023 are cited
+# often but are not in the database, so they are left out.
+
+# SGM
+- {from: sgm, to: stot, source: "Librarian, Oct 21 2026", where: "Sec. 2, p. 3 (author-year, \"most related, concurrent\")"}
+
+# Din 2025
+- {from: din-2025-proactivity, to: stot, source: "Librarian, Oct 21 2026", where: "Sec. 1, p. 3 and Sec. 2.2, p. 8, ref. [5]"}
+
+# FlowMaps
+- {from: flowmaps, to: stot, source: "Librarian, Oct 21 2026", where: "Sec. 2, p. 2–3, Sec. 5, Table 2, ref. [17] (as HOMER)"}
+- {from: flowmaps, to: sgm, source: "Librarian, Oct 21 2026", where: "Sec. 2, p. 3, Sec. 5, Table 2, ref. [23]"}
+- {from: flowmaps, to: tap, source: "Librarian, Oct 21 2026", where: "Sec. 2, p. 3, Sec. 5, Table 2, ref. [21] (TAP-LGX)"}
+
+# EvolvingNav
+- {from: evolvingnav, to: stot, source: "Librarian, Oct 21 2026", where: "Sec. 2, p. 3, ref. [35]"}
+- {from: evolvingnav, to: slate-pro, source: "Librarian, Oct 21 2026", where: "Sec. 2, p. 3, Sec. 4.2, p. 7, Tables 1, 2, 11, ref. [36]"}
+- {from: evolvingnav, to: streak, source: "Librarian, Oct 21 2026", where: "Sec. 2, p. 3, ref. [37]"}
+- {from: evolvingnav, to: sgm, source: "Librarian, Oct 21 2026", where: "Sec. 2, p. 3, Tables 1, 2, 11, ref. [33]"}
+- {from: evolvingnav, to: flowmaps, source: "Librarian, Oct 21 2026", where: "Sec. 2, p. 3, Tables 1, 2, 11, ref. [34]"}
+- {from: evolvingnav, to: saavedra-2026-scene-graphs, source: "Librarian, Oct 21 2026", where: "Sec. 1, p. 2, Sec. 2, p. 3, Tables 1, 2, 11, ref. [3]"}
+- {from: evolvingnav, to: tap, source: "Librarian, Oct 21 2026", where: "Sec. 1, p. 2, ref. [4]"}
+
+# Mullen 2025
+- {from: mullen-2025-home-emergency, to: stot, source: "Librarian, Oct 21 2026", where: "Sec. III-A, p. 3, ref. [33] (as HOMER)"}
+
+# TAP (Dorbala et al.)
+- {from: tap, to: sgm, source: "Librarian, Oct 21 2026", where: "Sec. II, p. 2, ref. [47]"}
+- {from: tap, to: stot, source: "Librarian, Oct 21 2026", where: "Sec. I, p. 1 and Sec. V, p. 3, ref. [19]"}
+- {from: tap, to: streak, source: "Librarian, Oct 21 2026", where: "Sec. I, p. 1 and Sec. V, p. 3, ref. [20]"}
+
+# Anticipatory TAMP (RA-L 2026; the arXiv 2024 version cites STOT as ref. [13])
+- {from: anticipatory-tamp, to: stot, source: "Librarian, Oct 21 2026", where: "Sec. I, p. 1, Sec. II, p. 2, Sec. III-A, p. 3, ref. [14]"}
+- {from: anticipatory-tamp, to: talukder-2025-anticipatory-planning, source: "Librarian, Oct 21 2026", where: "Sec. I–III, pp. 1–3, ref. [12]"}
+
+# Talukder 2025 (cites the arXiv 2024 version of Anticipatory TAMP)
+- {from: talukder-2025-anticipatory-planning, to: anticipatory-tamp, source: "Librarian, Oct 21 2026", where: "Sec. II-B, p. 2, ref. [23] (arXiv 2407.13694)"}
+- {from: talukder-2025-anticipatory-planning, to: stot, source: "Librarian, Oct 21 2026", where: "Sec. II-B, p. 2, ref. [25]"}
+
+# Courteous Anticipation
+- {from: courteous-anticipation, to: talukder-2025-anticipatory-planning, source: "Librarian, Oct 21 2026", where: "Sec. I–VII, pp. 2–8, ref. [12]"}
+- {from: courteous-anticipation, to: slate-pro, source: "Librarian, Oct 21 2026", where: "Sec. II-B, p. 2, ref. [14]"}
+- {from: courteous-anticipation, to: stot, source: "Librarian, Oct 21 2026", where: "Sec. II-B, p. 2, ref. [15]"}
+
+# PredictiveGraphs (IEEE-copyright version)
+- {from: saavedra-2026-scene-graphs, to: stot, source: "Librarian, Oct 21 2026", where: "Sec. VI-B, p. 7, ref. [22] (as HOMER)"}
+- {from: saavedra-2026-scene-graphs, to: flowmaps, source: "Librarian, Oct 21 2026", where: "Sec. VI-B, p. 7, ref. [35]"}
