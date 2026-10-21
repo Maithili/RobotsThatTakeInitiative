@@ -47,21 +47,79 @@ subproblems:
     relation: direct
     note: Assumes uniform cost across actions
 evaluations:
-  - id: saavedra-2026-scene-graphs-original
+  - id: saavedra-2026-scene-graphs-persistence
+    environment: null
+    datasets: []
+    loop: offline_replay
+    human_model: Scripted weekly object schedule
+    metrics:
+      - persistence_mae
+      - persistence_balanced_accuracy
+      - persistence_f1
+    other_baselines:
+      - Perpetua
+      - FreMEn
+    provenance: "Librarian Oct 2026, B-5 P1; PredictiveGraphs §VI-A, Table I. Scores the persistence estimator against the true state"
+    realism:
+      robot: task_specific
+      human: recorded
+      environment: simulator
+  - id: saavedra-2026-scene-graphs-sim-nav
+    environment: procthor
+    datasets: []
+    loop: closed_scripted
+    human_model: Scripted hourly object schedule
+    metrics:
+      - search_success_rate
+      - spl
+      - abort_rate
+    baselines:
+      - stot
+      - flowmaps
+    other_baselines:
+      - ConceptGraphs (CG)
+      - CG + LLM
+      - CG + LLM + History
+    provenance: "Librarian Oct 2026, B-5 P2; PredictiveGraphs §VI-B, Fig. 5, Table IV. STOT is the \"HOMER [22]\" baseline"
+    realism:
+      robot: generalist
+      human: scripted
+      environment: simulator
+  - id: saavedra-2026-scene-graphs-adaptive-nav
+    environment: procthor
+    datasets: []
+    loop: closed_scripted
+    human_model: Scripted object schedule that shifts at test time
+    metrics:
+      - search_success_rate
+      - spl
+      - abort_rate
+      - absent_search_distance
+    baselines:
+      - stot
+      - flowmaps
+    other_baselines:
+      - ConceptGraphs (CG)
+    provenance: "Librarian Oct 2026, B-5 P3; PredictiveGraphs §VI-B, Fig. 6, Table III. The robot never moves objects"
+    realism:
+      robot: generalist
+      human: scripted
+      environment: simulator
+  - id: saavedra-2026-scene-graphs-real
+    environment: null
+    datasets: []
     loop: null
-    human_model: Objects moved on a fixed schedule
+    human_model: Experimenters move objects on a fixed schedule
+    metrics:
+      - search_success_rate
+      - abort_rate
     baselines:
       - stot
     other_baselines:
-      - ConceptGraphs
-      - CG + LLM
-      - CG + LLM + History
+      - ConceptGraphs (CG)
       - DualMap
-      - FlowMaps
-      - FreMEn
-      - Perpetua
-    provenance: "PredictiveGraphs §VI (STOT appears as the \"HOMER [22]\" baseline)"
+    provenance: "Librarian Oct 2026, B-5 P4; PredictiveGraphs §VI-B5, Table V. Loop left null since live or replayed runs are not stated"
     realism:
-      robot: task_specific
+      robot: generalist
       human: scripted
       environment: lab

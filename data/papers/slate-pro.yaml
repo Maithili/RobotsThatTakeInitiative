@@ -51,10 +51,26 @@ evaluations:
       - homer-plus
     loop: offline_replay
     human_model: Generated HOMER+ routines
+    metrics:
+      - f1
     baselines:
       - stot
-    provenance: "RTI §I, §IV; SLaTe-PRO §6"
+    provenance: "RTI §I, §IV; SLaTe-PRO §6–7.2, Figs. 2–3; Librarian Oct 2026, B-2 S1–S2"
     realism:
       robot: task_specific
       human: recorded
+      environment: simulator
+  - id: slate-pro-queries
+    datasets:
+      - homer-plus
+    loop: offline_replay
+    human_model: Generated HOMER+ routines. An oracle answers queries
+    metrics:
+      - f1
+    baselines:
+      - stot
+    provenance: "Librarian Oct 2026, B-2 S3; SLaTe-PRO §5.2, §7.3, Fig. 4. One query per prediction, answered from ground truth"
+    realism:
+      robot: task_specific
+      human: scripted
       environment: simulator

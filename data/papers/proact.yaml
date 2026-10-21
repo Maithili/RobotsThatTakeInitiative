@@ -54,15 +54,46 @@ evaluations:
   - id: proact-original
     loop: offline_replay
     human_model: Recorded videos (ProAct-75)
+    metrics:
+      - detection_accuracy
+      - detection_f1
+      - detection_macro_accuracy
+      - detection_macro_f1
+      - future_action_edit_distance
+      - saved_steps_rate
+      - parallel_actions
     other_baselines:
+      - Qwen3-VL-30B-A3B-Instruct
+      - Qwen3-Omni-30B
+      - Qwen2.5-VL-32B-Instruct
+      - Qwen2.5-VL-3B-Instruct
+      - Qwen3-VL-Flash
+      - Qwen3-VL-Plus
       - GPT-4o
-      - Gemini-2.5-Pro
       - Gemini-2.5-Flash
-      - Qwen3-VL family
-      - DeepSeek-v3.2
-      - Greedy heuristic
-    provenance: "ProAct §4.1, §6 (action selection simulated against recorded trajectories)"
+      - Gemini-2.5-Pro
+    provenance: "ProAct §4.1, §6.1–6.2, Table 1; Librarian Oct 2026, B-8 Z1. One-step decisions scored against annotations"
     realism:
       robot: null
       human: recorded
       environment: null
+  - id: proact-rollout
+    loop: closed_scripted
+    human_model: Scripted replay of annotated trajectories
+    metrics:
+      - saved_steps
+      - thread_mixing_entropy
+      - robot_thread_entropy
+      - parallel_actions
+    other_baselines:
+      - GPT-4o
+      - Gemini-2.5-Flash
+      - Gemini-2.5-Pro
+      - DeepSeek-v3.2
+      - Qwen3-Max
+      - Greedy
+    provenance: "Librarian Oct 2026, B-8 Z2; ProAct §6.4, Table 3, App. A. Text-only task-graph simulator under ground-truth labels"
+    realism:
+      robot: null
+      human: scripted
+      environment: simulator

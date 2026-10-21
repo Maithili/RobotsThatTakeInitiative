@@ -50,11 +50,17 @@ evaluations:
       - homer
     loop: offline_replay
     human_model: Generated HOMER routines
+    metrics:
+      - used_correct
+      - used_wrong
+      - used_missed
+      - unused_correct
+      - unused_wrong
     baselines:
       - zeng-2020-semantic-linking
     other_baselines:
       - FreMEn
-    provenance: RTI §IV; STOT §5–6.2
+    provenance: RTI §IV; STOT §5–7.2, Table 1, Fig. 4–5; Librarian Oct 2026, B-1 S1–S2
     realism:
       robot: task_specific
       human: recorded

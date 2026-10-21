@@ -51,6 +51,9 @@ evaluations:
     environment: virtualhome
     loop: closed_scripted
     human_model: Built-in planner agent
+    metrics:
+      - speedup
+      - goal_predicate_f1
     baselines:
       - watch-and-help
     other_baselines:
@@ -58,7 +61,7 @@ evaluations:
       - Empowerment
       - HPRG
       - HPGT (oracle)
-    provenance: "NOPA §IV, §V-A, §V-B.1 (HPGPN is the best Watch-And-Help approach)"
+    provenance: "NOPA §IV, §V-A, §V-B.1 (HPGPN is the best Watch-And-Help approach); Librarian Oct 2026, B-6"
     realism:
       robot: task_specific
       human: scripted
@@ -67,11 +70,13 @@ evaluations:
     environment: virtualhome
     loop: user_study_short
     human_model: 10 participants
+    metrics:
+      - speedup
     baselines:
       - watch-and-help
     other_baselines:
       - HPRG
-    provenance: NOPA §V-B.2
+    provenance: NOPA §V-B.2; Librarian Oct 2026, B-6
     realism:
       robot: task_specific
       human: non_target

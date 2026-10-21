@@ -51,7 +51,10 @@ evaluations:
     environment: virtualhome
     loop: offline_replay
     human_model: Recorded demonstrations (goal inference)
-    provenance: RTI §IV; WAH §5.3 (the watch stage scores goal inference offline)
+    metrics:
+      - goal_predicate_precision
+      - goal_predicate_recall
+    provenance: RTI §IV; WAH §5.3 (the watch stage scores goal inference offline); Librarian Oct 2026, B-7
     realism:
       robot: task_specific
       human: recorded
@@ -60,7 +63,11 @@ evaluations:
     environment: virtualhome
     loop: closed_scripted
     human_model: Built-in planner agent (Alice)
-    provenance: WAH §3–5 (Alice replans each step from her latest observation)
+    metrics:
+      - task_success_rate
+      - speedup
+      - cumulative_reward
+    provenance: WAH §3–5 (Alice replans each step from her latest observation); Librarian Oct 2026, B-7
     realism:
       robot: task_specific
       human: scripted
@@ -69,7 +76,14 @@ evaluations:
     environment: virtualhome
     loop: user_study_short
     human_model: 12 participants
-    provenance: "WAH §6, Experiment 2"
+    metrics:
+      - task_success_rate
+      - speedup
+      - cumulative_reward
+      - rated_goal_knowledge
+      - rated_helpfulness
+      - rated_trust
+    provenance: "WAH §6, Experiment 2, App. D; Librarian Oct 2026, B-7"
     realism:
       robot: task_specific
       human: non_target

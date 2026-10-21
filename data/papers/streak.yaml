@@ -53,9 +53,17 @@ evaluations:
       - homer
     loop: offline_replay
     human_model: Recorded HOMER routines
+    metrics:
+      - used_correct
+      - used_wrong
+      - used_missed
+      - unused_correct
+      - unused_wrong
+      - training_time
+      - training_samples
     baselines:
       - stot
-    provenance: "RTI §I, §IV; STREAK §V (baselines are the STOT model, fine-tuned and jointly trained)"
+    provenance: "RTI §I, §IV; STREAK §V–VI (baselines are the STOT model, fine-tuned and jointly trained); Librarian Oct 2026, B-3"
     realism:
       robot: task_specific
       human: recorded
