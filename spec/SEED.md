@@ -205,7 +205,7 @@ Also add these A3 tags to the temporal family (§2.1): `slate-pro`, `streak`, an
 
 | id (proposed) | Citation as printed | Fields |
 |---|---|---|
-| `koch-2024-proactive-hri-review` | [22] M. Koch van den Broek, T. B. Moeslund, "What is proactive human-robot interaction? a review of a progressive field and its definitions," ACM/IEEE HRI 2024. | `type: survey`, provenance "RTI §II". No other blocks. Per Maithili, this is the only survey in the database. |
+| `koch-2024-proactive-hri-review` | [22] M. Koch van den Broek, T. B. Moeslund, "What is proactive human-robot interaction? a review of a progressive field and its definitions," ACM/IEEE HRI 2024. | `type: survey`, `tangent: hri`, provenance "RTI §II". No other blocks. Per Maithili, it sits with the HRI tangential works in the literature graph. |
 
 ## 7. Evaluation methodology
 

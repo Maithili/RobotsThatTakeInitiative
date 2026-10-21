@@ -198,7 +198,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {cirl: Cooperative inverse RL, proactive_communication: Proactive communication, hedging: Hedging under uncertainty}
 
 tangent_types:                # works next to the algorithmic core. Maithili adds more.
-  user_study:     {label: User studies, definition: User studies on the desirability of proactivity.}
+  hri:            {label: HRI studies, definition: HRI work on proactivity, such as user studies on its desirability and reviews of the field.}
   conversational: {label: Conversational proactivity, definition: Proactivity in conversational settings.}
 
 themes:                       # cross-cutting, RTI §III-A
@@ -315,7 +315,7 @@ featured_comparison:          # drives the chart in §8.2
 | `authors` | string[] | yes | |
 | `venue` | string | no | |
 | `year` | int | yes | |
-| `type` | `research` or `survey` | no | Default `research`. Only reviews of proactivity itself get `survey`. They show in the surveys strip (§7.2). |
+| `type` | `research` or `survey` | no | Default `research`. A survey shows a "Survey" chip in the drawer. |
 | `links.paper` | URL or null | yes | Landing page. The validator rejects URLs whose path ends in `.pdf`. |
 | `links.code`, `links.project` | URL | no | |
 | `ids.doi`, `ids.arxiv` | string | no | `fetch-citations` uses these to find the paper (§5.5). Fill them whenever the landing page shows them. |
@@ -545,7 +545,6 @@ Left to right: level cards, condensed timeline, legend. Under 900 px the legend 
 - **Click** on a node highlights all its ancestors and descendants through the edge types currently shown, dims the rest, sets `focus=`, and opens the drawer. Clicking empty canvas or pressing Esc clears the focus.
 - **Filter bar**: family, action type, input modality, theme, years. Selecting L1 dims every graph node and shows the note "The graph shows unprompted (L2) methods."
 - **View toggle**, Graph or List. The list covers all methods at every level, grouped by level then family, then tangential works grouped by tangent type, with sortable columns for short name, year, title, inputs, action types, core strength, and count of subproblems addressed. List is the default under 640 px.
-- **Surveys strip** above the graph shows papers with `type: survey` as chips.
 - The graph fits its container width and scales down on narrow screens. The page itself never scrolls horizontally.
 
 ## 8. Evaluations page
