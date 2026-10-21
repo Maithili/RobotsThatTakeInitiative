@@ -548,7 +548,7 @@ Left to right: level cards, condensed timeline, legend. Under 900 px the legend 
   - Hovering a chip highlights the same paper in the graph, and hovering a graph node highlights its chip.
   - Clicking a chip opens the drawer and, if the paper is in the graph, focuses its node.
   - A time brush on the shared axis sets `years=`.
-- **Legend**, in the space right of the timeline: the three edge styles with their checkboxes (bound to `edges=`; builds and benchmarks on by default, "Show all citation lines" off by default), the cluster tints, the level colors, and a "Show tangential works" checkbox. No action-type legend bound to `tangents=`.
+- **Legend**, in the space right of the timeline: the three edge styles with their checkboxes (bound to `edges=`; builds and benchmarks on by default, "Show all citation lines" off by default), the cluster tints and a "Show tangential works" checkbox. No action-type or level legend bound to `tangents=`.
 
 ### 7.2 Literature graph
 
