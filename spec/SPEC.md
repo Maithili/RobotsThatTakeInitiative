@@ -47,7 +47,7 @@ Readers come to find papers. The site gives them three entry points, one per pag
 data/
   taxonomy.yaml          the formalism (§5.1). Only Maithili changes its definitions.
   papers/<id>.yaml       one file per paper (§5.2)
-  datasets/<id>.yaml     datasets, simulators, benchmarks (§5.3)
+  datasets/<id>.yaml     datasets, evaluation setups, simulators (§5.3)
   citations.json         generated citation edges, committed (§5.5)
   SEED_REPORT.md         written during seeding (§14, M2)
 scripts/
@@ -309,7 +309,7 @@ Evaluation entry:
 | Field | Type | Notes |
 |---|---|---|
 | `id` | kebab-case string | Unique across all papers. |
-| `environment` | dataset id (kind `simulator`) or null | |
+| `environment` | id of a `simulator` entry, or null | |
 | `datasets` | dataset id[] | |
 | `loop` | loop type id or null | Null until someone reads the paper's evaluation. |
 | `human_model` | string ≤ 60 or null | Such as "LLM (gpt-4o-mini)", "Scripted", "Real users (n=12)". |
@@ -352,7 +352,7 @@ evaluations:
 | Field | Type | Notes |
 |---|---|---|
 | `id`, `name` | string | |
-| `kind` | `dataset`, `simulator`, or `benchmark` | |
+| `kind` | `dataset`, `evaluation_setup`, or `simulator` | Simulators stay in the data so datasets and setups can name their `environment`. The site never lists a simulator as a row. |
 | `introduced_in` | paper id or null | |
 | `links.home` | URL or null | Landing page, never a PDF. |
 | `sim_or_real` | `sim`, `real`, or `both` | |
@@ -361,7 +361,10 @@ evaluations:
 | `observations` | modality id[] | |
 | `goal_annotations` | `yes`, `partial`, `no`, or null | Goal-inference methods need these. |
 | `executable` | `yes`, `no`, or null | Whether user actions can run in a simulator so robot actions change the state. Closed loop needs this. |
-| `environment` | dataset id or null | The simulator it runs in. |
+| `environment` | simulator id or null | The simulator it runs in. |
+| `based_on` | list of `{id, relation}` | Other datasets this one relates to. `relation` is `extends` (adds to that dataset), `uses` (runs on it unchanged), or `validates_against` (checks its own data against it). |
+| `human_models` | string[], each ≤ 60 | Setups only. Such as "LLM (gpt-4o-mini)", "Scripted". |
+| `loops` | loop type id[] | Setups only. |
 | `notes` | string ≤ 140 | |
 | `provenance` | string ≤ 140 | |
 
@@ -537,9 +540,11 @@ A horizontal strip of the five loop types in order. Each step shows its label, i
 
 One row per evaluation entry. Columns: paper (short name and year), environment and datasets, loop type (pill), human model, metrics (chips with term color dots), state drift (glyph), goal adaptation (glyph), baselines (count, expandable). All columns sort. Filters come from `loop=`, `term=`, `metric=`, and the global filters. Clicking a row opens the drawer.
 
-### 8.5 Datasets and simulators table
+### 8.5 Datasets and evaluation setups table
 
-Columns: name, kind, sim or real, span, households or users, observations, goal annotations, executable, used by. Column filters for kind, sim or real, goal annotations, and executable. The name links to `links.home`. An info button opens a small panel with notes and the introducing paper. Clicking "used by" filters the protocol table to evaluations that use that dataset.
+Rows are entries of kind `dataset` or `evaluation_setup`. Simulators never appear as rows. They show only in the environment column.
+
+Columns: name, kind (Dataset or Setup), environment, based on (such as "Extends HOMER" or "Validated against HOMER", each linked to that row), sim or real, span, households or users, observations, goal annotations, executable, human models and loops (setups only), used by. Column filters for kind, sim or real, goal annotations, and executable. The name links to `links.home`. An info button opens a small panel with notes and the introducing paper. Clicking "used by" filters the protocol table to evaluations that use that dataset.
 
 ### 8.6 Metrics list
 
@@ -618,6 +623,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 9. Pinning two papers puts both ids in `compare=`.
 10. At 375 px wide, no page scrolls horizontally.
 11. On Methods, the STOT to SLaTe-PRO edge is solid, and unchecking "Cites" removes every dotted edge.
+12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column.
 
 **CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes: `npm ci`, validate, typecheck, unit tests, build, end-to-end tests.
 
@@ -633,7 +639,7 @@ Work on `main`. Commit at the end of each milestone and push to `origin main` ri
 | M2 | Seed data from `spec/SEED.md` | Every SEED entry has a file. Links come only from confirmed landing pages. `data/SEED_REPORT.md` lists missing links and every difference between the RTI reference list and the landing page. Baselines are recorded per SEED rule 7. `data/citations.json` exists. Validate passes. |
 | M3 | Shell: routing, header, URL state, search, drawer, compare tray, theme toggle | E2E tests 3 and 9 pass |
 | M4 | Methods page | E2E tests 2, 4, and 11 pass. Graph readable with seed data and with the 60-paper, 4-cluster synthetic fixture. |
-| M5 | Evaluations page | E2E tests 5 and 6 pass |
+| M5 | Evaluations page | E2E tests 5, 6, and 12 pass |
 | M6 | Subproblems page | E2E tests 7 and 8 pass |
 | M7 | Contribution flow, CI, deploy, README | CI green on `main`. README links the live site and CONTRIBUTING.md. |
 | M8 | Polish: keyboard and ARIA pass, responsive pass, empty states | All E2E tests pass, including test 10 |

@@ -210,7 +210,7 @@ Also add these A3 tags to the temporal family (§2.1): `slate-pro`, `streak`, an
 |---|---|---|
 | `zhang-2023-llm-human-models` | [44] B. Zhang, H. Soh, "Large language models as zero-shot human models for human-robot interaction," IROS 2023. | provenance "RTI §VII". No blocks. Referenced from `loop_types.closed_adaptive.refs`. |
 
-## 8. Datasets and simulators
+## 8. Datasets, evaluation setups, and simulators
 
 ```yaml
 # data/datasets/homer-plus.yaml
@@ -230,6 +230,37 @@ notes: Routine behavior sampled from crowdsourced patterns, executable in Virtua
 provenance: RTI §IV-A1
 ```
 
+Add `based_on: [{id: homer, relation: extends}]` to HOMER+ once the SLaTe-PRO paper confirms that HOMER+ extends HOMER. Record what it says in the report.
+
+```yaml
+# data/datasets/homer.yaml
+id: homer
+name: HOMER
+kind: dataset
+introduced_in: stot        # confirm from the STOT paper
+sim_or_real: sim
+environment: virtualhome    # confirm from the STOT paper
+provenance: Maithili, Oct 2026. Fill the other fields from the STOT paper.
+```
+
+```yaml
+# data/datasets/rti-closed-loop.yaml
+id: rti-closed-loop
+name: RTI closed-loop setup
+kind: evaluation_setup
+introduced_in: gap
+links: {home: https://github.com/Maithili/GAP}
+sim_or_real: sim
+environment: virtualhome
+based_on: [{id: homer-plus, relation: uses}]
+executable: yes
+human_models: [LLM (gpt-4o-mini), Scripted]
+loops: [closed_adaptive, closed_scripted]
+provenance: RTI §IV-A
+```
+
+Add `rti-closed-loop` to the `datasets` of `rti-closed-llm` and `rti-closed-scripted`.
+
 ```yaml
 # data/datasets/virtualhome.yaml
 # [43] X. Puig, K. Ra, M. Boben, J. Li, T. Wang, S. Fidler, A. Torralba,
@@ -243,13 +274,27 @@ sim_or_real: sim
 provenance: RTI §IV-A1
 ```
 
+### 8.1 Papers and datasets added by Maithili (Oct 21, 2026)
+
+Find each paper's landing page and fill bibliographic fields from it. Read each paper before filling any other field. If you cannot find a paper or its full text, list it in the report and stop there for that paper.
+
+| Paper (as Maithili gave it) | What Maithili said | Dataset entry |
+|---|---|---|
+| Hashimoto et al. 2026, "Whose Is This?" | Uses HOMER and extends it with object ownership | The paper's dataset, `based_on: [{id: homer, relation: extends}]` |
+| Singh et al. 2026, "Realistic Synthetic Household Data" | Checks its generated data against HOMER | The generated dataset, `based_on: [{id: homer, relation: validates_against}]` |
+| "Personalized and Robust Proactive Robot Assistance with Uncertainty-Guided LLM Reasoning" (2026) | Introduces HOMER-Noise, an extension with disturbances caused by humans, pets, and toddlers | `homer-noise`, `based_on: [{id: <HOMER or HOMER+, per the paper>, relation: extends}]` |
+
+- Use dataset names, sizes, spans, and observation types as each paper states them. Provenance names the section.
+- Add an evaluation entry for each paper from what its experiments section states: datasets, loop type, human model, baselines in the database, and metrics already in the taxonomy. List any other metric in the report with its definition and the net value terms it would measure. Do not add it to the taxonomy.
+- Do not add a `method` block yet. In the report, propose one per paper (knowns, family, inputs, action types, subproblem tags with notes), each item citing the section it comes from, for Maithili to confirm.
+
 ## 9. Items for `data/SEED_REPORT.md`
 
 Start the report with these items for Maithili, then add what the builder finds.
 
 1. **Watch-And-Help [29] and G2.** §III-B says the goal inference family assumes action-goal association is given. Table I and Appendix II-A list [29] under G2. Seeded as G2 addresses, per Table I.
 2. **Loop type for [29] and [20].** §IV says prior work relied on static datasets and cites [29] and [20]. Seeded as offline_replay.
-3. **Benchmarks.** Watch-And-Help [29] and ProAct [30] present benchmarks. Should they get dataset entries?
+3. **Benchmarks.** Watch-And-Help [29] and ProAct [30] present benchmarks. Should they get `evaluation_setup` entries?
 4. **GAP's family.** Resolved. GAP has no family and sits between the two clusters in the literature graph, per Maithili.
 5. **Temporal family G1 and P1.** Seeded as `assumes`, from §III-B's reading that these methods use a goal space at the action level and assume uniform cost.
 6. **Reference list.** [20] prints CoRL 2023, and Maithili confirms CoRL 2022. [41] prints 2024. [16] prints no year. [63] prints no venue or year. The builder adds every other difference it finds.
