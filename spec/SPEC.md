@@ -449,7 +449,6 @@ Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, th
 | `loop` | Evaluations | `closed_scripted,closed_adaptive` | Loop type filter |
 | `metric` | Evaluations | `f1` | Metric filter |
 | `sub` | Subproblems | `A2` | Selected subproblem |
-| `status` | Subproblems | `addresses` | Status filter |
 | `gaps` | Subproblems | `1` | Gaps mode in the matrix |
 
 Rules.
@@ -547,6 +546,8 @@ Rows show metric label, one-line definition, term chips, kind, and used-by count
 
 ## 9. Subproblems page
 
+This page shows the different methodologies for each subproblem, so it lists only works whose status is `addresses`. Works that assume a subproblem is given or skip it do not appear here. Those tags still show in the paper drawer and the compare view.
+
 ### 9.1 Navigator
 
 An interactive version of RTI Fig. 2. It runs left to right on wide screens and top to bottom under 900 px: ξ₀:ₜ → Grounding (goal space, action-goal association) → Anticipation (human policy, goal inference, goal anticipation) → Planning (cost model, action selection) → aʳₜ. Each node shows its name and a badge counting works that address it under the current filters. Edges come from `depends_on`.
@@ -555,11 +556,11 @@ Selecting a node sets `sub=`. Its upstream dependencies (all transitive ancestor
 
 ### 9.2 Detail panel
 
-With nothing selected, the panel lists all seven subproblems with counts by status. With a subproblem selected, it shows:
+With nothing selected, the panel lists all seven subproblems with the count of works that address each. With a subproblem selected, it shows:
 
 - name, input → output in KaTeX, and the one-line challenge;
-- works grouped by approach (taxonomy order, then "Other"), each row with status glyph, short name, year, relation tag, and note, and a click that opens the drawer;
-- filter chips for status and relation;
+- works that address it, grouped by approach (taxonomy order, then "Other"), each row with short name, year, relation tag, and note, and a click that opens the drawer;
+- filter chips for relation (direct, adjacent);
 - an empty state when no work addresses it directly, such as "No work in the database addresses goal-space representation directly. Suggest one."
 
 ### 9.3 Themes
@@ -568,7 +569,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 
 ### 9.4 Matrix view
 
-`view=matrix` replaces the detail panel with a matrix. Rows are papers with any subproblem tag, grouped by level and family (method papers first). Columns are the seven subproblems, labeled with short names under their stage headers, and each column header shows how many works address it. Cells show status glyphs. Clicking a cell opens the drawer. The header row and first column stay sticky. The "Gaps" toggle (`gaps=1`) dims filled cells and outlines empty cells in method rows.
+`view=matrix` replaces the detail panel with a matrix. Rows are papers that address at least one subproblem, grouped by level and family (method papers first). Columns are the seven subproblems, labeled with short names under their stage headers, and each column header shows how many works address it. A cell shows ● when the work addresses that subproblem and stays blank otherwise. Clicking a filled cell opens the drawer. The header row and first column stay sticky. The "Gaps" toggle (`gaps=1`) dims filled cells and outlines empty cells in method rows.
 
 ## 10. Contribution flow
 
@@ -612,7 +613,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 5. Clicking ΔC↑ leaves net actions saved, perturbed actions, and F1 in the metrics list.
 6. The featured chart shows 2 bars, then 6 after the toggle.
 7. Selecting A2 lists NOPA, highlights G1, G2, and A1 upstream, and highlights P2 downstream.
-8. In matrix view, clicking a cell opens the drawer.
+8. In matrix view, clicking a filled cell opens the drawer. Selecting goal inference does not list SLaTe-PRO, which skips it.
 9. Pinning two papers puts both ids in `compare=`.
 10. At 375 px wide, no page scrolls horizontally.
 11. On Methods, the STOT to SLaTe-PRO edge is solid, and unchecking "Cites" removes every dotted edge.
