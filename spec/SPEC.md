@@ -540,6 +540,8 @@ A horizontal strip of the five loop types in order. Each step shows its label, i
 
 One row per paper, GAP included, however many evaluation entries the paper has. The row merges them. Columns: paper (short name and year), environment and datasets (union), loop types (one pill per distinct type, in scale order), human models (union), metrics (union, as chips with term color dots), state drift and goal adaptation (the strongest value across the paper's entries, yes over partial over no), baselines (union, count, expandable). All columns sort. Loop type sorts by the paper's furthest type on the scale. A paper matches `loop=`, `term=`, or `metric=` when any of its entries does. Clicking a row opens the drawer, which lists each evaluation entry separately.
 
+GAP's row sits at the top in a shaded band, since GAP is part of the paper the site is built on. It stays at the top under every sort and carries a small "Framework paper" tag linking to the arXiv page. Filters can still hide it. One constant names this paper (`FRAMEWORK_PAPER = 'gap'`).
+
 ### 8.5 Datasets and evaluation setups table
 
 Rows are entries of kind `dataset` or `evaluation_setup`. Simulators never appear as rows. They show only in the environment column.
@@ -623,7 +625,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 9. Pinning two papers puts both ids in `compare=`.
 10. At 375 px wide, no page scrolls horizontally.
 11. On Methods, the STOT to SLaTe-PRO edge is solid, and unchecking "Cites" removes every dotted edge.
-12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table has exactly one GAP row, showing three loop-type pills.
+12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table has exactly one GAP row, shaded and first, showing three loop-type pills, and it stays first after sorting by year.
 
 **CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes: `npm ci`, validate, typecheck, unit tests, build, end-to-end tests.
 
