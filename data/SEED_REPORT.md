@@ -14,6 +14,8 @@ Written while seeding `data/` from `spec/SEED.md` (milestone M2). Section and re
 
 ## Decisions the builder made
 
+Maithili approved these on Oct 21, 2026.
+
 - **Families.** SEED §2.1 and §2.2 group papers by family but do not list `family` in the extra fields. The builder set `family: temporal_prediction` on the four §2.1 papers and `family: goal_inference` on the three §2.2 papers, following the SPEC §5.2 example for `slate-pro`.
 - **Year convention.** Where the landing page year differs from the printed year, the landing page year is used (SEED rule 2). For PMLR CoRL volumes this is the proceedings publication year, not the conference year: CoRL 2022 papers in PMLR 205 carry 2023, and Play-LMP (CoRL 2019, PMLR 100) carries 2020. Say if you prefer conference years.
 - **Ids renamed** so `firstauthor-year` matches the landing page (the SEED ids were proposals):
@@ -51,11 +53,11 @@ Capitalization-only differences are not listed.
 
 ### Needs your attention
 
-- **[11] `hoiabot`.** Printed as "Hoiabot: Human-object interaction anticipation for proactive bot", IEEE RO-MAN 2023, by E. V. Mascaro and D. Lee. The landing page is "HOI4ABOT: Human-Object Interaction Anticipation for Human Intention Reading Collaborative roBOTs", **CoRL 2023**, with **Daniel Sliwowski** as second author. No RO-MAN 2023 version was found. Please confirm this is the intended paper.
+- **[11] `hoiabot`.** Printed as "Hoiabot: Human-object interaction anticipation for proactive bot", IEEE RO-MAN 2023, by E. V. Mascaro and D. Lee. The landing page is "HOI4ABOT: Human-Object Interaction Anticipation for Human Intention Reading Collaborative roBOTs", **CoRL 2023**, with **Daniel Sliwowski** as second author. No RO-MAN 2023 version was found. **Confirmed by Maithili (Oct 21, 2026): the CoRL 2023 paper is the intended one.**
 - **[49] `hindsight-experience-replay`.** Printed second author "D. Crow". Both the NeurIPS page and arXiv give **Filip Wolski**.
 - **[41] `cirl`.** Printed 2024 with no venue. Landing page: NeurIPS (NIPS) **2016**; "Stuart J. Russell".
 - **[22] `koch-2024-proactive-hri-review`.** Printed ACM/IEEE HRI 2024 (conference). Landing page: **ACM Transactions on Human-Robot Interaction** (journal), vol. 13, no. 4, 2024. Title on the landing page: "What is Proactive Human-Robot Interaction? - A Review of a Progressive Field and Its Definitions".
-- **[19] `adapt`.** Printed COLM 2025. No COLM proceedings or OpenReview page could be confirmed; the arXiv page (2504.04040) has no venue comment. Seeded as arXiv 2025. Please supply the COLM landing page if it exists.
+- **[19] `adapt`.** Printed COLM 2025. The builder could not find the COLM page; Maithili supplied it (Oct 21, 2026). `links.paper` is the OpenReview forum https://openreview.net/forum?id=Z8vtD1egtI (the PDF link given was converted to its forum page), venue COLM, year 2025. Resolved.
 - **[46] `levy-2019-hierarchies`.** Printed ICLR 2017. The paper is ICLR **2019** (arXiv v1 posted Dec 2017). Printed "G. D. Konidaris"; landing "George Konidaris".
 - **[3] `saycan`.** Printed with A. Brohan first. PMLR lists **Brian Ichter** first, then Anthony Brohan (arXiv lists Michael Ahn first). Conference was CoRL 2022; PMLR 205 is dated 2023, matching the printed year.
 - **[48] `yao-2023-language-action-survey`.** Printed with H. Zhou first. The current arXiv version lists **Xiangtong Yao** first. Now also published in IJRR (2026), DOI 10.1177/02783649261468360 (found through Crossref only). Printed "A. C. Knoll"; landing "Alois Knoll".
