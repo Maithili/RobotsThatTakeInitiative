@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { ActionChip, InputChip, LevelChip } from '../../components/Chip.tsx';
 import { EmptyState, Missing } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
@@ -45,13 +45,22 @@ function sortVal(p: DbPaper, k: SortKey): string | number {
   }
 }
 
-function MethodsList({ papers }: { papers: DbPaper[] }) {
+function MethodsList({ papers, tangential }: { papers: DbPaper[]; tangential: DbPaper[] }) {
   const url = useUrl();
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'year', dir: 1 });
   const visible = papers.filter((p) => matchesGlobal(p, url.filters));
-  const groups = buildLanes(visible).filter((l) => l.papers.length);
+  const groups: { id: string; label: ReactNode; papers: DbPaper[] }[] = buildLanes(visible)
+    .filter((l) => l.papers.length)
+    .map((l) => ({ id: l.id, label: <><LevelChip level={l.level} /> {l.title}</>, papers: l.papers }));
+  // Tangential works come last, grouped by tangent type (SPEC §7.2).
+  if (url.get('tangents') !== '0') {
+    for (const [tid, t] of Object.entries(tx.tangent_types)) {
+      const ps = tangential.filter((p) => p.tangent === tid && matchesGlobal(p, url.filters));
+      if (ps.length) groups.push({ id: `tangent:${tid}`, label: <><span className="tag">Tangential</span> {t.label}</>, papers: ps });
+    }
+  }
 
-  if (!visible.length) return <EmptyState>No methods match these filters.</EmptyState>;
+  if (!groups.length) return <EmptyState>No methods match these filters.</EmptyState>;
 
   const sorted = (ps: DbPaper[]) =>
     [...ps].sort((a, b) => {
@@ -76,19 +85,23 @@ function MethodsList({ papers }: { papers: DbPaper[] }) {
           </tr>
         </thead>
         {groups.map((g) => (
-          <tbody key={g.id}>
+          <tbody key={g.id} data-testid={`list-group-${g.id}`}>
             <tr className="group-row">
               <th colSpan={COLS.length} scope="colgroup">
-                <LevelChip level={g.level} /> {g.title} <span className="muted">· {g.papers.length}</span>
+                {g.label} <span className="muted">· {g.papers.length}</span>
               </th>
             </tr>
             {sorted(g.papers).map((p) => (
               <tr key={p.id} className="clickable" data-locate={p.id} onClick={() => url.openPaper(p.id)}>
                 <td>
-                  <button type="button" className="linkish strong" onClick={(e) => {
-                    e.stopPropagation();
-                    url.openPaper(p.id);
-                  }}>
+                  <button
+                    type="button"
+                    className="linkish strong"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      url.openPaper(p.id);
+                    }}
+                  >
                     {p.short_name}
                   </button>
                 </td>
@@ -96,7 +109,7 @@ function MethodsList({ papers }: { papers: DbPaper[] }) {
                 <td className="title-cell">{p.title}</td>
                 <td>{(p.method?.inputs ?? []).map((i) => <InputChip key={i} id={i} />)}</td>
                 <td>{(p.method?.action_types ?? []).map((a) => <ActionChip key={a} type={a} />)}</td>
-                <td className="core-cell">{p.method?.core_strength ?? <Missing href={fixUrl(p, 'method.core_strength')} />}</td>
+                <td className="core-cell">{p.method ? p.method.core_strength ?? <Missing href={fixUrl(p, 'method.core_strength')} /> : <span className="muted">—</span>}</td>
                 <td className="num">{addressed(p)}</td>
               </tr>
             ))}
@@ -112,13 +125,14 @@ export function MethodsPage() {
   const synthetic = url.get('synthetic') === '1';
   const papers = useMemo(() => (synthetic ? syntheticPapers() : allPapers), [synthetic]);
   const families: Record<string, FamilyInfo> = synthetic ? SYNTHETIC_FAMILIES : tx.families;
-  // Only classified works appear on this page (SPEC §7).
-  const methods = useMemo(() => papers.filter((p) => p.method && p.level), [papers]);
+  // Classified, non-tangential works fill the timeline and the graph core (SPEC §7).
+  const methods = useMemo(() => papers.filter((p) => p.method && p.level && !p.tangent), [papers]);
+  const tangential = useMemo(() => papers.filter((p) => p.tangent), [papers]);
+  const graphPapers = useMemo(() => [...methods, ...tangential], [methods, tangential]);
   const clusters = useMemo(
     () => Object.keys(families).filter((fam) => methods.some((p) => p.level && GRAPH_LEVELS.includes(p.level) && p.method?.family === fam)),
     [families, methods],
   );
-  const surveys = synthetic ? [] : papers.filter((p) => p.type === 'survey');
   const [hoverId, setHover] = useState<string | null>(null);
   const narrow = typeof window !== 'undefined' && window.innerWidth < 640;
   const view = url.get('view') === 'list' || (url.get('view') !== 'graph' && narrow) ? 'list' : 'graph';
@@ -155,25 +169,12 @@ export function MethodsPage() {
         }
       />
 
-      {surveys.length > 0 && (
-        <section className="strip strip--row" aria-label="Surveys">
-          <h2 className="strip__title">Surveys</h2>
-          <div className="chips">
-            {surveys.map((p) => (
-              <button key={p.id} type="button" className="chip chip--paper" data-locate={p.id} onClick={() => url.openPaper(p.id)}>
-                {p.short_name} <span className="muted">{p.year}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
       {synthetic && <p className="notice small">Showing synthetic papers (layout test fixture), not real data.</p>}
 
       {view === 'graph' ? (
-        <LiteratureGraph papers={methods} families={families} hoverId={hoverId} setHover={setHover} />
+        <LiteratureGraph papers={graphPapers} families={families} hoverId={hoverId} setHover={setHover} />
       ) : (
-        <MethodsList papers={methods} />
+        <MethodsList papers={methods} tangential={tangential} />
       )}
     </div>
   );

@@ -46,7 +46,7 @@ export function addressesAny(p: DbPaper) {
 /** Pages that show a paper (SPEC §6.4 item 8). */
 export function pagesFor(p: DbPaper): ('methods' | 'evaluations' | 'subproblems')[] {
   const out: ('methods' | 'evaluations' | 'subproblems')[] = [];
-  if ((p.method && p.level) || p.type === 'survey') out.push('methods');
+  if ((p.method && p.level) || p.tangent) out.push('methods');
   if (p.evaluations?.length) out.push('evaluations');
   if (addressesAny(p)) out.push('subproblems');
   return out;

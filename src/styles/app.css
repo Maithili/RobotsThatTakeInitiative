@@ -2386,3 +2386,39 @@ tr.clickable:hover td {
 .tag--framework:hover {
   background: color-mix(in srgb, var(--framework) 14%, transparent);
 }
+
+/* ---------- tangential works (SPEC §7.2) ---------- */
+.litg__node.is-tangent {
+  opacity: 0.5;
+}
+.litg__node.is-tangent .litg__pill {
+  stroke-dasharray: 3 2;
+}
+.litg__node.is-tangent:hover,
+.litg__node.is-tangent:focus-visible,
+.litg__node.is-tangent.is-hover {
+  opacity: 1;
+}
+.litg__node.is-tangent.is-dim {
+  opacity: 0.2;
+}
+.litg__edges .is-tangent {
+  opacity: 0.5;
+}
+.litg__edges .is-tangent.is-hot {
+  opacity: 1;
+}
+.litg__edges .is-tangent.is-dim {
+  opacity: 0.2;
+}
+.lgd__tangent {
+  display: inline-block;
+  width: 22px;
+  height: 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 6px;
+  opacity: 0.6;
+}
+.litg__node--none .litg__stripe {
+  fill: var(--level-none);
+}

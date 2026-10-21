@@ -73,6 +73,7 @@ export const TaxonomySchema = z.object({
   stages: z.record(z.object({ name: z.string(), definition: z.string() })),
   subproblems: z.object(Object.fromEntries(SUBPROBLEM_IDS.map((s) => [s, subproblemDef])) as Record<SubproblemId, typeof subproblemDef>),
   themes: z.record(defn),
+  tangent_types: z.record(defn),
   statuses: z.record(z.object({ glyph: z.string(), label: z.string() })),
   relations: z.record(defn),
   net_value: z.object({
@@ -182,6 +183,7 @@ export const PaperSchema = z
     venue: z.string().nullable().optional(),
     year: z.number().int(),
     type: z.enum(['research', 'survey']).optional(),
+    tangent: z.string().optional(),
     links: z
       .object({
         paper: url.nullable(),

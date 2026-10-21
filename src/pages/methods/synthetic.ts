@@ -1,5 +1,5 @@
 // Synthetic papers for checking that the literature graph stays readable as it grows (SPEC §7.2, M4):
-// 60 L2 papers, 56 of them in 4 families and 4 with no family, plus links between them.
+// 60 L2 papers, 56 of them in 4 families and 4 with no family, plus 15 tangential works, with links between them.
 // Reached only through ?synthetic=1; never mixed with real data.
 import type { DbPaper } from '../../schema.ts';
 
@@ -21,6 +21,8 @@ const FAMILIES = [...Object.keys(SYNTHETIC_FAMILIES)];
 const ACTIONS = ['act', 'timing', 'initiate', 'inform', 'ask'];
 const INPUTS = ['object_relocations', 'scene_graph', 'video', 'language'];
 export const SYNTHETIC_COUNT = 60;
+export const SYNTHETIC_TANGENTS = 15;
+const TANGENT_TYPES = ['hri', 'conversational'];
 
 export function syntheticPapers(): DbPaper[] {
   const r = rng(42);
@@ -57,6 +59,30 @@ export function syntheticPapers(): DbPaper[] {
       cites: [],
       cited_by: [],
       search: `${short_name} synthetic paper ${i} ${year}`.toLowerCase(),
+    });
+  }
+  const core = [...out];
+  for (let i = 0; i < SYNTHETIC_TANGENTS; i++) {
+    const id = `synthetic-t${i}`;
+    const short_name = `Study ${String.fromCharCode(65 + i)}`;
+    const cites = [core[Math.floor(r() * core.length)].id];
+    if (r() < 0.5) cites.push(core[Math.floor(r() * core.length)].id);
+    out.push({
+      id,
+      short_name,
+      title: `Synthetic tangential work ${i}`,
+      authors: ['Synthetic Author'],
+      year: 2016 + Math.floor(r() * 11),
+      tangent: TANGENT_TYPES[i % TANGENT_TYPES.length],
+      links: { paper: null },
+      provenance: 'Synthetic fixture',
+      level: null,
+      built_upon_by: [],
+      benchmarks_against: [],
+      benchmarked_in: [],
+      cites: [...new Set(cites)],
+      cited_by: [],
+      search: `${short_name} synthetic tangential ${i}`.toLowerCase(),
     });
   }
   return out;

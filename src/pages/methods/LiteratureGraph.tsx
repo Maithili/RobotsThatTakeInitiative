@@ -46,26 +46,29 @@ function NodeCard({ p }: { p: DbPaper }) {
   return (
     <>
       <div className="hovercard__top">
-        <strong>{p.short_name}</strong> <span className="muted">{p.year}</span> <LevelChip level={p.level} />
+        <strong>{p.short_name}</strong> <span className="muted">{p.year}</span> {p.level && <LevelChip level={p.level} />}
+        {p.tangent && <span className="tag">Tangential · {tx.tangent_types[p.tangent]?.label ?? p.tangent}</span>}
       </div>
       <div className="one-line small">{p.title}</div>
       {m?.core_strength && <div className="small">{m.core_strength}</div>}
-      <div className="io small">
-        <span className="io__side">{(m?.inputs ?? []).length ? m!.inputs!.map((i) => <InputChip key={i} id={i} />) : <span className="muted">—</span>}</span>
-        <span className="io__arrow">→</span>
-        <span className="io__side">
-          {(m?.action_types ?? []).length ? (
-            m!.action_types!.map((a) => (
-              <span key={a} className="chip chip--action">
-                <ActionIcon type={a} /> {tx.action_types[a]?.label}
-              </span>
-            ))
-          ) : (
-            <span className="muted">—</span>
-          )}
-        </span>
-      </div>
-      <KnownsChips knowns={m?.knowns} />
+      {m && (
+        <div className="io small">
+          <span className="io__side">{(m.inputs ?? []).length ? m.inputs!.map((i) => <InputChip key={i} id={i} />) : <span className="muted">—</span>}</span>
+          <span className="io__arrow">→</span>
+          <span className="io__side">
+            {(m.action_types ?? []).length ? (
+              m.action_types!.map((a) => (
+                <span key={a} className="chip chip--action">
+                  <ActionIcon type={a} /> {tx.action_types[a]?.label}
+                </span>
+              ))
+            ) : (
+              <span className="muted">—</span>
+            )}
+          </span>
+        </div>
+      )}
+      {m && <KnownsChips knowns={m.knowns} />}
     </>
   );
 }
@@ -96,10 +99,13 @@ export function LiteratureGraph({
   const [tip, setTip] = useState<Tip>(null);
   const [scale, setScale] = useState(1);
 
-  const nodesIn = useMemo(() => papers.filter((p) => p.method && p.level && GRAPH_LEVELS.includes(p.level)), [papers]);
+  // Core: L2 papers with a method block and no tangent. Tangential works join at half opacity (SPEC §7.2).
+  const nodesIn = useMemo(() => papers.filter((p) => p.tangent || (p.method && p.level && GRAPH_LEVELS.includes(p.level))), [papers]);
+  const showTangents = url.get('tangents') !== '0';
   const byId = useMemo(() => new Map(nodesIn.map((p) => [p.id, p])), [nodesIn]);
+  const isTangent = (id: string) => !!byId.get(id)?.tangent;
   const label = (id: string) => byId.get(id)?.short_name ?? paperLabel(id);
-  const clusterOrder = useMemo(() => Object.keys(families).filter((fam) => nodesIn.some((p) => p.method?.family === fam)), [families, nodesIn]);
+  const clusterOrder = useMemo(() => Object.keys(families).filter((fam) => nodesIn.some((p) => !p.tangent && p.method?.family === fam)), [families, nodesIn]);
 
   const edges = useMemo(() => {
     const rels: Relation[] = [];
@@ -116,10 +122,11 @@ export function LiteratureGraph({
       layoutLiterature(
         nodesIn.map((p) => ({
           id: p.id,
-          cluster: p.method?.family && families[p.method.family] ? p.method.family : null,
+          cluster: !p.tangent && p.method?.family && families[p.method.family] ? p.method.family : null,
           label: p.short_name,
           year: p.year,
           icons: (p.method?.action_types ?? []).length,
+          tangent: !!p.tangent,
         })),
         clusterOrder,
         edges.map((e) => ({ source: e.relations[0].from, target: e.relations[0].to })),
@@ -262,6 +269,9 @@ export function LiteratureGraph({
           {edges.map((e) => {
             const r = drawnRelation(e, shown);
             if (!r) return null;
+            const touchesTangent = isTangent(r.from) || isTangent(r.to);
+            if (touchesTangent && !showTangents) return null;
+            const hot = touchesTangent && (hoverId === r.from || hoverId === r.to);
             const a = layout.nodes.get(r.from)!;
             const b = layout.nodes.get(r.to)!;
             const { d, mid } = edgeGeometry(a, b);
@@ -274,7 +284,7 @@ export function LiteratureGraph({
               </ul>
             );
             return (
-              <g key={e.key} className={dim ? 'is-dim' : undefined}>
+              <g key={e.key} className={[dim && 'is-dim', touchesTangent && 'is-tangent', hot && 'is-hot'].filter(Boolean).join(' ') || undefined}>
                 <path d={d} className={`litg__edge litg__edge--${r.type}`} markerEnd={`url(#arrow-${r.type})`} data-testid={`edge-${r.from}-${r.to}`} data-type={r.type} />
                 <path d={d} className="litg__edge-hit" onMouseEnter={() => showTip(mid[0], mid[1], body)} onMouseLeave={() => setTip(null)} />
               </g>
@@ -285,6 +295,7 @@ export function LiteratureGraph({
         <g className="litg__nodes">
           {ordered.map((n) => {
             const p = byId.get(n.id)!;
+            if (p.tangent && !showTangents) return null;
             const dim = !matches.has(n.id) || (lit !== null && !lit.has(n.id));
             const icons = p.method?.action_types ?? [];
             const open = () => url.set({ focus: n.id, paper: n.id }, { push: true });
@@ -292,10 +303,11 @@ export function LiteratureGraph({
               <g
                 key={n.id}
                 transform={`translate(${n.x - n.w / 2},${n.y - n.h / 2})`}
-                className={`litg__node litg__node--${p.level}${dim ? ' is-dim' : ''}${focus === n.id ? ' is-focus' : ''}${lit?.has(n.id) && focus !== n.id ? ' is-lit' : ''}${hoverId === n.id ? ' is-hover' : ''}`}
+                className={`litg__node litg__node--${p.level ?? 'none'}${p.tangent ? ' is-tangent' : ''}${dim ? ' is-dim' : ''}${focus === n.id ? ' is-focus' : ''}${lit?.has(n.id) && focus !== n.id ? ' is-lit' : ''}${hoverId === n.id ? ' is-hover' : ''}`}
                 tabIndex={0}
                 role="button"
-                aria-label={`${p.short_name}, ${p.year}${p.method?.family ? `, ${families[p.method.family]?.name ?? ''}` : ''}`}
+                aria-label={`${p.short_name}, ${p.year}${p.tangent ? `, tangential: ${tx.tangent_types[p.tangent]?.label ?? p.tangent}` : p.method?.family ? `, ${families[p.method.family]?.name ?? ''}` : ''}`}
+                data-tangent={p.tangent ?? undefined}
                 data-testid={`node-${n.id}`}
                 data-locate={n.id}
                 data-cx={n.x}

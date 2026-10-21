@@ -68,6 +68,7 @@ describe('validator', () => {
 
   it('rejects ids that are not in the taxonomy', () => {
     expectError(run([base('a', { themes: ['vibes'] })]), /unknown theme/);
+    expectError(run([base('a', { tangent: 'gossip' })]), /unknown tangent type "gossip"/);
     expectError(run([base('a', { method: { ...L2K, action_types: ['dance'] } })]), /unknown action type/);
     expectError(run([base('a', { method: { ...L2K, inputs: ['smell'] } })]), /unknown input modality/);
     expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'vibes' }] })]), /unknown loop type/);

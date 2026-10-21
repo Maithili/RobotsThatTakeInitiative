@@ -156,9 +156,10 @@ test('search opens a paper from the header box', async ({ page }) => {
   await expect(page.getByTestId('drawer')).toContainText('SLaTe-PRO');
 });
 
-test('the literature graph lays out the 60-paper, 4-cluster synthetic fixture', async ({ page }) => {
+test('the literature graph lays out the synthetic fixture: 60 L2 papers in 4 clusters plus 15 tangential works', async ({ page }) => {
   await page.goto('/#/methods?view=graph&synthetic=1');
-  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(60);
+  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(75);
+  await expect(page.locator('[data-testid^="node-synthetic-t"]')).toHaveCount(15);
   await expect(page.locator('[data-testid^="hull-"]')).toHaveCount(4);
   const overlaps = await page.evaluate(() => {
     const rects = [...document.querySelectorAll('[data-testid^="node-synthetic-"] .litg__pill')].map((n) => n.getBoundingClientRect());
@@ -267,4 +268,34 @@ test('13. the realism plot puts GAP at task-specific policy and adaptive simulat
   await link.hover();
   await expect(card).toBeVisible();
   await expect(page.getByText('Organization adapted from')).toHaveCount(0);
+});
+
+test('14. a tangential work renders at half opacity, and unchecking Show tangential works removes it and its edges', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  const koch = page.getByTestId('node-koch-2024-proactive-hri-review');
+  await expect(koch).toHaveAttribute('data-tangent', 'hri');
+  await expect(koch).toHaveCSS('opacity', '0.5');
+  await expect(page.getByTestId('tchip-koch-2024-proactive-hri-review')).toHaveCount(0);
+  await koch.hover();
+  await expect(koch).toHaveCSS('opacity', '1');
+  await expect(page.getByLabel('Surveys')).toHaveCount(0);
+
+  // The fixture has tangential works with edges.
+  await page.goto('/#/methods?view=graph&synthetic=1');
+  const t = page.getByTestId('node-synthetic-t0');
+  await expect(t).toHaveCSS('opacity', '0.5');
+  const tangentEdges = page.locator('.litg__edges g.is-tangent');
+  expect(await tangentEdges.count()).toBeGreaterThan(0);
+  await page.getByTestId('show-tangents').uncheck();
+  await expect.poll(() => params(page).get('tangents')).toBe('0');
+  await expect(page.locator('[data-testid^="node-synthetic-t"]')).toHaveCount(0);
+  await expect(tangentEdges).toHaveCount(0);
+  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(60);
+});
+
+test('the list view ends with tangential works grouped by type', async ({ page }) => {
+  await page.goto('/#/methods?view=list');
+  const groups = page.locator('[data-testid^="list-group-"]');
+  await expect(groups.last()).toHaveAttribute('data-testid', 'list-group-tangent:hri');
+  await expect(groups.last()).toContainText('Koch van den Broek 2024');
 });

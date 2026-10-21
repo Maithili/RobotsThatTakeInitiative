@@ -12,7 +12,8 @@ There are two ways to help:
 1. **Landing pages only.** `links.paper` must be a DOI page, a publisher or proceedings page, an arXiv abstract page, or an OpenReview forum. Never a `.pdf` link. Do not add PDF files to the repo. The validator rejects both.
 2. **Tag only what the source states.** Do not infer a level, family, lineage edge, modality, or metric from a title or abstract. If you are not sure, leave the field empty. Empty fields show as "—" on the site with a link to suggest a value.
 3. **Provenance is required.** Every paper has a `provenance` line saying where its tags come from, such as `RTI §III-B, Table I` or `Read by MP, Oct 2026`.
-4. **Run `npm run validate`** before you open the pull request.
+4. **Run `npm run fetch-citations`** after adding papers, so the thin dotted "cites" edges stay current. It needs network access and works best with `S2_API_KEY` set.
+5. **Run `npm run validate`** before you open the pull request.
 
 ## Add a paper
 
@@ -38,26 +39,28 @@ Every id below is defined in [`data/taxonomy.yaml`](data/taxonomy.yaml), which f
 |---|---|---|
 | `short_name` | The paper's name for its method or system, else "FirstAuthor Year". ≤ 24 characters. | |
 | `title`, `authors`, `venue`, `year` | As on the landing page. | |
-| `type` | `survey` for surveys; omit otherwise. | |
+| `type` | `survey` for surveys (adds a "Survey" chip in the drawer); omit otherwise. | |
+| `tangent` | Marks a tangential work, such as an HRI study of proactivity. It needs no method block and shows in the literature graph at half opacity. | [`tangent_types`](data/taxonomy.yaml) |
 | `links.paper` / `code` / `project` | Landing page; official code; project page. | |
+| `ids.doi` / `ids.arxiv` | Bare DOI (`10.1145/…`) and arXiv id (`2401.01234`) from the landing page. `fetch-citations` uses them. | |
 | `provenance` | Where the tags come from. ≤ 140 characters. | |
-| `method.knowns` | `{goal, human_policy}`, each `known` or `unknown`. The level is derived: both known → L0, goal known → L1, both unknown → L2. Use `null` if the paper is proactive but its level is unclear. | [`levels`](data/taxonomy.yaml) |
+| `method.knowns` | `{goal, human_policy}`, each `known` or `unknown`. The level is derived: both known → L0, goal known → L1, both unknown → L2. A paper without a clear level gets no method block. | [`levels`](data/taxonomy.yaml) |
 | `method.family` | L2 only. | [`families`](data/taxonomy.yaml) |
 | `method.action_types` | What the robot does proactively. | [`action_types`](data/taxonomy.yaml) |
 | `method.inputs` | What the robot observes. | [`observation_modalities`](data/taxonomy.yaml) |
 | `method.core_strength` | One line, ≤ 120 characters. | |
-| `method.builds_on` | Ids of papers this one extends, only when its authors say so. | |
+| `method.builds_on` | Ids of papers this one extends (solid edges). The maintainer fills these. | |
 | `themes` | Cross-cutting themes. | [`themes`](data/taxonomy.yaml) |
-| `subproblems` | Map from `G1`…`P2` to `{status, relation, approach?, note}`. `status` is `addresses`, `assumes`, or `skips`. `relation` is `direct` (works on it in a proactivity setting) or `adjacent` (a starting point from another field). `note` (≤ 140) says what part of the subproblem the work solves. | [`subproblems`](data/taxonomy.yaml), [`statuses`](data/taxonomy.yaml), [`relations`](data/taxonomy.yaml) |
-| `evaluations` | One entry per evaluation protocol: `id`, `loop`, `environment`, `datasets`, `human_model`, `metrics`, `baselines`, `other_baselines`, `captures`, `provenance`, `results`. | [`loop_types`](data/taxonomy.yaml), [`metrics`](data/taxonomy.yaml), [`captures`](data/taxonomy.yaml) |
+| `subproblems` | Map from the subproblem codes `G1`…`P2` (see the taxonomy) to `{status, relation, approach?, note}`. `status` is `addresses`, `assumes`, or `skips`. `relation` is `direct` (works on it in a proactivity setting) or `adjacent` (a starting point from another field). `note` (≤ 140) says what part of the subproblem the work solves. | [`subproblems`](data/taxonomy.yaml), [`statuses`](data/taxonomy.yaml), [`relations`](data/taxonomy.yaml) |
+| `evaluations` | One entry per evaluation protocol: `id`, `loop`, `environment`, `datasets`, `human_model`, `metrics`, `baselines` (compared methods in the database, read from the experiments section; dashed edges), `other_baselines`, `captures`, `realism` (`{robot, human, environment}` levels, only as the paper states them), `provenance`, `results`. | [`loop_types`](data/taxonomy.yaml), [`metrics`](data/taxonomy.yaml), [`captures`](data/taxonomy.yaml), [`realism`](data/taxonomy.yaml) |
 
-Datasets and simulators live in [`data/datasets/`](data/datasets), one file each, with `kind`, `sim_or_real`, `span`, `households_or_users`, `observations`, `goal_annotations`, `executable`, `environment`, `notes`, and `provenance`.
+Datasets, evaluation setups, and simulators live in [`data/datasets/`](data/datasets), one file each, with `kind` (`dataset`, `evaluation_setup`, or `simulator`), `sim_or_real`, `span`, `households_or_users`, `observations`, `goal_annotations`, `executable`, `environment` (a simulator), `based_on` (`[{id, relation}]` with `extends`, `uses`, or `validates_against`), `human_models` and `loops` (setups only), `notes`, and `provenance`. Simulators never show as rows on the site.
 
 ## What the validator checks
 
 Errors (the build fails): schema mismatches, ids not in the taxonomy, references to papers or datasets that do not exist, an id that differs from its file name, duplicate evaluation ids, text over its length cap, PDF links or files, `goal: unknown` with `human_policy: known`, a family on a non-L2 paper, and cycles in `builds_on`.
 
-Warnings (the build passes): a missing `links.paper`, a `builds_on` target newer than the paper, a result metric not listed in its evaluation, and a paper that nothing shows or references.
+Warnings (the build passes): a missing `links.paper`, a `builds_on` target newer than the paper, a result metric not listed in its evaluation, a paper that nothing shows or references, and a `data/citations.json` that is missing, stale, or incomplete.
 
 ## Working on the site
 

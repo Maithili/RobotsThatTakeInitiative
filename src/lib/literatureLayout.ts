@@ -1,6 +1,6 @@
 // Deterministic force layout for the Methods literature graph (SPEC §7.2).
 // Pure: the same data always gives the same positions. Filters never reach this function.
-import { forceLink, forceSimulation, forceX, forceY, type SimulationLinkDatum, type SimulationNodeDatum } from 'd3-force';
+import { forceLink, forceRadial, forceSimulation, forceX, forceY, type SimulationLinkDatum, type SimulationNodeDatum } from 'd3-force';
 import { polygonCentroid, polygonContains, polygonHull } from 'd3-polygon';
 
 export const NODE_H = 26;
@@ -15,6 +15,8 @@ export interface LayoutNodeInput {
   label: string;
   year: number;
   icons: number;
+  /** Tangential works get no cluster pull; a weak radial force puts them on a ring outside the clusters. */
+  tangent?: boolean;
 }
 
 export interface PlacedNode {
@@ -74,6 +76,7 @@ interface SimNode extends SimulationNodeDatum {
   h: number;
   tx: number;
   ty: number;
+  tangent: boolean;
 }
 
 /** Cluster centers evenly spaced on a circle, the first on the left, so two clusters sit left and right. */
@@ -146,13 +149,17 @@ export function layoutLiterature(
   const clusters = clusterOrder.filter((c) => sorted.some((n) => n.cluster === c));
   const sizes = Object.fromEntries(clusters.map((c) => [c, sorted.filter((n) => n.cluster === c).length]));
   const centers = clusterCenters(clusters, sizes);
+  const spread = Math.max(80, ...clusters.map((c) => 46 * Math.sqrt(sizes[c]) + 70));
+  const ring = Math.max(0, ...[...centers.values()].map(([x, y]) => Math.hypot(x, y))) + spread + 130;
 
   const nodes: SimNode[] = sorted.map((n) => {
-    const [tx, ty] = (n.cluster && centers.get(n.cluster)) || [0, 0];
+    const tangent = !!n.tangent;
+    const cluster = !tangent && n.cluster && centers.has(n.cluster) ? n.cluster : null;
+    const [tx, ty] = (cluster && centers.get(cluster)) || [0, 0];
     const r = mulberry32(hash(n.id));
     const a = r() * 2 * Math.PI;
-    const d = 20 + r() * 60;
-    return { id: n.id, cluster: n.cluster && centers.has(n.cluster) ? n.cluster : null, w: pillWidth(`${n.label}`, n.icons), h: NODE_H, tx, ty, x: tx + d * Math.cos(a), y: ty + d * Math.sin(a) };
+    const d = tangent ? ring : 20 + r() * 60;
+    return { id: n.id, cluster, tangent, w: pillWidth(`${n.label}`, n.icons), h: NODE_H, tx, ty, x: tx + d * Math.cos(a), y: ty + d * Math.sin(a) };
   });
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const simLinks: SimulationLinkDatum<SimNode>[] = [...links]
@@ -185,14 +192,15 @@ export function layoutLiterature(
 
   const sim = forceSimulation<SimNode>(nodes)
     .randomSource(mulberry32(42))
-    .force('x', forceX<SimNode>((d) => d.tx).strength((d) => (d.cluster ? 0.09 : 0.2)))
-    .force('y', forceY<SimNode>((d) => d.ty).strength((d) => (d.cluster ? 0.09 : 0.2)))
+    .force('x', forceX<SimNode>((d) => d.tx).strength((d) => (d.tangent ? 0 : d.cluster ? 0.09 : 0.2)))
+    .force('y', forceY<SimNode>((d) => d.ty).strength((d) => (d.tangent ? 0 : d.cluster ? 0.09 : 0.2)))
+    .force('ring', forceRadial<SimNode>(ring, 0, 0).strength((d) => (d.tangent ? 0.05 : 0)))
     .force(
       'link',
       forceLink<SimNode, SimulationLinkDatum<SimNode>>(simLinks)
         .id((d) => d.id)
         .distance(130)
-        .strength(0.03),
+        .strength((l) => ((l.source as SimNode).tangent || (l.target as SimNode).tangent ? 0.08 : 0.03)),
     )
     .force('exclude', exclude)
     .force('collide', collide)

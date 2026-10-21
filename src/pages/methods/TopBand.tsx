@@ -282,6 +282,19 @@ function Legend({ clusters, families }: { clusters: string[]; families: Record<s
         </ul>
       </div>
       <div className="lgd__group">
+        <h2 className="strip__title">Tangential works</h2>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={url.get('tangents') !== '0'}
+            data-testid="show-tangents"
+            onChange={(e) => url.set({ tangents: e.target.checked ? null : '0' })}
+          />
+          <span className="lgd__tangent" aria-hidden="true" />
+          Show tangential works
+        </label>
+      </div>
+      <div className="lgd__group">
         <h2 className="strip__title">Actions</h2>
         <ul className="plain lgd lgd--row">
           {Object.entries(tx.action_types).map(([id, a]) => (

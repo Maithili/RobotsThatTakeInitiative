@@ -146,6 +146,7 @@ export function buildDb(input: BuildInput): BuildResult {
     if (p.links.paper === null) warnings.push(`${at}: links.paper is null`);
 
     for (const th of p.themes ?? []) if (!inSet(t.themes, th)) errors.push(`${at}: unknown theme "${th}"`);
+    if (p.tangent !== undefined && !inSet(t.tangent_types, p.tangent)) errors.push(`${at}: unknown tangent type "${p.tangent}"`);
 
     const m = p.method;
     if (m) {
@@ -282,7 +283,7 @@ export function buildDb(input: BuildInput): BuildResult {
   for (const c of fc.columns) if (!evalById.has(c.evaluation)) errors.push(`taxonomy.yaml: featured_comparison evaluation "${c.evaluation}" does not exist`);
 
   for (const p of papers) {
-    if (!p.method && !p.subproblems && !p.evaluations && p.type !== 'survey' && !referenced.has(p.id)) {
+    if (!p.method && !p.subproblems && !p.evaluations && !p.tangent && !referenced.has(p.id)) {
       warnings.push(`papers/${p.id}.yaml: no method, subproblem, or evaluation block and nothing references it`);
     }
   }

@@ -40,3 +40,19 @@ describe('literature graph layout', () => {
     expect(layoutLiterature(f.nodes, [...f.clusters, 'unused'], f.links).clusters.map((c) => c.id)).toEqual(['c0', 'c1', 'c2']);
   });
 });
+
+describe('tangential works in the layout', () => {
+  it('keeps them outside every hull, without overlaps, and nearer their linked papers', () => {
+    const f = fixture(40, 2, 2);
+    const tangents: LayoutNodeInput[] = Array.from({ length: 8 }, (_, i) => ({ id: `t${i}`, cluster: null, label: `Study ${i}`, year: 2020, icons: 0, tangent: true }));
+    const links = [...f.links, { source: 'p0', target: 't0' }, { source: 'p1', target: 't1' }];
+    const r = layoutLiterature([...f.nodes, ...tangents], f.clusters, links);
+    const placed = [...r.nodes.values()];
+    expect(countOverlaps(placed)).toBe(0);
+    expect(placed.filter((n) => insideForeignHull(n, r.clusters)).map((n) => n.id)).toEqual([]);
+    const d = (a: string, b: string) => Math.hypot(r.nodes.get(a)!.x - r.nodes.get(b)!.x, r.nodes.get(a)!.y - r.nodes.get(b)!.y);
+    // t0 is linked to p0 (cluster c0); t1 to p1 (cluster c1). Each sits closer to its own paper than to the other.
+    expect(d('t0', 'p0')).toBeLessThan(d('t0', 'p1'));
+    expect(d('t1', 'p1')).toBeLessThan(d('t1', 'p0'));
+  });
+});

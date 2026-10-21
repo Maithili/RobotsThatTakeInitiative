@@ -119,6 +119,10 @@ themes:                       # cross-cutting, RTI §III-A
   continual_learning: {label: Continual learning, definition: Adapting to drifting needs without forgetting.}
   user_interaction:   {label: User interaction, definition: Resolving uncertainty and answering user queries.}
 
+tangent_types:                # works next to the algorithmic core. Maithili adds more.
+  hri:            {label: HRI studies, definition: "HRI work on proactivity, such as user studies on its desirability and reviews of the field."}
+  conversational: {label: Conversational proactivity, definition: Proactivity in conversational settings.}
+
 statuses:
   addresses: {glyph: "●", label: Addresses}
   assumes:   {glyph: "◐", label: Assumes given}
