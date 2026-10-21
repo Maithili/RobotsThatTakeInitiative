@@ -88,7 +88,6 @@ const PAGE_LABEL = { methods: 'Methods', evaluations: 'Evaluations', subproblems
 function DrawerBody({ p }: { p: DbPaper }) {
   const url = useUrl();
   const m = p.method;
-  const compared = [...new Set((p.evaluations ?? []).flatMap((e) => e.baselines ?? []))];
   const subs = SUBS.filter((s) => p.subproblems?.[s]);
   const pages = pagesFor(p);
 
@@ -231,6 +230,7 @@ function DrawerBody({ p }: { p: DbPaper }) {
       )}
 
       <Section title="Lineage">
+        <p className="small muted">Only papers in this database.</p>
         <dl className="lineage">
           <dt>Builds on</dt>
           <dd>
@@ -240,13 +240,21 @@ function DrawerBody({ p }: { p: DbPaper }) {
           <dd>
             <PaperLinks ids={p.built_upon_by} />
           </dd>
-          <dt>Compared against</dt>
+          <dt>Benchmarks against</dt>
           <dd>
-            <PaperLinks ids={compared} />
+            <PaperLinks ids={p.benchmarks_against} />
           </dd>
-          <dt>Compared in</dt>
+          <dt>Benchmarked in</dt>
           <dd>
-            <PaperLinks ids={p.compared_in} />
+            <PaperLinks ids={p.benchmarked_in} />
+          </dd>
+          <dt>Cites</dt>
+          <dd>
+            <PaperLinks ids={p.cites} />
+          </dd>
+          <dt>Cited by</dt>
+          <dd>
+            <PaperLinks ids={p.cited_by} />
           </dd>
         </dl>
       </Section>

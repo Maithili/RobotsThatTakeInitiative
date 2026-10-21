@@ -51,17 +51,38 @@ test('3. ?paper=gap opens the drawer and Esc closes it', async ({ page }) => {
   expect(params(page).get('paper')).toBeNull();
 });
 
-test('4. clicking the L2 card highlights the L2 lanes', async ({ page }) => {
+test('4. hovering a timeline chip highlights the graph node; GAP sits outside both cluster hulls', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
   await expect(page.locator('.levelnav__toggles')).toHaveCount(0);
-  await page.getByTestId('levelcard-L2').click();
-  await expect.poll(() => params(page).get('level')).toBe('L2');
-  const lanes = page.locator('[data-testid^="lane-L2"]');
-  expect(await lanes.count()).toBeGreaterThan(0);
-  for (const lane of await lanes.all()) await expect(lane).toHaveAttribute('data-active', 'true');
-  await expect(page.getByTestId('lane-L1')).toHaveAttribute('data-active', 'false');
-  await expect(page.getByTestId('lane-L0')).toHaveAttribute('data-active', 'false');
-  await expect(page.getByLabel('Not yet classified')).toHaveCount(0);
+  await expect(page.getByTestId('levelcard-L0')).toHaveCount(0);
+  await page.getByTestId('tchip-slate-pro').hover();
+  await expect(page.getByTestId('node-slate-pro')).toHaveAttribute('data-hover', 'true');
+  await page.getByTestId('node-nopa').hover();
+  await expect(page.getByTestId('tchip-nopa')).toHaveAttribute('data-hover', 'true');
+  await expect(page.getByTestId('tchip-slate-pro')).toHaveAttribute('data-hover', 'false');
+
+  const hulls = page.locator('[data-testid^="hull-"]');
+  await expect(hulls).toHaveCount(2);
+  const inside = await page.evaluate(() => {
+    const node = document.querySelector<SVGGElement>('[data-testid="node-gap"]')!;
+    const cx = Number(node.getAttribute('data-cx'));
+    const cy = Number(node.getAttribute('data-cy'));
+    const svg = node.ownerSVGElement!;
+    const pt = svg.createSVGPoint();
+    pt.x = cx;
+    pt.y = cy;
+    return [...document.querySelectorAll<SVGPathElement>('[data-testid^="hull-"]')].map((h) => h.isPointInFill(pt));
+  });
+  expect(inside).toEqual([false, false]);
+  // Cluster members do sit inside their own hull.
+  const own = await page.evaluate(() => {
+    const node = document.querySelector<SVGGElement>('[data-testid="node-slate-pro"]')!;
+    const pt = node.ownerSVGElement!.createSVGPoint();
+    pt.x = Number(node.getAttribute('data-cx'));
+    pt.y = Number(node.getAttribute('data-cy'));
+    return document.querySelector<SVGPathElement>('[data-testid="hull-temporal_imitation"]')!.isPointInFill(pt);
+  });
+  expect(own).toBe(true);
 });
 
 test('5. clicking ΔC↑ leaves net actions saved, perturbed actions, and F1 in the metrics list', async ({ page }) => {
@@ -135,21 +156,48 @@ test('search opens a paper from the header box', async ({ page }) => {
   await expect(page.getByTestId('drawer')).toContainText('SLaTe-PRO');
 });
 
-test('the lineage graph lays out a 150-node synthetic fixture', async ({ page }) => {
-  await page.goto('/#/methods?view=graph&synthetic=150');
-  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(150);
+test('the literature graph lays out the 60-paper, 4-cluster synthetic fixture', async ({ page }) => {
+  await page.goto('/#/methods?view=graph&synthetic=1');
+  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(60);
+  await expect(page.locator('[data-testid^="hull-"]')).toHaveCount(4);
   const overlaps = await page.evaluate(() => {
-    const rects = [...document.querySelectorAll('[data-testid^="node-synthetic-"]')].map((n) => n.getBoundingClientRect());
+    const rects = [...document.querySelectorAll('[data-testid^="node-synthetic-"] .litg__pill')].map((n) => n.getBoundingClientRect());
     let n = 0;
     for (let i = 0; i < rects.length; i++)
       for (let j = i + 1; j < rects.length; j++) {
         const a = rects[i];
         const b = rects[j];
-        if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) n++;
+        if (a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5) n++;
       }
     return n;
   });
   expect(overlaps).toBe(0);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test('11. the STOT to SLaTe-PRO edge is solid, and unchecking Cites removes every dotted edge', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  const e = page.getByTestId('edge-stot-slate-pro');
+  await expect(e).toHaveAttribute('data-type', 'builds');
+  await expect(page.getByTestId('edge-slate-pro-gap')).toHaveAttribute('data-type', 'benchmarks');
+  await page.getByTestId('edges-cites').uncheck();
+  await expect.poll(() => params(page).get('edges')).toBe('builds,benchmarks');
+  await expect(page.locator('[data-type="cites"]')).toHaveCount(0);
+  await expect(e).toHaveAttribute('data-type', 'builds');
+  await page.getByTestId('edges-builds').uncheck();
+  // With builds hidden, the pair falls back to its next relation or disappears.
+  await expect(page.locator('[data-testid="edge-stot-slate-pro"][data-type="builds"]')).toHaveCount(0);
+  await page.getByTestId('edges-builds').check();
+  await page.getByTestId('edges-cites').check();
+  await expect.poll(() => params(page).get('edges')).toBeNull();
+});
+
+test('selecting L1 dims every graph node and explains why', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  await page.getByTestId('levelcard-L1').click();
+  await expect(page.getByText('The graph shows unprompted (L2) methods.')).toBeVisible();
+  for (const n of await page.locator('[data-testid^="node-"]').all()) await expect(n).toHaveClass(/is-dim/);
 });
 
 test('no subproblem codes appear as visible text', async ({ page }) => {

@@ -43,7 +43,7 @@ body:
     id: family
     attributes:
       label: Family (L2 only)
-      options: [goal_inference, temporal_imitation, full_pipeline, other or none]
+      options: [goal_inference, temporal_imitation, other or none]
   - type: checkboxes
     id: action_types
     attributes:

@@ -13,6 +13,8 @@ year: 2020
 links:
   paper: https://arxiv.org/abs/2006.07532
   code: https://github.com/ztangent/Plinf.jl
+ids:
+  arxiv: "2006.07532"
 provenance: RTI Table I, App. II-A
 subproblems:
   G2:

@@ -13,6 +13,8 @@ venue: IJCNN
 year: 2018
 links:
   paper: https://doi.org/10.1109/IJCNN.2018.8489653
+ids:
+  doi: "10.1109/IJCNN.2018.8489653"
 provenance: RTI App. II-A
 subproblems:
   A2:

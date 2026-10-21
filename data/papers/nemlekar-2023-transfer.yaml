@@ -12,6 +12,8 @@ venue: ACM/IEEE HRI
 year: 2023
 links:
   paper: https://doi.org/10.1145/3568162.3576965
+ids:
+  doi: "10.1145/3568162.3576965"
 provenance: RTI §II, §II-B
 method:
   knowns:

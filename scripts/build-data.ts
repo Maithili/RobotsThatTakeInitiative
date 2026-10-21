@@ -1,6 +1,6 @@
 // Validates data/ and writes src/generated/db.json (SPEC §5.4).
 // `--check` validates without writing.
-import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import yaml from 'js-yaml';
 import { buildDb, type SourceFile } from '../src/validate.ts';
@@ -39,6 +39,7 @@ try {
     taxonomy: yaml.load(readFileSync(join(dataDir, 'taxonomy.yaml'), 'utf8')),
     papers: loadDir(join(dataDir, 'papers')),
     datasets: loadDir(join(dataDir, 'datasets')),
+    citations: existsSync(join(dataDir, 'citations.json')) ? JSON.parse(readFileSync(join(dataDir, 'citations.json'), 'utf8')) : undefined,
     repoFiles: listFiles(root),
   });
 } catch (e) {

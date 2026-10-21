@@ -1,6 +1,8 @@
 // Validation and derivation for the data files (SPEC §5.4).
 // Pure: takes parsed YAML, returns errors, warnings and the db. scripts/build-data.ts does the I/O.
+import { mergeEdges, type Relation } from './lib/edges.ts';
 import {
+  CitationsSchema,
   DatasetSchema,
   PaperSchema,
   SUBPROBLEM_IDS,
@@ -14,6 +16,7 @@ import {
   type Paper,
   type SubproblemId,
   type Taxonomy,
+  type Citations,
 } from './schema.ts';
 
 export interface SourceFile {
@@ -26,6 +29,8 @@ export interface BuildInput {
   taxonomy: unknown;
   papers: SourceFile[];
   datasets: SourceFile[];
+  /** Parsed data/citations.json, or undefined if the file does not exist yet. */
+  citations?: unknown;
   /** Repo-relative paths of every file in the repo, to reject PDFs. */
   repoFiles?: string[];
 }
@@ -199,6 +204,26 @@ export function buildDb(input: BuildInput): BuildResult {
     }
   }
 
+  // ---- citations ----
+  let citations: Citations | null = null;
+  if (input.citations === undefined) {
+    warnings.push('data/citations.json is missing. Run `npm run fetch-citations`.');
+  } else {
+    const c = CitationsSchema.safeParse(input.citations);
+    if (!c.success) errors.push(...zodMessages('citations.json', c.error));
+    else {
+      citations = c.data;
+      const listed = new Set([...Object.keys(citations.papers), ...citations.unresolved]);
+      const stale = [...listed].filter((id) => !paperById.has(id));
+      const staleCites = Object.values(citations.papers).flatMap((e) => e.cites).filter((id) => !paperById.has(id));
+      const missing = papers.map((p) => p.id).filter((id) => !listed.has(id));
+      if (stale.length || staleCites.length) {
+        warnings.push(`data/citations.json lists paper ids that no longer exist (${[...new Set([...stale, ...staleCites])].join(', ')}). Rerun \`fetch-citations\`.`);
+      }
+      if (missing.length) warnings.push(`data/citations.json is missing ${missing.join(', ')}. Rerun \`fetch-citations\`.`);
+    }
+  }
+
   const cycle = findCycle(new Map(papers.map((p) => [p.id, p.method?.builds_on ?? []])));
   if (cycle) errors.push(`builds_on contains a cycle: ${cycle.join(' → ')}`);
 
@@ -243,17 +268,35 @@ export function buildDb(input: BuildInput): BuildResult {
   if (errors.length) return { errors, warnings, db: null };
 
   // ---- derive ----
+  const relations: Relation[] = [];
   const builtUponBy = new Map<string, string[]>();
-  const comparedIn = new Map<string, Set<string>>();
+  const benchmarkedIn = new Map<string, Set<string>>();
+  const citedBy = new Map<string, Set<string>>();
+  const citesOf = new Map<string, string[]>();
+  for (const [id, entry] of Object.entries(citations?.papers ?? {})) {
+    if (!paperById.has(id)) continue;
+    const cs = [...new Set(entry.cites)].filter((c) => paperById.has(c) && c !== id);
+    citesOf.set(id, cs);
+    for (const c of cs) {
+      if (!citedBy.has(c)) citedBy.set(c, new Set());
+      citedBy.get(c)!.add(id);
+      relations.push({ type: 'cites', from: c, to: id });
+    }
+  }
   const metricUsedBy: Record<string, EvalRef[]> = Object.fromEntries(Object.keys(t.metrics).map((k) => [k, []]));
   const datasetUsedBy = new Map<string, EvalRef[]>(datasets.map((d) => [d.id, []]));
   for (const p of papers) {
-    for (const b of p.method?.builds_on ?? []) builtUponBy.set(b, [...(builtUponBy.get(b) ?? []), p.id]);
+    for (const b of p.method?.builds_on ?? []) {
+      builtUponBy.set(b, [...(builtUponBy.get(b) ?? []), p.id]);
+      relations.push({ type: 'builds', from: b, to: p.id });
+    }
     for (const e of p.evaluations ?? []) {
       const ref = { paper: p.id, evaluation: e.id };
       for (const b of e.baselines ?? []) {
-        if (!comparedIn.has(b)) comparedIn.set(b, new Set());
-        comparedIn.get(b)!.add(p.id);
+        if (b === p.id) continue;
+        if (!benchmarkedIn.has(b)) benchmarkedIn.set(b, new Set());
+        benchmarkedIn.get(b)!.add(p.id);
+        relations.push({ type: 'benchmarks', from: b, to: p.id });
       }
       for (const m of e.metrics ?? []) metricUsedBy[m].push(ref);
       const ds = new Set([...(e.datasets ?? []), ...(e.environment ? [e.environment] : [])]);
@@ -271,7 +314,10 @@ export function buildDb(input: BuildInput): BuildResult {
       ...p,
       level: deriveLevel(p.method?.knowns),
       built_upon_by: builtUponBy.get(p.id) ?? [],
-      compared_in: [...(comparedIn.get(p.id) ?? [])],
+      benchmarks_against: [...new Set((p.evaluations ?? []).flatMap((e) => e.baselines ?? []))].filter((b) => b !== p.id),
+      benchmarked_in: [...(benchmarkedIn.get(p.id) ?? [])],
+      cites: citesOf.get(p.id) ?? [],
+      cited_by: [...(citedBy.get(p.id) ?? [])].sort(),
       search: searchString(p),
     }))
     .sort((a, b) => a.year - b.year || a.id.localeCompare(b.id));
@@ -282,6 +328,19 @@ export function buildDb(input: BuildInput): BuildResult {
   return {
     errors,
     warnings,
-    db: { taxonomy: t, papers: dbPapers, datasets: dbDatasets, metric_used_by: metricUsedBy, subproblem_counts: counts },
+    db: {
+      taxonomy: t,
+      papers: dbPapers,
+      datasets: dbDatasets,
+      metric_used_by: metricUsedBy,
+      subproblem_counts: counts,
+      edges: mergeEdges(relations),
+      citations: {
+        generated_at: citations?.generated_at ?? null,
+        source: citations?.source ?? 'none',
+        unresolved: citations?.unresolved ?? [],
+        resolved: Object.values(citations?.papers ?? {}).filter((e) => e.s2_id).length,
+      },
+    },
   };
 }

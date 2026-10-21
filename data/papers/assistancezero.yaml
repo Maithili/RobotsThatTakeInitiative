@@ -16,6 +16,8 @@ year: 2025
 links:
   paper: https://arxiv.org/abs/2504.07091
   code: https://github.com/cassidylaidlaw/minecraft-building-assistance-game
+ids:
+  arxiv: "2504.07091"
 provenance: RTI App. II-A
 subproblems:
   P2:

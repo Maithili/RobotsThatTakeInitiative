@@ -14,6 +14,8 @@ venue: ACM THRI
 year: 2025
 links:
   paper: https://doi.org/10.1145/3737892
+ids:
+  doi: "10.1145/3737892"
 provenance: RTI App. II-A
 subproblems:
   A1:

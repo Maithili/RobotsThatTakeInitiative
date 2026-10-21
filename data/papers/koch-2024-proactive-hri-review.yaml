@@ -10,4 +10,6 @@ venue: ACM THRI
 year: 2024
 links:
   paper: https://doi.org/10.1145/3650117
+ids:
+  doi: "10.1145/3650117"
 provenance: RTI §II

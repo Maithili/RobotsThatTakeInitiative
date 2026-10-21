@@ -8,7 +8,7 @@ import { addressesAny, papers, SUBS, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
 import { SUBPROBLEM_IDS, type DbPaper, type SubproblemId, type SubproblemTag } from '../../schema.ts';
 import { toggleInList, useUrl } from '../../state/url.ts';
-import { buildLanes } from '../methods/LineageGraph.tsx';
+import { buildLanes } from '../methods/groups.ts';
 import { SubproblemNavigator } from './SubproblemNavigator.tsx';
 
 const RELATIONS = Object.keys(tx.relations) as SubproblemTag['relation'][];

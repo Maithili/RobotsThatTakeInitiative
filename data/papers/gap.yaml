@@ -10,12 +10,13 @@ year: 2026
 links:
   paper: https://arxiv.org/abs/2609.28910
   code: https://github.com/Maithili/GAP
+ids:
+  arxiv: "2609.28910"
 provenance: RTI paper §V–VI
 method:
   knowns:
     goal: unknown
     human_policy: unknown
-  family: full_pipeline
   action_types:
     - act
   inputs:

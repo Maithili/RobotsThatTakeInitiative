@@ -10,6 +10,8 @@ venue: Cognition
 year: 2009
 links:
   paper: https://doi.org/10.1016/j.cognition.2009.07.005
+ids:
+  doi: "10.1016/j.cognition.2009.07.005"
 provenance: RTI Table I, App. II-A
 subproblems:
   G2:

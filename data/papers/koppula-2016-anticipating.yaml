@@ -9,6 +9,8 @@ venue: IEEE TPAMI
 year: 2016
 links:
   paper: https://doi.org/10.1109/TPAMI.2015.2430335
+ids:
+  doi: "10.1109/TPAMI.2015.2430335"
 provenance: RTI §II, §II-B
 method:
   knowns:

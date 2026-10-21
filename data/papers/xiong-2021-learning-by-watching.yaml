@@ -13,6 +13,8 @@ venue: IEEE/RSJ IROS
 year: 2021
 links:
   paper: https://doi.org/10.1109/IROS51168.2021.9636080
+ids:
+  doi: "10.1109/IROS51168.2021.9636080"
 provenance: RTI App. II-A
 subproblems:
   A1:

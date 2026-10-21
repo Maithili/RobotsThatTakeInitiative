@@ -10,6 +10,8 @@ venue: Artificial Intelligence
 year: 2020
 links:
   paper: https://doi.org/10.1016/j.artint.2019.103217
+ids:
+  doi: "10.1016/j.artint.2019.103217"
 provenance: RTI App. II-A
 subproblems:
   A2:

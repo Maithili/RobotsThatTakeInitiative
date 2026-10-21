@@ -29,10 +29,6 @@ families:                     # L2 only, from RTI §III-B
     strength: Predicts minutes to hours ahead, with no need for close collaboration.
     limitations:
       - Discards the intentional structure of behavior that a goal-level model can exploit.
-  full_pipeline:
-    name: Grounding, anticipation, and planning pipeline
-    definition: Instantiates the grounding, anticipation, and planning subproblems in one pipeline.
-    note: Not a family named in the RTI paper. Added for GAP. Pending Maithili's confirmation.
 
 action_types:                 # RTI §II
   act:      {label: Acts, definition: Executes actions that serve anticipated needs.}

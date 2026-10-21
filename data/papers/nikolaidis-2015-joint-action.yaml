@@ -11,6 +11,8 @@ venue: ACM/IEEE HRI
 year: 2015
 links:
   paper: https://doi.org/10.1145/2696454.2696455
+ids:
+  doi: "10.1145/2696454.2696455"
 provenance: RTI Table I, App. II-A
 subproblems:
   A1:

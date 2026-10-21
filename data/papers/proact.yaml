@@ -18,6 +18,8 @@ venue: arXiv
 year: 2026
 links:
   paper: https://arxiv.org/abs/2602.03430
+ids:
+  arxiv: "2602.03430"
 provenance: RTI §III-B, Table I, App. II-A
 method:
   knowns:

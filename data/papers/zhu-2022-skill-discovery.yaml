@@ -10,6 +10,8 @@ venue: IEEE RA-L
 year: 2022
 links:
   paper: https://doi.org/10.1109/LRA.2022.3146589
+ids:
+  doi: "10.1109/LRA.2022.3146589"
 provenance: RTI App. II-A
 subproblems:
   G1:

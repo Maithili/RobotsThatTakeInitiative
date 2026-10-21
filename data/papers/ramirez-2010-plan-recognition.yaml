@@ -9,6 +9,8 @@ venue: AAAI
 year: 2010
 links:
   paper: https://doi.org/10.1609/aaai.v24i1.7745
+ids:
+  doi: "10.1609/aaai.v24i1.7745"
 provenance: RTI Table I, App. II-A
 subproblems:
   A2:

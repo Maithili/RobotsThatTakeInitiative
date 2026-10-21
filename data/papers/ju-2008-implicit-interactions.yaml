@@ -9,6 +9,8 @@ venue: Design Issues
 year: 2008
 links:
   paper: https://doi.org/10.1162/desi.2008.24.3.72
+ids:
+  doi: "10.1162/desi.2008.24.3.72"
 provenance: RTI App. II-A
 subproblems:
   P2:

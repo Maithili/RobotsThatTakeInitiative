@@ -9,6 +9,8 @@ venue: Industrial Robot
 year: 2019
 links:
   paper: https://doi.org/10.1108/IR-11-2018-0231
+ids:
+  doi: "10.1108/IR-11-2018-0231"
 provenance: RTI App. II-A
 subproblems:
   P1:

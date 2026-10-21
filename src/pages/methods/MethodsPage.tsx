@@ -4,11 +4,13 @@ import { EmptyState, Missing } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
 import { fixUrl, papers as allPapers, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
-import type { DbPaper, LevelId } from '../../schema.ts';
+import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
-import { LevelNavigator } from './LevelNavigator.tsx';
-import { buildLanes, LineageGraph } from './LineageGraph.tsx';
-import { syntheticPapers } from './synthetic.ts';
+import { GRAPH_LEVELS, type FamilyInfo } from './constants.ts';
+import { buildLanes } from './groups.ts';
+import { LiteratureGraph } from './LiteratureGraph.tsx';
+import { SYNTHETIC_FAMILIES, syntheticPapers } from './synthetic.ts';
+import { TopBand } from './TopBand.tsx';
 
 type SortKey = 'short_name' | 'year' | 'title' | 'inputs' | 'actions' | 'core' | 'subs';
 
@@ -107,16 +109,17 @@ function MethodsList({ papers }: { papers: DbPaper[] }) {
 
 export function MethodsPage() {
   const url = useUrl();
-  const synthetic = Number(url.get('synthetic')) || 0;
-  const papers = useMemo(() => (synthetic ? syntheticPapers(synthetic) : allPapers), [synthetic]);
-  // Only classified works appear on this page (SPEC §7.2).
+  const synthetic = url.get('synthetic') === '1';
+  const papers = useMemo(() => (synthetic ? syntheticPapers() : allPapers), [synthetic]);
+  const families: Record<string, FamilyInfo> = synthetic ? SYNTHETIC_FAMILIES : tx.families;
+  // Only classified works appear on this page (SPEC §7).
   const methods = useMemo(() => papers.filter((p) => p.method && p.level), [papers]);
-  const surveys = papers.filter((p) => p.type === 'survey');
-  const counts = useMemo(() => {
-    const c: Record<LevelId, number> = { L0: 0, L1: 0, L2: 0 };
-    for (const p of methods) c[p.level!]++;
-    return c;
-  }, [methods]);
+  const clusters = useMemo(
+    () => Object.keys(families).filter((fam) => methods.some((p) => p.level && GRAPH_LEVELS.includes(p.level) && p.method?.family === fam)),
+    [families, methods],
+  );
+  const surveys = synthetic ? [] : papers.filter((p) => p.type === 'survey');
+  const [hoverId, setHover] = useState<string | null>(null);
   const narrow = typeof window !== 'undefined' && window.innerWidth < 640;
   const view = url.get('view') === 'list' || (url.get('view') !== 'graph' && narrow) ? 'list' : 'graph';
   const yearSpan = useMemo<[number, number]>(() => {
@@ -128,51 +131,12 @@ export function MethodsPage() {
     <div className="page page--wide">
       <div className="page__intro">
         <h1>Methods</h1>
-        <p className="lede">Proactive methods by level of proactivity: what the robot knows about the goal g and the human policy π<sup>h</sup>.</p>
+        <p className="lede">
+          Proactive methods by level of proactivity: what the robot knows about the goal g and the human policy π<sup>h</sup>.
+        </p>
       </div>
 
-      <div className="methods-top">
-        <LevelNavigator counts={counts} />
-        <div className="methods-side">
-          {surveys.length > 0 && (
-            <section className="strip" aria-label="Surveys">
-              <h2 className="strip__title">Surveys</h2>
-              <div className="chips">
-                {surveys.map((p) => (
-                  <button key={p.id} type="button" className="chip chip--paper" data-locate={p.id} onClick={() => url.openPaper(p.id)}>
-                    {p.short_name} <span className="muted">{p.year}</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
-          <section className="strip legend-strip" aria-label="Legend">
-            <h2 className="strip__title">Legend</h2>
-            <ul className="legend">
-              {Object.entries(tx.action_types).map(([id, a]) => (
-                <li key={id}>
-                  <ActionChip type={id} />
-                  <span className="sr-only">{a.definition}</span>
-                </li>
-              ))}
-            </ul>
-            <ul className="legend small">
-              <li>
-                <svg width="28" height="8" aria-hidden="true">
-                  <line x1="0" y1="4" x2="28" y2="4" className="lg__edge lg__edge--builds" />
-                </svg>
-                Builds on
-              </li>
-              <li>
-                <svg width="28" height="8" aria-hidden="true">
-                  <line x1="0" y1="4" x2="28" y2="4" className="lg__edge lg__edge--baseline" />
-                </svg>
-                Compared against
-              </li>
-            </ul>
-          </section>
-        </div>
-      </div>
+      <TopBand papers={methods} clusters={clusters} families={families} hoverId={hoverId} setHover={setHover} />
 
       <FilterBar
         controls={['family', 'action', 'input', 'theme']}
@@ -187,22 +151,30 @@ export function MethodsPage() {
                 List
               </button>
             </span>
-            {view === 'graph' && (
-              <label className="check">
-                <input type="checkbox" checked={url.get('edges') === 'baselines'} onChange={(e) => url.set({ edges: e.target.checked ? 'baselines' : null })} />
-                Show baseline comparisons
-              </label>
-            )}
           </span>
         }
       />
 
-      {synthetic > 0 && <p className="notice small">Showing {synthetic} synthetic papers (layout test fixture), not real data.</p>}
-      {methods.every((p) => !(p.method?.builds_on ?? []).length) && view === 'graph' && (
-        <p className="small muted">No lineage edges yet: the RTI paper does not state which methods extend which. Turn on baseline comparisons to see evaluation links.</p>
+      {surveys.length > 0 && (
+        <section className="strip strip--row" aria-label="Surveys">
+          <h2 className="strip__title">Surveys</h2>
+          <div className="chips">
+            {surveys.map((p) => (
+              <button key={p.id} type="button" className="chip chip--paper" data-locate={p.id} onClick={() => url.openPaper(p.id)}>
+                {p.short_name} <span className="muted">{p.year}</span>
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
-      {view === 'graph' ? <LineageGraph papers={methods} /> : <MethodsList papers={methods} />}
+      {synthetic && <p className="notice small">Showing synthetic papers (layout test fixture), not real data.</p>}
+
+      {view === 'graph' ? (
+        <LiteratureGraph papers={methods} families={families} hoverId={hoverId} setHover={setHover} />
+      ) : (
+        <MethodsList papers={methods} />
+      )}
     </div>
   );
 }

@@ -10,6 +10,8 @@ venue: arXiv
 year: 2015
 links:
   paper: https://arxiv.org/abs/1512.00964
+ids:
+  arxiv: "1512.00964"
 provenance: RTI Table I, App. II-A
 subproblems:
   G2:

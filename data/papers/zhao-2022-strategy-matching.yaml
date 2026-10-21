@@ -10,6 +10,8 @@ venue: IEEE/RSJ IROS
 year: 2022
 links:
   paper: https://doi.org/10.1109/IROS47612.2022.9982277
+ids:
+  doi: "10.1109/IROS47612.2022.9982277"
 provenance: RTI §II, §II-B
 method:
   knowns:

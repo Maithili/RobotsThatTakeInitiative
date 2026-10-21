@@ -171,12 +171,55 @@ describe('validator', () => {
     expect(a.level).toBe('L2');
     expect(b.level).toBe('L1');
     expect(a.built_upon_by).toEqual(['b']);
-    expect(a.compared_in).toEqual(['b']);
+    expect(a.benchmarked_in).toEqual(['b']);
+    expect(b.benchmarks_against).toEqual(['a']);
     expect(db.metric_used_by.f1).toEqual([{ paper: 'b', evaluation: 'e' }]);
     expect(db.datasets.find((d) => d.id === 'ds')!.used_by).toEqual([{ paper: 'b', evaluation: 'e' }]);
     expect(db.datasets.find((d) => d.id === 'sim')!.used_by).toEqual([{ paper: 'b', evaluation: 'e' }]);
     expect(db.subproblem_counts.A3.addresses).toBe(1);
     expect(b.search).toContain('jane doe');
     expect(b.search).toContain('2022');
+  });
+});
+
+describe('citations', () => {
+  const cit = (papers: Record<string, { s2_id: string | null; cites: string[] }>, unresolved: string[] = []) => ({
+    generated_at: 'T',
+    source: 'test',
+    papers,
+    unresolved,
+  });
+  const runC = (ps: Record<string, unknown>[], citations: unknown) =>
+    buildDb({ taxonomy: bareTaxonomy(), papers: ps.map((p) => ({ name: p.id as string, data: p })), datasets: [], citations });
+
+  it('warns when citations.json is missing, stale, or incomplete', () => {
+    expect(runC([base('a')], undefined).warnings.join('\n')).toMatch(/citations.json is missing/);
+    const stale = runC([base('a')], cit({ a: { s2_id: 'x', cites: ['ghost'] }, gone: { s2_id: 'y', cites: [] } }));
+    expect(stale.errors).toEqual([]);
+    expect(stale.warnings.join('\n')).toMatch(/no longer exist \(gone, ghost\)/);
+    expect(runC([base('a'), base('b')], cit({ a: { s2_id: 'x', cites: [] } })).warnings.join('\n')).toMatch(/missing b/);
+  });
+
+  it('rejects a malformed citations.json', () => {
+    expectError(runC([base('a')], { papers: {} }) as ReturnType<typeof run>, /citations.json/);
+  });
+
+  it('derives cites, cited_by, and one merged edge per pair', () => {
+    const r = runC(
+      [
+        base('a', { method: { ...L2K } }),
+        base('b', { year: 2022, method: { ...L2K, builds_on: ['a'] }, evaluations: [{ id: 'e', loop: 'offline_replay', baselines: ['a'] }] }),
+      ],
+      cit({ a: { s2_id: 'x', cites: [] }, b: { s2_id: 'y', cites: ['a', 'outside'] } }),
+    );
+    expect(r.errors).toEqual([]);
+    const a = r.db!.papers.find((p) => p.id === 'a')!;
+    const b = r.db!.papers.find((p) => p.id === 'b')!;
+    expect(b.cites).toEqual(['a']);
+    expect(a.cited_by).toEqual(['b']);
+    expect(r.db!.edges).toHaveLength(1);
+    expect(r.db!.edges[0].relations.map((x) => x.type)).toEqual(['builds', 'benchmarks', 'cites']);
+    expect(r.db!.edges[0].relations[0]).toEqual({ type: 'builds', from: 'a', to: 'b' });
+    expect(r.db!.citations.resolved).toBe(2);
   });
 });

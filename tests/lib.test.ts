@@ -59,7 +59,10 @@ const P = (id: string, short_name: string, extra: Partial<DbPaper> = {}): DbPape
     provenance: '',
     level: null,
     built_upon_by: [],
-    compared_in: [],
+    benchmarks_against: [],
+    benchmarked_in: [],
+    cites: [],
+    cited_by: [],
     search: '',
     ...extra,
   }) as DbPaper;

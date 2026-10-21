@@ -12,10 +12,13 @@
     "preview": "vite preview",
     "test": "vitest run",
     "e2e": "playwright test",
-    "new-paper": "tsx scripts/new-paper.ts"
+    "new-paper": "tsx scripts/new-paper.ts",
+    "fetch-citations": "tsx scripts/fetch-citations.ts"
   },
   "dependencies": {
     "d3-brush": "^3.0.0",
+    "d3-force": "3.0.0",
+    "d3-polygon": "3.0.1",
     "d3-scale": "^4.0.2",
     "d3-selection": "^3.0.0",
     "d3-shape": "^3.2.0",
@@ -29,6 +32,8 @@
   "devDependencies": {
     "@playwright/test": "1.48",
     "@types/d3-brush": "^3.0.6",
+    "@types/d3-force": "3.0.10",
+    "@types/d3-polygon": "3.0.2",
     "@types/d3-scale": "^4.0.9",
     "@types/d3-selection": "^3.0.12",
     "@types/d3-shape": "^3.2.0",
