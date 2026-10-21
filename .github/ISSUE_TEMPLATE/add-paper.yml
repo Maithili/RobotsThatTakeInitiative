@@ -1,0 +1,93 @@
+name: Suggest a paper
+description: Add a paper to the literature map. A maintainer turns this into a data file.
+title: "[paper] "
+labels: [add-paper]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tag only what the paper states, and say where each tag comes from. Leave a field empty if you are not sure.
+        Definitions for every term are in [data/taxonomy.yaml](https://github.com/Maithili/RobotsThatTakeInitiative/blob/main/data/taxonomy.yaml) and [CONTRIBUTING.md](https://github.com/Maithili/RobotsThatTakeInitiative/blob/main/CONTRIBUTING.md).
+  - type: input
+    id: paper_title
+    attributes:
+      label: Title
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Link to the landing page
+      description: DOI, publisher or proceedings page, arXiv abstract, or OpenReview forum. Not a PDF.
+      placeholder: https://arxiv.org/abs/...
+    validations:
+      required: true
+  - type: input
+    id: short_name
+    attributes:
+      label: Short name
+      description: The name the paper gives its method or system, else "FirstAuthor Year". At most 24 characters.
+  - type: dropdown
+    id: goal
+    attributes:
+      label: Goal g
+      description: Does the robot have access to the user's goal?
+      options: [known, unknown, not sure]
+  - type: dropdown
+    id: human_policy
+    attributes:
+      label: Human policy π^h
+      description: Does the robot have access to how the user goes about the goal?
+      options: [known, unknown, not sure]
+  - type: dropdown
+    id: family
+    attributes:
+      label: Family (L2 only)
+      options: [goal_inference, temporal_prediction, full_pipeline, other or none]
+  - type: checkboxes
+    id: action_types
+    attributes:
+      label: Action types (output)
+      options:
+        - label: act — executes actions that serve anticipated needs
+        - label: timing — decides the precise timing of an action
+        - label: initiate — chooses to initiate an interaction
+        - label: inform — provides extra information
+        - label: ask — actively asks questions
+  - type: checkboxes
+    id: inputs
+    attributes:
+      label: Input modalities
+      options:
+        - label: object_relocations
+        - label: scene_graph
+        - label: video
+        - label: language
+  - type: textarea
+    id: subproblems
+    attributes:
+      label: Subproblems
+      description: One per line, as "ID: status, note". Status is addresses, assumes, or skips.
+      placeholder: |
+        A2: addresses, Infers the current goal online with a particle filter
+        G1: assumes, Goal set is given
+  - type: dropdown
+    id: loop
+    attributes:
+      label: Evaluation loop type
+      options: [offline_replay, closed_scripted, closed_adaptive, user_study_short, user_study_longitudinal, none or not sure]
+  - type: input
+    id: datasets
+    attributes:
+      label: Datasets and simulators used
+  - type: input
+    id: metrics
+    attributes:
+      label: Metrics reported
+  - type: input
+    id: provenance
+    attributes:
+      label: Source of these tags
+      description: Where in the paper (or which other source) each tag comes from, e.g. "§III, Table 2".
+    validations:
+      required: true

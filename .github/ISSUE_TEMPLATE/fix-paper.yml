@@ -1,0 +1,32 @@
+name: Suggest a correction
+description: Fix or fill a field for a paper already on the map.
+title: "[fix] "
+labels: [fix-paper]
+body:
+  - type: input
+    id: paper_id
+    attributes:
+      label: Paper id
+      description: The file name in data/papers, without .yaml.
+      placeholder: slate-pro
+    validations:
+      required: true
+  - type: input
+    id: field
+    attributes:
+      label: Field
+      description: For example method.core_strength, method.builds_on, subproblems.A2, links.paper.
+  - type: textarea
+    id: correction
+    attributes:
+      label: Correction
+      description: The value it should have.
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Source
+      description: Where the correction comes from, such as a section of the paper or the landing page.
+    validations:
+      required: true

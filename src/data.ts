@@ -53,7 +53,6 @@ export function fixUrl(p: { id: string; title: string }, field?: string) {
   return issueUrl('fix-paper.yml', {
     title: `[fix] ${p.id}${field ? `: ${field}` : ''}`,
     paper_id: p.id,
-    paper_title: p.title,
     ...(field ? { field } : {}),
   });
 }
