@@ -173,6 +173,665 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     direction: higher
     unit: fraction
 
+  # ---- Added Oct 21, 2026 from the librarian's answers. Terms and kinds are proposals for Maithili's
+  # ---- review (data/METRIC_MAPPING_REVIEW.md). Grouped by the papers that use them.
+
+  # Object relocation prediction, offline (STOT, STREAK)
+  used_correct:
+    label: Used objects, correct
+    definition: Objects the user moved in the window whose predicted move goes to the right place, as a share of used objects.
+    terms: [dC_saved]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: A correct move would spare the user that relocation, but it is scored offline and assumes the robot acts.
+  used_wrong:
+    label: Used objects, wrong
+    definition: Objects the user moved in the window that are predicted to move to the wrong place, as a share of used objects.
+    terms: [dC_added]
+    kind: proxy
+    direction: lower
+    unit: "%"
+    mapping_note: A wrong move would make the user fetch the object back. Scored offline, so later drift is not counted.
+  used_missed:
+    label: Used objects, missed
+    definition: Objects the user moved in the window that are predicted to stay put, as a share of used objects.
+    terms: [dC_saved]
+    kind: proxy
+    direction: lower
+    unit: "%"
+    mapping_note: Counts savings the robot forgoes, the shortfall in ΔC↓. A miss adds no cost.
+  unused_correct:
+    label: Unused objects, correct
+    definition: Objects the user did not use in the window that are predicted to stay put, as a share of unused objects.
+    terms: [dC_added]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Leaving unneeded objects alone avoids added cost. It is the complement of unused objects moved.
+  unused_wrong:
+    label: Unused objects, wrong
+    definition: Objects the user did not use in the window that are predicted to move, as a share of unused objects.
+    terms: [dC_added]
+    kind: proxy
+    direction: lower
+    unit: "%"
+    mapping_note: Moving an object nobody needs may make the user put it back. Scored offline.
+
+  # Activity and object prediction, offline (GLOBE)
+  activity_f1:
+    label: Activity F1
+    definition: F1 of the predicted activity against the true activity at each time step.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: fraction
+    mapping_note: Scores an anticipated activity, an intermediate step that triggers no robot action.
+  object_f1:
+    label: Object F1
+    definition: F1 of the predicted object against the true object at each time step.
+    terms: [dC_saved, dC_added]
+    kind: proxy
+    direction: higher
+    unit: fraction
+    mapping_note: A right object could be brought to spare the user and a wrong one adds cost. Scored offline.
+  joint_mean_f1:
+    label: Mean F1 (activity-object)
+    definition: F1 averaged across all joint activity-object labels.
+    terms: [dC_saved, dC_added]
+    kind: proxy
+    direction: higher
+    unit: fraction
+    mapping_note: Carries object F1's link to cost but mixes in activity prediction, which maps to no term.
+
+  # Computing cost (STREAK, GLOBE, Anticipatory TAMP)
+  training_time:
+    label: Training time
+    definition: Wall-clock time to train the model, per learning session or in total.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: min or s
+    mapping_note: Computing cost of building the model, not a cost to the user or to the robot's body.
+  training_samples:
+    label: Training samples kept
+    definition: Number of training samples stored per learning session and in total.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: samples
+    mapping_note: Memory cost of continual learning. Maps to no term.
+  inference_time:
+    label: Inference time
+    definition: Wall-clock time to produce predictions. What it is summed over is not stated.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: s
+    mapping_note: Computing cost. Slow inference could delay help, but no delay is measured.
+  planning_time:
+    label: Planning time
+    definition: Time the planner takes per task or for a given number of plan samples.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: s
+    mapping_note: Computing cost of choosing a plan, not a cost to the user or to the robot's body.
+
+  # Goal inference and helping (NOPA, Watch-And-Help)
+  speedup:
+    label: Speedup
+    definition: Episode length with the user alone divided by episode length with the helper, minus 1.
+    terms: [dC_saved, dC_added]
+    kind: proxy
+    direction: higher
+    unit: ratio
+    mapping_note: Net change in the time to finish the user's goal. Savings and interference are not separated.
+  task_success_rate:
+    label: Task success rate
+    definition: Share of episodes where every predicate of the user's goal holds before the step limit.
+    terms: [dV]
+    kind: proxy
+    direction: higher
+    unit: fraction
+    mapping_note: Goals finished in time come close to ΔV, but the user alone also finishes most goals.
+  cumulative_reward:
+    label: Cumulative reward
+    definition: Per-step reward summed over the episode, from −1 (failure) to 1 (goal reached in zero steps).
+    terms: [dV, dC_saved]
+    kind: proxy
+    direction: higher
+    unit: score
+    mapping_note: Rewards finishing and finishing sooner, so it mixes completion with time saved.
+  goal_predicate_f1:
+    label: Goal F1
+    definition: F1 of the predicted goal predicates against the user's true goal.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: fraction
+    mapping_note: Scores goal inference, an intermediate step. No robot action is counted.
+  goal_predicate_precision:
+    label: Goal precision
+    definition: Precision of the predicted goal predicates against the user's true goal.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: fraction
+    mapping_note: Scores goal recognition from a demonstration. No robot action is counted.
+  goal_predicate_recall:
+    label: Goal recall
+    definition: Recall of the predicted goal predicates against the user's true goal.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: fraction
+    mapping_note: Scores goal recognition from a demonstration. No robot action is counted.
+  rated_goal_knowledge:
+    label: Rated goal knowledge
+    definition: User rating from 1 to 7 of how much the agent knew about the true goal.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: 1–7 rating
+    mapping_note: Perceived goal understanding. Maps to no term.
+  rated_helpfulness:
+    label: Rated helpfulness
+    definition: User rating from 1 to 7 of how helpful the agent was (1 hurting, 4 neutral, 7 very helpful).
+    terms: [dV, dC_saved, dC_added]
+    kind: proxy
+    direction: higher
+    unit: 1–7 rating
+    mapping_note: Users judge net help, which spans every human term, but only as a perception.
+  rated_trust:
+    label: Rated trust
+    definition: User rating from 1 to 7 of whether they would trust the agent to do its job.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: 1–7 rating
+    mapping_note: Trust maps to no term.
+
+  # Video perception and task-graph rollouts (ProAct)
+  detection_accuracy:
+    label: Detection accuracy
+    definition: Micro-averaged accuracy of trigger, task, and step detection on video.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Scores perception of when and what to help with. No robot action is counted.
+  detection_f1:
+    label: Detection F1
+    definition: Micro-averaged F1 of trigger, task, and step detection on video.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Scores perception of when and what to help with. No robot action is counted.
+  detection_macro_accuracy:
+    label: Detection mAcc
+    definition: Accuracy averaged over classes (macro) for trigger, task, and step detection.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Same as detection accuracy, weighted toward rare classes. No robot action is counted.
+  detection_macro_f1:
+    label: Detection mF1
+    definition: F1 averaged over classes (macro) for trigger, task, and step detection.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Same as detection F1, weighted toward rare classes. No robot action is counted.
+  future_action_edit_distance:
+    label: Future action edit distance
+    definition: Edit distance between the predicted and true sequences of future user actions.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: not stated
+    mapping_note: Scores anticipation of the user's next actions. No robot action is counted.
+  saved_steps_rate:
+    label: Saved steps (one step)
+    definition: Share of decision points where the robot's action is one of the user's true upcoming steps (Terminate excluded).
+    terms: [dC_saved]
+    kind: proxy
+    direction: higher
+    unit: fraction
+    mapping_note: A matching action could take over a user step, but it is scored offline, one decision at a time.
+  saved_steps:
+    label: Saved steps (rollout)
+    definition: Steps in the annotated user trajectory minus the steps the user still executes alongside the robot, averaged over videos.
+    terms: [dC_saved]
+    kind: direct
+    direction: higher
+    unit: steps
+    mapping_note: Counts user steps the robot takes over in closed loop. The task graph blocks wrong actions, so ΔC↑ goes unmeasured.
+  parallel_actions:
+    label: Parallel actions
+    definition: Share of effective robot actions on a different thread from the user's previous action.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Measures how often robot and user work apart. It may relate to interference but counts no cost.
+  thread_mixing_entropy:
+    label: Thread mixing entropy
+    definition: Entropy of how user and robot actions mix across task threads, WAIT excluded.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: unitless
+    mapping_note: Describes how work is split. Maps to no term.
+  robot_thread_entropy:
+    label: Robot thread entropy
+    definition: Entropy of the robot's actions across task threads, WAIT excluded.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: unitless
+    mapping_note: Describes how the robot's work is spread. Maps to no term.
+
+  # Object search in changing homes (SGM, FlowMaps, EvolvingNav, PredictiveGraphs, TAP, Mullen 2025)
+  location_accuracy:
+    label: Location accuracy
+    definition: Share of predictions that pick a furniture node holding an object matching the query.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: fraction
+    mapping_note: Scores where an object is. It serves search but measures no cost or value.
+  ndcg:
+    label: NDCG
+    definition: Normalized discounted cumulative gain of the ranked candidate locations.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: score
+    mapping_note: Scores the ranking of locations. Maps to no term.
+  search_success_rate:
+    label: Search success rate
+    definition: Share of search episodes in which the robot ends near the target and sees it within its budget.
+    terms: [dC_saved]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Finding the item would spare the user the search, but no user cost is measured.
+  spl:
+    label: SPL
+    definition: Success weighted by path length, so success times the shortest path over the longer of the actual and shortest paths.
+    terms: [dC_saved, Cr]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Mixes finding the item, a stand-in for user cost saved, with path efficiency, a robot cost.
+  path_length:
+    label: Path length
+    definition: Distance the robot travels in an episode.
+    terms: [Cr]
+    kind: proxy
+    direction: lower
+    unit: m
+    mapping_note: Travel drives wear and charge. It says nothing about the user.
+  steps_to_find:
+    label: Steps to find
+    definition: Robot actions or steps taken until it finds the target. In SGM, the budget plus one if it never does.
+    terms: [Cr]
+    kind: proxy
+    direction: lower
+    unit: steps
+    mapping_note: More steps mean more robot effort. The user's waiting time is not measured.
+  task_time:
+    label: Task time
+    definition: Wall-clock time the robot takes to finish the episode or the task sequence.
+    terms: [Cr]
+    kind: proxy
+    direction: lower
+    unit: s
+    mapping_note: Robot time and effort. Any user waiting time is not measured as such.
+  success_at_k:
+    label: Success at K
+    definition: Share of episodes where one of the first K ranked candidates brings the robot within reach and view of the target.
+    terms: [dC_saved]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Same link as search success, at a candidate budget of K. Reported per K and averaged over K.
+  spl_at_k:
+    label: SPL at K
+    definition: SPL over the first K ranked candidates, reported per K and averaged over K.
+    terms: [dC_saved, Cr]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Mixes finding the item with path efficiency, as SPL does.
+  min_fde:
+    label: minFDE@K
+    definition: 3D distance from the true box center to the closest of K predicted samples.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: m
+    mapping_note: Scores predicted object positions. Maps to no term.
+  recall_at_1m:
+    label: Rec@1
+    definition: Share of queries where the best of K samples lies within 1 m of the true position on the floor plane.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: fraction
+    mapping_note: Scores predicted object positions. Maps to no term.
+  sample_density:
+    label: Density
+    definition: Average number of nearest-neighbor balls around true positions that each predicted sample falls in.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: unitless
+    mapping_note: Scores the predicted position distribution. Maps to no term.
+  sample_coverage:
+    label: Coverage
+    definition: Share of true positions whose nearest-neighbor ball holds at least one predicted sample.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: fraction
+    mapping_note: Scores the predicted position distribution. Maps to no term.
+  total_variation:
+    label: TV
+    definition: Total-variation divergence between predicted and true position histograms on a 0.5 m floor grid.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: unitless
+    mapping_note: Scores the predicted position distribution. Maps to no term.
+  js_divergence:
+    label: JS
+    definition: Jensen-Shannon divergence between predicted and true position histograms on a 0.5 m floor grid.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: nats
+    mapping_note: Scores the predicted position distribution. Maps to no term.
+  eventual_search_success:
+    label: Search SR
+    definition: Share of episodes where the target is found at some point within the budget. Not defined further.
+    terms: [dC_saved]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Same link as search success, with a looser success test.
+  first_inspection_success:
+    label: First-inspection success
+    definition: Share of episodes where the first candidate to get enough view coverage holds the target.
+    terms: [dC_saved]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Rewards finding the item on the first look. It stands in for user cost saved, as search success does.
+  recovery_success:
+    label: Recovery success
+    definition: Share of episodes with a failed first inspection in which the target is found later.
+    terms: [dC_saved]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Search success after a first miss. Same link as search success.
+  dynamic_success:
+    label: Dynamic success
+    definition: Search success on episodes where the target is scheduled to move after the query.
+    terms: [dC_saved]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Search success on moving targets. Same link as search success.
+  online_recovery_success:
+    label: Online recovery success
+    definition: Success on episodes whose scheduled move invalidates the target's earlier place. Only finds after the move count.
+    terms: [dC_saved]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Search success when the target moves mid-search. Same link as search success.
+  excess_distance:
+    label: Excess distance
+    definition: Path length minus the oracle shortest path, with a moving oracle for moving targets.
+    terms: [Cr]
+    kind: proxy
+    direction: lower
+    unit: m
+    mapping_note: Extra robot travel, so robot wear and charge. Says nothing about the user.
+  revisit_success:
+    label: Revisit success
+    definition: Share of reopened candidate visits that recover the target.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Checks the belief update after a miss. Maps to no term.
+  inspections:
+    label: Inspections
+    definition: Number of candidate inspections per episode. Not defined further.
+    terms: [Cr]
+    kind: proxy
+    direction: lower
+    unit: count
+    mapping_note: Each inspection is robot effort. Says nothing about the user.
+  top1_accuracy:
+    label: Top-1 accuracy
+    definition: Top-1 accuracy of the predicted current state of the target. No formula given.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Scores object-state prediction. Maps to no term.
+  mrr:
+    label: MRR
+    definition: Mean reciprocal rank of the target's true state among the candidates. No formula given.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: unitless
+    mapping_note: Scores object-state prediction. Maps to no term.
+  nll:
+    label: NLL
+    definition: Negative log-likelihood of the target's true state under the predicted belief. No formula given.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: unitless
+    mapping_note: Scores object-state prediction. Maps to no term.
+  true_state_rank:
+    label: True-state rank
+    definition: Rank of the target's true state among the candidates. It captures changes beyond top-1 accuracy.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: rank
+    mapping_note: Scores object-state prediction. Maps to no term.
+  ece:
+    label: ECE
+    definition: Expected calibration error, with predictions grouped by maximum confidence.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: unitless
+    mapping_note: Scores how well the belief is calibrated. Maps to no term.
+  persistence_mae:
+    label: Persistence MAE
+    definition: Mean absolute error between the predicted presence belief and the true presence of each object.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: unitless
+    mapping_note: Scores the persistence estimator. Maps to no term.
+  persistence_balanced_accuracy:
+    label: Persistence B-Acc
+    definition: Balanced accuracy of presence predictions, with the belief thresholded at 0.5.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: unitless
+    mapping_note: Scores the persistence estimator. Maps to no term.
+  persistence_f1:
+    label: Persistence F1
+    definition: F1 of presence predictions, with the belief thresholded at 0.5.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: unitless
+    mapping_note: Scores the persistence estimator. Maps to no term.
+  abort_rate:
+    label: Correct abort rate
+    definition: Share of queries for absent objects where the robot correctly gives up.
+    terms: [Cr]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: A correct abort ends wasted search. The user's cost of a wrong answer is not measured.
+  absent_search_distance:
+    label: Distance on absent queries
+    definition: Distance the robot travels before stopping on queries for absent objects.
+    terms: [Cr]
+    kind: proxy
+    direction: lower
+    unit: m
+    mapping_note: Robot travel spent searching for something that is not there.
+  objects_found_ratio:
+    label: Objects found ratio
+    definition: Objects found in an episode over the most an optimal policy could find.
+    terms: [dC_saved]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Found objects would spare the user a search, but no user cost is measured.
+  trajectory_alignment:
+    label: Trajectory alignment
+    definition: Largest overlap, in nodes, between the agent's path and a ground-truth optimal path.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Measures similarity to the optimal path, not distance or effort. Maps to no term.
+  relative_change_in_success:
+    label: Relative change in success
+    definition: Percent change in success or alignment between static and dynamic scenes. Closer to 0 is better.
+    terms: []
+    kind: unrelated
+    direction: lower
+    unit: "%"
+    mapping_note: Measures robustness to object movement. Maps to no term.
+  cumulative_success_rate:
+    label: Cumulative success rate
+    definition: Success accumulated over episodes in the lab replay. No formula given.
+    terms: [dC_saved]
+    kind: proxy
+    direction: higher
+    unit: not stated
+    mapping_note: Same link as the objects found ratio, accumulated over episodes.
+  emergency_false_negative_rate:
+    label: Emergency false negatives
+    definition: Share of episodes with an emergency in which none is reported.
+    terms: [dV]
+    kind: proxy
+    direction: lower
+    unit: fraction
+    mapping_note: A missed emergency leaves the user without help they could not get alone. Far from household chores.
+  emergency_false_positive_rate:
+    label: Emergency false positives
+    definition: Share of episodes without an emergency in which one is reported.
+    terms: [dC_added]
+    kind: proxy
+    direction: lower
+    unit: fraction
+    mapping_note: A false alarm adds cost for the user or responders. That cost is not measured.
+
+  # Anticipatory planning with no user in the loop (Anticipatory TAMP, Talukder 2025, Courteous Anticipation)
+  avg_task_cost:
+    label: Average cost per task
+    definition: Robot plan cost per task, averaged over task sequences, from fixed action costs plus distance.
+    terms: [Cr]
+    kind: proxy
+    direction: lower
+    unit: cost units
+    mapping_note: Time-like robot execution cost. With no user in the loop, no human term applies.
+  cost_reduction:
+    label: Cost reduction
+    definition: Percent reduction in task cost relative to a baseline planner, such as a myopic one.
+    terms: [Cr]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Relative form of average cost per task. Robot cost only.
+  robot_action_count:
+    label: Robot actions
+    definition: Number of actions the robot executes to finish the tasks.
+    terms: [Cr]
+    kind: proxy
+    direction: lower
+    unit: actions
+    mapping_note: Robot effort. Says nothing about the user.
+
+  # Proactive task prediction from egocentric images, offline (Din 2025)
+  ooi_precision:
+    label: OID precision
+    definition: Share of frames flagged as holding an object of interest that do hold one.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Scores the per-frame trigger to act. No action is executed or costed.
+  ooi_recall:
+    label: OID recall
+    definition: Share of frames holding an object of interest that are flagged.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Scores the per-frame trigger to act. No action is executed or costed.
+  ooi_f1:
+    label: OID F1
+    definition: Harmonic mean of object-of-interest precision and recall.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Scores the per-frame trigger to act. No action is executed or costed.
+  ooi_accuracy:
+    label: OID accuracy
+    definition: Share of frames correctly classified as holding an object of interest or not.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Scores the per-frame trigger to act. No action is executed or costed.
+  relation_accuracy:
+    label: Relation accuracy
+    definition: Accuracy of predicted spatial relations (on, inside, next to) between object pairs. Not formally defined.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: "%"
+    mapping_note: Scores scene perception. Maps to no term.
+  exact_match_accuracy:
+    label: Exact-match accuracy
+    definition: Share of predicted subgoal sequences that exactly match the annotated proactive task.
+    terms: [dC_saved, dC_added]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: A match would do the help annotators chose, and a mismatch may add cost. Scored offline against labels.
+  subgoal_accuracy:
+    label: Subgoal accuracy
+    definition: Share of individual predicted subgoals that match the subgoals in the annotated sequence.
+    terms: [dC_saved, dC_added]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Same link as exact-match accuracy, credited per subgoal.
+
 loop_types:                   # ordered
   offline_replay:
     label: Offline replay
