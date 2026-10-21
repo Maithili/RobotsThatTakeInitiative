@@ -19,8 +19,10 @@ export interface S2Api {
   byExternalId(ext: string): Promise<S2Paper | null>;
   /** Semantic Scholar's best title match. The caller still checks it for an exact match. */
   matchTitle(title: string): Promise<S2Paper | null>;
-  /** Semantic Scholar ids of the papers this paper cites. */
+  /** Source ids of the papers this paper cites. */
   references(paperId: string): Promise<string[]>;
+  /** Optional: other source ids for the same paper (a preprint and its published version), found by exact title. */
+  aliases?(p: PaperRef): Promise<S2Paper[]>;
 }
 
 export type MatchedBy = 'doi' | 'arxiv' | 'title';
@@ -71,6 +73,7 @@ export async function buildCitations(
   api: S2Api,
   log: (msg: string) => void = () => {},
   now = () => new Date().toISOString(),
+  source = 'Semantic Scholar Graph API',
 ): Promise<CitationsFile> {
   const s2ToId = new Map<string, string>();
   const resolved = new Map<string, string>();
@@ -84,6 +87,7 @@ export async function buildCitations(
     }
     resolved.set(p.id, r.s2.paperId);
     s2ToId.set(r.s2.paperId, p.id);
+    for (const a of (await api.aliases?.(p)) ?? []) if (isExactMatch(p, a) && !s2ToId.has(a.paperId)) s2ToId.set(a.paperId, p.id);
     log(`✓ ${p.id} by ${r.by}`);
   }
   const out: CitationsFile['papers'] = {};
@@ -94,5 +98,5 @@ export async function buildCitations(
     const cites = [...new Set(refs.map((r) => s2ToId.get(r)).filter((x): x is string => !!x && x !== p.id))].sort();
     out[p.id] = { s2_id: s2, cites };
   }
-  return { generated_at: now(), source: 'Semantic Scholar Graph API', papers: out, unresolved: unresolved.sort() };
+  return { generated_at: now(), source, papers: out, unresolved: unresolved.sort() };
 }

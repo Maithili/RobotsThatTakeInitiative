@@ -100,3 +100,28 @@ describe('fetch-citations resolution', () => {
     expect(out.papers.a.cites).toEqual([]);
   });
 });
+
+describe('fetch-citations aliases', () => {
+  it('maps exact-title aliases (preprint and published versions) to the same paper', async () => {
+    const api: S2Api = {
+      byExternalId: async (ext) => (ext === 'DOI:10.1/pub' ? { paperId: 'PUB', title: 'Paper P', year: 2023 } : null),
+      matchTitle: async (t) => (t === 'Paper Q' ? { paperId: 'Q', title: 'Paper Q', year: 2024 } : null),
+      references: async (id) => (id === 'Q' ? ['PRE', 'OTHER'] : []),
+      aliases: async (p) =>
+        p.id === 'p'
+          ? [
+              { paperId: 'PRE', title: 'Paper P', year: 2022 },
+              { paperId: 'NEAR', title: 'Paper P revisited', year: 2023 },
+            ]
+          : [],
+    };
+    const out = await buildCitations(
+      [
+        { id: 'p', title: 'Paper P', year: 2023, ids: { doi: '10.1/pub' } },
+        { id: 'q', title: 'Paper Q', year: 2024 },
+      ],
+      api,
+    );
+    expect(out.papers.q.cites).toEqual(['p']);
+  });
+});

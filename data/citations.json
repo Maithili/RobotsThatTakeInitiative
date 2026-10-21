@@ -1,58 +1,246 @@
 {
-  "generated_at": null,
-  "source": "Semantic Scholar Graph API",
-  "papers": {},
+  "generated_at": "2026-10-21T19:42:57.378Z",
+  "source": "OpenAlex",
+  "papers": {
+    "actionable-models": {
+      "s2_id": "https://openalex.org/W3156232699",
+      "cites": [
+        "hindsight-experience-replay",
+        "lynch-2019-play"
+      ]
+    },
+    "adapt": {
+      "s2_id": "https://openalex.org/W4415981198",
+      "cites": []
+    },
+    "amado-2018-latent": {
+      "s2_id": "https://openalex.org/W2895996109",
+      "cites": [
+        "ramirez-2010-plan-recognition"
+      ]
+    },
+    "amado-2018-lstm": {
+      "s2_id": "https://openalex.org/W2886462735",
+      "cites": []
+    },
+    "anticipate-and-act": {
+      "s2_id": "https://openalex.org/W4401413973",
+      "cites": []
+    },
+    "assistancezero": {
+      "s2_id": "https://openalex.org/W4417249509",
+      "cites": []
+    },
+    "baker-2009-inverse-planning": {
+      "s2_id": "https://openalex.org/W2151516755",
+      "cites": []
+    },
+    "banerjee-2018-interruptibility": {
+      "s2_id": "https://openalex.org/W2903891655",
+      "cites": [
+        "fogarty-2005-interruptibility"
+      ]
+    },
+    "cirl": {
+      "s2_id": "https://openalex.org/W2410842990",
+      "cites": []
+    },
+    "fogarty-2005-interruptibility": {
+      "s2_id": "https://openalex.org/W2029778954",
+      "cites": []
+    },
+    "gap": {
+      "s2_id": "https://openalex.org/W7214348030",
+      "cites": []
+    },
+    "globe": {
+      "s2_id": "https://openalex.org/W7164047680",
+      "cites": []
+    },
+    "grace": {
+      "s2_id": "https://openalex.org/W4413944809",
+      "cites": [
+        "zhang-2023-llm-human-models"
+      ]
+    },
+    "hashimoto-2026-coin": {
+      "s2_id": "https://openalex.org/W7162676917",
+      "cites": []
+    },
+    "hindsight-experience-replay": {
+      "s2_id": "https://openalex.org/W2733961795",
+      "cites": []
+    },
+    "hoiabot": {
+      "s2_id": "https://openalex.org/W4387225628",
+      "cites": []
+    },
+    "huang-2016-anticipatory": {
+      "s2_id": "https://openalex.org/W4229726131",
+      "cites": []
+    },
+    "huang-2025-intention-tracking": {
+      "s2_id": "https://openalex.org/W4417126419",
+      "cites": []
+    },
+    "jayanthi-2022-strategy-discovery": {
+      "s2_id": "https://openalex.org/W4221163314",
+      "cites": []
+    },
+    "ju-2008-implicit-interactions": {
+      "s2_id": "https://openalex.org/W1982010290",
+      "cites": []
+    },
+    "koch-2024-proactive-hri-review": {
+      "s2_id": "https://openalex.org/W4395038446",
+      "cites": [
+        "huang-2016-anticipatory"
+      ]
+    },
+    "koppula-2016-anticipating": {
+      "s2_id": "https://openalex.org/W1483019628",
+      "cites": []
+    },
+    "levy-2019-hierarchies": {
+      "s2_id": "https://openalex.org/W2920215304",
+      "cites": []
+    },
+    "lynch-2019-play": {
+      "s2_id": "https://openalex.org/W2919872398",
+      "cites": [
+        "hindsight-experience-replay",
+        "torabi-2018-bco"
+      ]
+    },
+    "malik-2019-task-allocation": {
+      "s2_id": "https://openalex.org/W2953773709",
+      "cites": []
+    },
+    "nakahashi-2015-subgoal": {
+      "s2_id": "https://openalex.org/W2963501068",
+      "cites": [
+        "baker-2009-inverse-planning",
+        "ramirez-2010-plan-recognition"
+      ]
+    },
+    "nemlekar-2023-transfer": {
+      "s2_id": "https://openalex.org/W4323659700",
+      "cites": [
+        "huang-2016-anticipatory",
+        "nikolaidis-2015-joint-action"
+      ]
+    },
+    "nikolaidis-2015-joint-action": {
+      "s2_id": "https://openalex.org/W1528932438",
+      "cites": []
+    },
+    "nopa": {
+      "s2_id": "https://openalex.org/W4383108805",
+      "cites": [
+        "cirl",
+        "zhi-xuan-2020-goal-inference"
+      ]
+    },
+    "patel-2025-personalization": {
+      "s2_id": "https://openalex.org/W4408357864",
+      "cites": [
+        "cirl",
+        "malik-2019-task-allocation",
+        "nemlekar-2023-transfer",
+        "zhang-2023-llm-human-models",
+        "zhao-2022-strategy-matching"
+      ]
+    },
+    "pereira-2020-landmark": {
+      "s2_id": "https://openalex.org/W2940898985",
+      "cites": [
+        "amado-2018-latent",
+        "ramirez-2010-plan-recognition"
+      ]
+    },
+    "proact": {
+      "s2_id": "https://openalex.org/W7127639999",
+      "cites": []
+    },
+    "ramirez-2010-plan-recognition": {
+      "s2_id": "https://openalex.org/W1572384134",
+      "cites": [
+        "baker-2009-inverse-planning"
+      ]
+    },
+    "ravichandar-2020-lfd-review": {
+      "s2_id": "https://openalex.org/W2994446013",
+      "cites": [
+        "cirl"
+      ]
+    },
+    "saavedra-2026-scene-graphs": {
+      "s2_id": "https://openalex.org/W7160021508",
+      "cites": []
+    },
+    "sakr-2025-everyday-users": {
+      "s2_id": "https://openalex.org/W4410893076",
+      "cites": []
+    },
+    "singh-2026-synthetic-households": {
+      "s2_id": "https://openalex.org/W7128529023",
+      "cites": []
+    },
+    "smith-2020-dynamic-cost": {
+      "s2_id": "https://openalex.org/W2922921726",
+      "cites": []
+    },
+    "streak": {
+      "s2_id": "https://openalex.org/W4415821946",
+      "cites": []
+    },
+    "torabi-2018-bco": {
+      "s2_id": "https://openalex.org/W2802726207",
+      "cites": []
+    },
+    "xiong-2021-learning-by-watching": {
+      "s2_id": "https://openalex.org/W3122520957",
+      "cites": [
+        "hindsight-experience-replay",
+        "torabi-2018-bco"
+      ]
+    },
+    "yao-2023-language-action-survey": {
+      "s2_id": "https://openalex.org/W7171640749",
+      "cites": [
+        "torabi-2018-bco"
+      ]
+    },
+    "zeng-2020-semantic-linking": {
+      "s2_id": "https://openalex.org/W3090952442",
+      "cites": []
+    },
+    "zhang-2023-llm-human-models": {
+      "s2_id": "https://openalex.org/W4389665836",
+      "cites": []
+    },
+    "zhao-2022-strategy-matching": {
+      "s2_id": "https://openalex.org/W4312583411",
+      "cites": []
+    },
+    "zhi-xuan-2020-goal-inference": {
+      "s2_id": "https://openalex.org/W3099899614",
+      "cites": []
+    },
+    "zhu-2022-skill-discovery": {
+      "s2_id": "https://openalex.org/W4225873172",
+      "cites": [
+        "hindsight-experience-replay"
+      ]
+    }
+  },
   "unresolved": [
-    "actionable-models",
-    "adapt",
-    "amado-2018-latent",
-    "amado-2018-lstm",
-    "anticipate-and-act",
-    "assistancezero",
-    "baker-2009-inverse-planning",
-    "banerjee-2018-interruptibility",
-    "cirl",
-    "fogarty-2005-interruptibility",
-    "gap",
-    "grace",
-    "hindsight-experience-replay",
-    "hoiabot",
-    "huang-2016-anticipatory",
-    "huang-2025-intention-tracking",
-    "jayanthi-2022-strategy-discovery",
-    "ju-2008-implicit-interactions",
-    "koch-2024-proactive-hri-review",
-    "koppula-2016-anticipating",
-    "levy-2019-hierarchies",
-    "lynch-2019-play",
-    "malik-2019-task-allocation",
-    "nakahashi-2015-subgoal",
-    "nemlekar-2023-transfer",
-    "nikolaidis-2015-joint-action",
-    "nopa",
-    "patel-2025-personalization",
-    "pereira-2020-landmark",
-    "proact",
-    "ramirez-2010-plan-recognition",
-    "ravichandar-2020-lfd-review",
-    "saavedra-2026-scene-graphs",
-    "sakr-2025-everyday-users",
     "saycan",
     "schrum-2022-mind-meld",
     "slate-pro",
-    "smith-2020-dynamic-cost",
     "stot",
-    "streak",
-    "torabi-2018-bco",
     "watch-and-help",
-    "xiong-2021-learning-by-watching",
-    "yao-2023-language-action-survey",
-    "zeng-2020-semantic-linking",
-    "zhang-2023-llm-human-models",
-    "zhao-2022-strategy-matching",
-    "zhao-2023-contribution-preferences",
-    "zhi-xuan-2020-goal-inference",
-    "zhu-2022-skill-discovery"
+    "zhao-2023-contribution-preferences"
   ],
-  "note": "Not fetched yet: Semantic Scholar returned 429 (rate limit) on every request. Run `npm run fetch-citations`, ideally with S2_API_KEY set."
+  "note": "Title search was rate-limited for saycan, schrum-2022-mind-meld, slate-pro, stot, watch-and-help, zhao-2023-contribution-preferences. Rerun to fill them in."
 }
