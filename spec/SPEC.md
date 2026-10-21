@@ -472,7 +472,7 @@ Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, th
 | `paper` | global | `gap` | Open drawer |
 | `compare` | global | `gap,slate-pro` | Compare set, up to 3 |
 | `view` | per page | `list`, `matrix` | View toggle |
-| `edges` | Methods | `builds,benchmarks` | Edge types shown. Absent means all three. |
+| `edges` | Methods | `builds,benchmarks,cites` | Edge types drawn for all papers. Absent means builds and benchmarks. Cites lines always show for the hovered or selected paper. |
 | `tangents` | Methods | `0` | Hides tangential works. Absent means shown. |
 | `focus` | Methods | `slate-pro` | Ancestry focus |
 | `term` | Evaluations | `dC_added` | Net value term |
@@ -483,7 +483,11 @@ Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, th
 
 Rules.
 
-- **Level scope.** Outside the Methods top band (§7.1), the site shows only L2 papers, plus papers with no level: subproblem works, tangential works, and dataset-only papers. L1 papers appear only in the L1 timeline row, and in the drawer when opened from there or from search. One constant holds this (`FOCUS_LEVELS = ['L2']`). The literature graph, the list view, the Evaluations page (protocols table, realism plot, dataset "used by" counts), and the Subproblems page (lists, counts, matrix) all apply it.
+- **Level scope.** One constant holds the focus levels (`FOCUS_LEVELS = ['L2']`).
+  - Methods top band (§7.1): L2 and L1 papers.
+  - Methods bottom half (graph and list) and the whole Evaluations page (protocols table, realism plot, dataset "used by" counts): only papers at a focus level. Papers with no level stay out, with one exception: tangential works stay in the graph and list (§7.2).
+  - Subproblems page (lists, counts, matrix): papers at a focus level plus papers with no level, such as related works from other fields. Never L1 papers.
+  - L1 papers otherwise appear only in the drawer, when opened from the L1 timeline row or from search.
 - Global filters apply on every page. A paper with no method block fails any `family`, `action`, or `input` filter.
 - Page params stay in the URL when the reader switches pages, so coming back restores the view. Each page ignores params that are not its own.
 - Filter changes use `replaceState`. Opening a paper or switching pages uses `pushState`, so Back closes the drawer.
@@ -531,19 +535,29 @@ Left to right: level cards, condensed timeline, legend. Under 900 px the legend 
   - Hovering a chip highlights the same paper in the graph, and hovering a graph node highlights its chip.
   - Clicking a chip opens the drawer and, if the paper is in the graph, focuses its node.
   - A time brush on the shared axis sets `years=`.
-- **Legend**, in the space right of the timeline: the three edge styles with their checkboxes (bound to `edges=`, all on by default), the cluster tints, the level colors, the action type icons, and a "Show tangential works" checkbox bound to `tangents=`.
+- **Legend**, in the space right of the timeline: the three edge styles with their checkboxes (bound to `edges=`; builds and benchmarks on by default, "Show all citation lines" off by default), the cluster tints, the level colors, the action type icons, and a "Show tangential works" checkbox bound to `tangents=`.
 
 ### 7.2 Literature graph
 
 - **Scope.** The core of the graph is algorithmic: every paper at a level in `FOCUS_LEVELS` (L2) with a method block and no `tangent`. L1 papers appear only in the top band (§6.2 Level scope).
 - **Tangential works.** Papers with a `tangent` also show in the graph, at half opacity, along with the edges that touch them. Hover or focus brings a tangential node and its edges to full opacity, and its hover card names its tangent type. They sit outside the cluster hulls (§7.2 Layout). They do not appear in the timeline.
 - **Clusters.** One cluster per L2 family, so Goal Inference and Temporal Imitation to start. Each cluster draws as a soft tinted hull behind its nodes, labeled with the family name, with the scope line, strength, and limitations on hover. Papers with no family sit outside the hulls, in the space between the clusters. GAP is one of these.
-- **Layout.** `d3-force`, run for a fixed number of ticks from seeded positions, so the layout is identical on every load. Cluster centers sit evenly spaced on a circle, which puts two clusters left and right. Each node pulls toward its cluster center, and nodes with no family pull toward the center point between clusters. Tangential works take no cluster pull. A weak radial force places them on a ring outside the clusters, and their links pull them toward the papers they connect to. Links pull connected nodes together weakly, and a collision force keeps pills apart. The layout depends only on the data. Filters dim nodes and never move them.
-- **Growth.** Adding papers or a new family needs no layout code change. A new family gets its own cluster and hull. The graph stays readable with a synthetic fixture of 60 L2 papers in 4 clusters plus 15 tangential works.
-- **Nodes** are pills with the short name and year, a left edge in the level color, and small icons for action types.
-- **Edges** follow §5.5 and draw as curves under the nodes. Hovering an edge lists every relation between its two papers.
-- **Hover or focus** on a node shows a card with short name and year, title (one line, truncated), core strength, inputs → action types, and knowns chips.
-- **Click** on a node highlights all its ancestors and descendants through the edge types currently shown, dims the rest, sets `focus=`, and opens the drawer. Clicking empty canvas or pressing Esc clears the focus.
+- **Layout.** Computed once at build time in `scripts/build-data.ts` and stored as x, y per paper in `db.json`, so the graph loads instantly and papers keep their positions between visits. `d3-force` runs a fixed number of ticks from seeded positions. Cluster centers sit evenly spaced on a circle, which puts two clusters left and right. Each node pulls toward its cluster center, and nodes with no family pull toward the point between clusters. Tangential works take no cluster pull and sit in a band just outside the clusters, never far off. Links pull connected nodes together weakly, and a collision force keeps dots and their labels apart. Filters dim nodes and never move them.
+- **Growth.** Adding papers or a new family needs no layout code change. A new family gets its own cluster. The graph stays readable and responsive with a synthetic fixture of 300 papers in 4 clusters plus 30 tangential works: pan and zoom stay smooth, and hover responds within 50 ms.
+- **Nodes** are dots, in the style of ResearchRabbit, matching the mock Maithili approved:
+  - Radius grows with the number of database papers the node connects to by any edge type, from 7 px to a capped maximum.
+  - Fill hue is the family: teal for Goal Inference, coral for Temporal Imitation, and a third hue for new families. Papers with no family use purple. GAP (`FRAMEWORK_PAPER`) also gets a purple ring.
+  - Darker fill means a newer paper, from the year's position in the visible range.
+  - Every dot has a thin outline in the page background color.
+  - Tangential works are smaller gray dots with a dashed outline, at half opacity.
+  - No pills, no boxes, no action-type icons on the node.
+- **Labels** sit to the right of the dot as plain text: short name, then the two-digit year in muted text (" '23"). Don't repeat a year that the short name already contains. At the fitted zoom, only the larger dots show labels, with collision-aware placement that hides overlapping labels. Zooming in reveals more. Hover, focus, selection, and search always show a node's label.
+- **Clusters** draw as soft tinted ellipses or rounded hulls behind their dots, with the family name above in the cluster's dark stop. The scope line, strength, and limitations show on hover over the name.
+- **Edges** follow §5.5 as thin gray curves that start and end at the dot edges, with small arrowheads. Builds on is solid, benchmarks dashed, and cites dotted and lighter. Cites lines draw only for the hovered or selected paper unless "Show all citation lines" is on. Hovering an edge lists every relation between its two papers.
+- **Zoom and pan** use `d3-zoom`. On load, the graph fits its content with a small margin, so no large empty areas remain. Controls for zoom in, zoom out, and fit sit in the graph's corner. Choosing a paper in search zooms to it and pulses it once. The wheel zooms only with a modifier key or inside the graph after a click, so page scrolling isn't hijacked.
+- **Hover or focus** on a node fades everything except that paper and its direct neighbors, colors its edges with its family's dark stop, and shows a card with short name and year, title, core strength, inputs → action types, and knowns chips.
+- **Click** on a node highlights its ancestors and descendants through the edge types currently shown, dims the rest, sets `focus=`, and opens the drawer. Clicking empty canvas or pressing Esc clears the focus.
+- **Rendering.** SVG. Keep the element count per node small, so 330 nodes stay smooth.
 - **Filter bar**: family, action type, input modality, theme, years. Selecting a level card affects only the top band.
 - **View toggle**, Graph or List. The list covers the same papers as the graph: L2 methods grouped by family, then tangential works grouped by tangent type, with sortable columns for short name, year, title, inputs, action types, core strength, and count of subproblems addressed. List is the default under 640 px.
 - The graph fits its container width and scales down on narrow screens. The page itself never scrolls horizontally.
@@ -666,7 +680,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 8. In matrix view, clicking a filled cell opens the drawer. Selecting goal inference does not list SLaTe-PRO, which skips it.
 9. Pinning two papers puts both ids in `compare=`.
 10. At 375 px wide, no page scrolls horizontally.
-11. On Methods, the STOT to SLaTe-PRO edge is solid, and unchecking "Cites" removes every dotted edge.
+11. On Methods, the STOT to SLaTe-PRO edge is solid. With "Show all citation lines" off, no dotted edge shows until a node is hovered. The fit button brings every node into view.
 12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table has exactly one GAP row, shaded and first, showing three loop-type pills, and it stays first after sorting by year.
 13. The realism plot shows GAP's dot at task-specific policy and adaptive simulated user, at simulator opacity. Hovering it shows a card with a working Paper link.
 14. With a fixture tangential paper, its graph node renders at half opacity, and unchecking "Show tangential works" removes it and its edges.
@@ -684,7 +698,7 @@ Work on `main`. Commit at the end of each milestone and push to `origin main` ri
 | M1 | Data foundation: taxonomy, schemas, validator, `build-data`, `new-paper` | `npm run validate` passes on an empty `papers/` folder, and each §5.4 rule has a failing fixture |
 | M2 | Seed data from `spec/SEED.md` | Every SEED entry has a file. Links come only from confirmed landing pages. `data/SEED_REPORT.md` lists missing links and every difference between the RTI reference list and the landing page. Baselines are recorded per SEED rule 7. `data/citations.json` exists. Validate passes. |
 | M3 | Shell: routing, header, URL state, search, drawer, compare tray, theme toggle | E2E tests 3 and 9 pass |
-| M4 | Methods page | E2E tests 2, 4, 11, and 14 pass. Graph readable with seed data and with the synthetic fixture from §7.2. |
+| M4 | Methods page | E2E tests 2, 4, 11, and 14 pass. Graph readable with seed data and with the 330-node synthetic fixture from §7.2. |
 | M5 | Evaluations page | E2E tests 5, 6, 12, and 13 pass |
 | M6 | Subproblems page | E2E tests 7 and 8 pass |
 | M7 | Contribution flow, CI, deploy, README | CI green on `main`. README links the live site and CONTRIBUTING.md. |
