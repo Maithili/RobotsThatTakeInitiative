@@ -31,11 +31,13 @@ describe('edge precedence and merging', () => {
     expect(drawnRelation(pair, new Set<EdgeType>())).toBeNull();
   });
 
-  it('reads and writes edges=', () => {
-    expect([...parseEdgeTypes(null)]).toEqual(['builds', 'benchmarks', 'cites']);
+  it('reads and writes edges=: absent means builds and benchmarks', () => {
+    expect([...parseEdgeTypes(null)]).toEqual(['builds', 'benchmarks']);
+    expect([...parseEdgeTypes('builds,benchmarks,cites')]).toEqual(['builds', 'benchmarks', 'cites']);
     expect([...parseEdgeTypes('builds,benchmarks,bogus')]).toEqual(['builds', 'benchmarks']);
     expect([...parseEdgeTypes('none')]).toEqual([]);
-    expect(edgeParam(all)).toBeNull();
+    expect(edgeParam(new Set<EdgeType>(['benchmarks', 'builds']))).toBeNull();
+    expect(edgeParam(all)).toBe('builds,benchmarks,cites');
     expect(edgeParam(new Set<EdgeType>(['cites', 'builds']))).toBe('builds,cites');
     expect(edgeParam(new Set<EdgeType>())).toBe('none');
   });

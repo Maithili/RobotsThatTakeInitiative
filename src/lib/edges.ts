@@ -47,15 +47,19 @@ export function drawnRelation(e: PairEdge, shown: ReadonlySet<EdgeType>): Relati
   return e.relations.find((r) => shown.has(r.type)) ?? null;
 }
 
-/** Parses `edges=`. Absent means all three; unknown values are ignored. */
+/** Edge types drawn for all papers when `edges=` is absent (SPEC §6.2). Cites lines then show only for the
+ *  hovered or selected paper, until "Show all citation lines" is on. */
+export const DEFAULT_EDGE_TYPES: readonly EdgeType[] = ['builds', 'benchmarks'];
+
+/** Parses `edges=`. Absent means builds and benchmarks; unknown values are ignored. */
 export function parseEdgeTypes(v: string | null | undefined): Set<EdgeType> {
-  if (v === null || v === undefined) return new Set(EDGE_TYPES);
+  if (v === null || v === undefined) return new Set(DEFAULT_EDGE_TYPES);
   return new Set(v.split(',').filter((x): x is EdgeType => (EDGE_TYPES as readonly string[]).includes(x)));
 }
 
-/** Serializes the shown types for `edges=`: null (absent) when all three are on. */
+/** Serializes the shown types for `edges=`: null (absent) for the default set. */
 export function edgeParam(shown: ReadonlySet<EdgeType>): string | null {
-  if (EDGE_TYPES.every((t) => shown.has(t))) return null;
+  if (shown.size === DEFAULT_EDGE_TYPES.length && DEFAULT_EDGE_TYPES.every((t) => shown.has(t))) return null;
   const list = EDGE_TYPES.filter((t) => shown.has(t));
   return list.length ? list.join(',') : 'none';
 }
