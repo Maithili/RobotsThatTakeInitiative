@@ -1,6 +1,6 @@
 # Seed report
 
-Written while seeding `data/` from `spec/SEED.md` (milestone M2) and updated on the second pass (Oct 21, 2026, see the last section). Section and reference numbers point into the RTI paper unless a section names another paper.
+Written while seeding `data/` from `spec/SEED.md` (milestone M2), updated on the second pass and on the HOMER-lineage pass (both Oct 21, 2026, see the last two sections). Section and reference numbers point into the RTI paper unless a section names another paper.
 
 ## Open questions for Maithili (from SEED.md §9)
 
@@ -193,3 +193,75 @@ All three were found on arXiv and read in full. None gets a method block yet. Pr
 - Evaluation entry: offline on HOMER+ and HOMER-Noise, against SLaTe-PRO and STOT (STOT's numbers come from the SLaTe-PRO paper), with n-gram and zero-shot LLM ablations (§IV). The Stretch 3 demo (§IV-G) is a proof of concept with activity labels given externally, so it is not entered.
 - Metric not in the taxonomy: mean F1 over joint activity-object labels (§IV). Like F1, it is a proxy that mixes ΔC↓ (correct predictions) and ΔC↑ (wrong ones).
 - Proposed method block: `knowns: {goal: unknown, human_policy: unknown}` (L2, no goal given, §III). `family: temporal_imitation`, with a caveat, since it predicts the next activity and then the object from temporal patterns rather than at the action level. `inputs: [object_relocations]` (§IV-A). `action_types: [act]` (§IV-G). `themes: [personalization]` (title, §I). Subproblems: goal anticipation, addresses (predicts the upcoming activity, §III). Action-goal association, addresses in part (objects tied to activities by co-occurrence, §III). Goal-space representation, assumes given (uses the dataset's activity labels, §III-D). Human policy learning, open question (n-gram transition models, §III). Cost modeling and action selection, not addressed (it acts when confident, §III).
+
+## HOMER-lineage pass (Oct 21, 2026)
+
+All new facts in this pass come from the librarian's answers of Oct 21, 2026, which read each paper's full text. Placements follow Maithili's decisions in SPEC §16. Provenance strings cite the librarian's section (such as "A-3 FlowMaps A10") and the paper's own section.
+
+### Papers added
+
+| Id | Short name | Placement |
+|---|---|---|
+| `sgm` | SGM | Tangential, type search |
+| `flowmaps` | FlowMaps | Tangential, type search |
+| `evolvingnav` | EvolvingNav | Tangential, type search |
+| `tap` | TAP | Tangential, type search (Dorbala et al., Transit-Aware Planning) |
+| `mullen-2025-home-emergency` | Mullen 2025 | Tangential, type search (HomeEmergency names the task and dataset, not the method) |
+| `anticipatory-tamp` | Anticipatory TAMP | L2, no family (Dhakal et al., RA-L 2026, one paper with arXiv 2407.13694) |
+| `talukder-2025-anticipatory-planning` | Talukder 2025 | L2, no family |
+| `courteous-anticipation` | Courteous Anticipation | L2, no family (Talukder et al. 2026) |
+| `din-2025-proactivity` | Din 2025 | L2, Implicit Cues |
+
+The three anticipatory planning papers have goal and human policy unknown because their preparation step acts before any task is given. Each later task is given one at a time. All three carry `action_types: [act]` and no inputs, since their planners read the full symbolic state, which fits no observation modality. Din 2025 carries `[act]` and `[video]` (egocentric RGB).
+
+### Datasets and simulators added
+
+- **Tangential.** EvoWorld-Bench (evaluation setup, EvolvingNav), Dynamic House Simulator (simulator, SGM), and Dynamic Object Maps (simulator, TAP). COIN's ownership dataset is now tangential too. The Dynamic House Simulator is a generator, not a recorded dataset, so it is a simulator. Dynamic Object Maps is not yet released, but TAP's evaluations need it as their environment.
+- **Simulators needed as environments.** ProcTHOR (AI2-THOR), Habitat (HSSD scenes), ThreeDWorld, PyBullet, and Unity.
+- **Not created.** FlowMaps' generated data, Talukder 2025's benchmark, Courteous Anticipation's evaluation setting, and Din 2025's image set are unnamed. HomeEmergency is not yet released. Anticipatory TAMP releases no data.
+- **EvoWorld-Bench and HOMER+.** HOMER+ is one of six sources and supplies only activity-order and end-state priors. None of `extends`, `uses`, or `validates_against` fits, so the relation is in the notes, not in `based_on`.
+
+### Changes to existing papers
+
+- **GLOBE** joins Temporal Imitation with goal and human policy unknown. Its inputs, action types, and subproblem tags from the earlier proposal are not added, since the librarian's answers do not state them.
+- **COIN** keeps its paper file with no method block. Its evaluation entry stays, because a paper with no level shows on no page (SPEC §6.2).
+- **PredictiveGraphs** now has four entries, one per setting. STOT and FlowMaps are baselines, per the librarian's corrections. Its navigation settings use an LLM planning agent, so the robot level is now generalist, and the real-lab entry keeps a null loop because the paper does not say whether its queries ran live or on recorded scans.
+- **SLaTe-PRO** gains an entry for its interactive-query setting, where a ground-truth oracle answers queries (human level scripted).
+- **ProAct** splits into its offline perception setting and its closed-loop task-graph rollout, each with the baselines from its own table.
+- **Metrics** are attached to every evaluation entry of STOT, SLaTe-PRO, STREAK, GLOBE, PredictiveGraphs, NOPA, Watch-And-Help, and ProAct.
+
+### Corrections applied
+
+FlowMaps' CEG baseline is cited to Wang et al., and its TAP-LGX baseline is TAP. PredictiveGraphs benchmarks against STOT and FlowMaps. Mullen 2025's baselines are DF, FFO, and PPO. TAP's published baselines are DD-PPO and LGX. SGM's are HMS plus the authors' heuristics. Din 2025's Transformer Predictor is Tang et al. (CVPR 2020). The anticipatory planning papers compare only against myopic planners and their own variants. Courteous Anticipation's Selfish A.P. implements the objective of Dhakal 2023 and Talukder 2025 but is the authors' own code, so it stays in `other_baselines`.
+
+### Citations
+
+`data/citations-manual.yaml` holds 25 citations the librarian confirmed in reference lists, each between two papers in the database. Talukder 2025 cites the arXiv version of Anticipatory TAMP, and Anticipatory TAMP's RA-L version cites Talukder 2025, so that pair has a citation in each direction. `data/citations.json` does not list the nine new papers yet. Rerun `npm run fetch-citations`.
+
+### Metrics
+
+80 metrics are new, and the existing three gained direction and unit. `data/METRIC_MAPPING_REVIEW.md` lists each with its papers and the proposed terms and kind, and flags the mappings that are a stretch.
+
+### Judgment calls
+
+- **Loop type for search.** Where the robot moves or chooses what to observe in a simulator while scripted object moves ignore it, the entry uses `closed_scripted`, and its provenance says the robot never changes object state. Predictions scored against fixed records use `offline_replay`.
+- **Realism.** Offline predictors take a task-specific robot and recorded behavior, as STOT's entry does. A scripted object schedule or task stream with no person takes the scripted user level. LLM or VLM controllers take the generalist level (EvolvingNav, PredictiveGraphs' navigation, and TAP, whose TAP-RL variant is task-specific). Mullen 2025's hand-built planner takes the task-specific level. Mullen 2025's four real apartments take users' own homes and EvolvingNav's real indoor and outdoor sites take lab, each as the closest level.
+- **Subproblem status.** "Addressed", "partly", "implicitly", and "indirectly" give `addresses`, with the qualifier at the start of the note. "Not addressed" gives `skips`, unless the librarian says the input is given, which gives `assumes`. No approach is set on the new tags. Because tangential works have no level, their `addresses` tags appear on the Subproblems page. These are SGM (human policy, action selection), FlowMaps (human policy, goal anticipation, action selection), EvolvingNav (human policy, goal anticipation, cost model, action selection), TAP (human policy, goal anticipation, action selection), and Mullen 2025 (action selection). Most of the human-policy and goal-anticipation tags are partial, since these papers learn object dynamics, not people.
+- **Demos.** Robot demos with no reported numbers are not entered, as before. That covers FlowMaps' TIAGo demo and the demos in STOT, SLaTe-PRO, STREAK, and GLOBE. Anticipatory TAMP's Fetch demo reports time and action counts, so it has an entry. Mullen 2025's real-world entry has no metrics because Table V was unreadable.
+
+### Could not place
+
+- **SGM's link.** SGM prints no landing page, arXiv id, or DOI, so `links.paper` is null. EvolvingNav's reference list prints arXiv 2305.17537 for SGM, which Maithili may want to confirm and use.
+- **Din 2025's link.** The thesis prints only a ProQuest number, so `links.paper` is null.
+- **TAP's code.** The only code link is an anonymous review link, so it is left out.
+- **EvolvingNav's external benchmarks.** FindingDory, GOAT-Bench, and the cross-environment navigation tasks follow their own protocols, and the paper does not define their metrics, so they have no entry.
+- **Rudra et al., Dhakal et al. 2023, and Wang et al.** These are cited or used as baselines often but are not in the database.
+- **GLOBE's venue.** The librarian read the RO-MAN 2026 (IEEE) version. The file still says arXiv with the arXiv link, since no DOI was given.
+
+### Open questions for Maithili
+
+1. Should the search metrics map to ΔC↓ at all, given that no search paper has a user (`data/METRIC_MAPPING_REVIEW.md`, item 1)?
+2. Should Talukder 2025 and Courteous Anticipation take `inputs: [scene_graph]`? Both encode the planner state as a scene graph, but it is not an observed modality.
+3. Should Courteous Anticipation list Talukder 2025 in `baselines` for its Selfish A.P. baseline?
+4. Should GLOBE's venue become IEEE RO-MAN 2026?
+5. Should partial `addresses` tags on the search papers become `skips`, to keep them off the Subproblems page?
