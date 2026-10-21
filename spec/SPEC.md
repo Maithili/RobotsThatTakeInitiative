@@ -197,6 +197,10 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     depends_on: [P1, A1, A2, A3]   # A2 -> P2 pending confirmation (see §15)
     approaches: {cirl: Cooperative inverse RL, proactive_communication: Proactive communication, hedging: Hedging under uncertainty}
 
+tangent_types:                # works next to the algorithmic core. Maithili adds more.
+  user_study:     {label: User studies, definition: User studies on the desirability of proactivity.}
+  conversational: {label: Conversational proactivity, definition: Proactivity in conversational settings.}
+
 themes:                       # cross-cutting, RTI §III-A
   joint_optimization: {label: Joint optimization, definition: Optimizing across subproblems instead of solving each alone.}
   personalization:    {label: Personalization, definition: Learning user-specific patterns.}
@@ -325,6 +329,7 @@ featured_comparison:          # drives the chart in §8.2
 | `method.core_strength` | string ≤ 120 | no | One line. |
 | `method.builds_on` | paper id[] | no | Solid "builds on" edges (§5.5). This paper extends those papers. Only Maithili adds these. |
 | `themes` | theme id[] | no | |
+| `tangent` | tangent type id | no | Marks a tangential work. It needs no method block and shows in the literature graph at half opacity (§7.2). |
 | `subproblems` | map from G1…P2 to `{status, relation, approach?, note}` | no | `note` ≤ 140 says what part of the subproblem the work solves. `approach` must be one of that subproblem's approaches. |
 | `evaluations` | list of evaluation entries | no | Their presence puts the paper on the Evaluations page. |
 
@@ -468,6 +473,7 @@ Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, th
 | `compare` | global | `gap,slate-pro` | Compare set, up to 3 |
 | `view` | per page | `list`, `matrix` | View toggle |
 | `edges` | Methods | `builds,benchmarks` | Edge types shown. Absent means all three. |
+| `tangents` | Methods | `0` | Hides tangential works. Absent means shown. |
 | `focus` | Methods | `slate-pro` | Ancestry focus |
 | `term` | Evaluations | `dC_added` | Net value term |
 | `loop` | Evaluations | `closed_scripted,closed_adaptive` | Loop type filter |
@@ -524,20 +530,21 @@ Left to right: level cards, condensed timeline, legend. Under 900 px the legend 
   - Hovering a chip highlights the same paper in the graph, and hovering a graph node highlights its chip.
   - Clicking a chip opens the drawer and, if the paper is in the graph, focuses its node.
   - A time brush on the shared axis sets `years=`.
-- **Legend**, in the space right of the timeline: the three edge styles with their checkboxes (bound to `edges=`, all on by default), the cluster tints, the level colors, and the action type icons.
+- **Legend**, in the space right of the timeline: the three edge styles with their checkboxes (bound to `edges=`, all on by default), the cluster tints, the level colors, the action type icons, and a "Show tangential works" checkbox bound to `tangents=`.
 
 ### 7.2 Literature graph
 
-- **Scope.** The graph shows every L2 paper with a method block. One constant holds the levels it shows (`GRAPH_LEVELS = ['L2']`). L1 papers appear in the timeline and the list view.
+- **Scope.** The core of the graph is algorithmic: every L2 paper with a method block and no `tangent`. One constant holds the levels it shows (`GRAPH_LEVELS = ['L2']`). L1 papers appear in the timeline and the list view.
+- **Tangential works.** Papers with a `tangent` also show in the graph, at half opacity, along with the edges that touch them. Hover or focus brings a tangential node and its edges to full opacity, and its hover card names its tangent type. They sit outside the cluster hulls (§7.2 Layout). They do not appear in the timeline.
 - **Clusters.** One cluster per L2 family, so Goal Inference and Temporal Imitation to start. Each cluster draws as a soft tinted hull behind its nodes, labeled with the family name, with the scope line, strength, and limitations on hover. Papers with no family sit outside the hulls, in the space between the clusters. GAP is one of these.
-- **Layout.** `d3-force`, run for a fixed number of ticks from seeded positions, so the layout is identical on every load. Cluster centers sit evenly spaced on a circle, which puts two clusters left and right. Each node pulls toward its cluster center, and nodes with no family pull toward the center point between clusters. Links pull connected nodes together weakly, and a collision force keeps pills apart. The layout depends only on the data. Filters dim nodes and never move them.
-- **Growth.** Adding papers or a new family needs no layout code change. A new family gets its own cluster and hull. The graph stays readable with a synthetic fixture of 60 L2 papers in 4 clusters.
+- **Layout.** `d3-force`, run for a fixed number of ticks from seeded positions, so the layout is identical on every load. Cluster centers sit evenly spaced on a circle, which puts two clusters left and right. Each node pulls toward its cluster center, and nodes with no family pull toward the center point between clusters. Tangential works take no cluster pull. A weak radial force places them on a ring outside the clusters, and their links pull them toward the papers they connect to. Links pull connected nodes together weakly, and a collision force keeps pills apart. The layout depends only on the data. Filters dim nodes and never move them.
+- **Growth.** Adding papers or a new family needs no layout code change. A new family gets its own cluster and hull. The graph stays readable with a synthetic fixture of 60 L2 papers in 4 clusters plus 15 tangential works.
 - **Nodes** are pills with the short name and year, a left edge in the level color, and small icons for action types.
 - **Edges** follow §5.5 and draw as curves under the nodes. Hovering an edge lists every relation between its two papers.
 - **Hover or focus** on a node shows a card with short name and year, title (one line, truncated), core strength, inputs → action types, and knowns chips.
 - **Click** on a node highlights all its ancestors and descendants through the edge types currently shown, dims the rest, sets `focus=`, and opens the drawer. Clicking empty canvas or pressing Esc clears the focus.
 - **Filter bar**: family, action type, input modality, theme, years. Selecting L1 dims every graph node and shows the note "The graph shows unprompted (L2) methods."
-- **View toggle**, Graph or List. The list covers all methods at every level, grouped by level then family, with sortable columns for short name, year, title, inputs, action types, core strength, and count of subproblems addressed. List is the default under 640 px.
+- **View toggle**, Graph or List. The list covers all methods at every level, grouped by level then family, then tangential works grouped by tangent type, with sortable columns for short name, year, title, inputs, action types, core strength, and count of subproblems addressed. List is the default under 640 px.
 - **Surveys strip** above the graph shows papers with `type: survey` as chips.
 - The graph fits its container width and scales down on narrow screens. The page itself never scrolls horizontally.
 
@@ -662,6 +669,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 11. On Methods, the STOT to SLaTe-PRO edge is solid, and unchecking "Cites" removes every dotted edge.
 12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table has exactly one GAP row, shaded and first, showing three loop-type pills, and it stays first after sorting by year.
 13. The realism plot shows GAP's dot at task-specific policy and adaptive simulated user, at simulator opacity. Hovering it shows a card with a working Paper link.
+14. With a fixture tangential paper, its graph node renders at half opacity, and unchecking "Show tangential works" removes it and its edges.
 
 **CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes: `npm ci`, validate, typecheck, unit tests, build, end-to-end tests.
 
@@ -676,7 +684,7 @@ Work on `main`. Commit at the end of each milestone and push to `origin main` ri
 | M1 | Data foundation: taxonomy, schemas, validator, `build-data`, `new-paper` | `npm run validate` passes on an empty `papers/` folder, and each §5.4 rule has a failing fixture |
 | M2 | Seed data from `spec/SEED.md` | Every SEED entry has a file. Links come only from confirmed landing pages. `data/SEED_REPORT.md` lists missing links and every difference between the RTI reference list and the landing page. Baselines are recorded per SEED rule 7. `data/citations.json` exists. Validate passes. |
 | M3 | Shell: routing, header, URL state, search, drawer, compare tray, theme toggle | E2E tests 3 and 9 pass |
-| M4 | Methods page | E2E tests 2, 4, and 11 pass. Graph readable with seed data and with the 60-paper, 4-cluster synthetic fixture. |
+| M4 | Methods page | E2E tests 2, 4, 11, and 14 pass. Graph readable with seed data and with the synthetic fixture from §7.2. |
 | M5 | Evaluations page | E2E tests 5, 6, 12, and 13 pass |
 | M6 | Subproblems page | E2E tests 7 and 8 pass |
 | M7 | Contribution flow, CI, deploy, README | CI green on `main`. README links the live site and CONTRIBUTING.md. |
@@ -699,3 +707,4 @@ Maithili can reverse any of these.
 
 1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them.
 2. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.
+3. **Tangential works.** Maithili lists them. Candidates from the RTI references that fit the two tangent types: Peng et al. 2019 [16] (a CHI design and evaluation of service-robot proactivity), and the works that ask questions [17]–[19]. [16]–[18] left the database earlier, and ADAPT [19] is in it now with only its action-selection tag.
