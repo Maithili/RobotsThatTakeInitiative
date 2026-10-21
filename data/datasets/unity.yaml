@@ -1,0 +1,10 @@
+# Added from the librarian's answers (Oct 21, 2026), as the environment for Din 2025.
+id: unity
+name: Unity
+kind: simulator
+introduced_in: null
+links:
+  home: https://unity.com
+sim_or_real: sim
+notes: Din 2025 builds three household environments in it with a Tiago robot
+provenance: Librarian Oct 2026, A-2 Din A2, A8; Din ref. [7], §4.1

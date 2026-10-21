@@ -1,0 +1,10 @@
+# Added from the librarian's answers (Oct 21, 2026), as the environment for Anticipatory TAMP.
+id: pybullet
+name: PyBullet
+kind: simulator
+introduced_in: null
+links:
+  home: null
+sim_or_real: sim
+notes: Anticipatory TAMP adapts the NAMO and cabinet domains of Chitnis et al. in it
+provenance: Librarian Oct 2026, A-7 Dhakal A8; Dhakal §V

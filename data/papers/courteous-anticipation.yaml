@@ -1,0 +1,71 @@
+# Added from the librarian's answers (Oct 21, 2026). Placement per Maithili (SPEC §16).
+# Knowns are both unknown because a free robot prepares the shared space before any task is given to it. Other tasks are given one at a time.
+# Inputs are left empty. The planner reads the PDDL state as a sparse scene graph, which fits no observation modality.
+# Selfish A.P. is the authors' own implementation of the single-robot objective of Dhakal 2023 and Talukder 2025, so it stays out of `baselines`.
+id: courteous-anticipation
+short_name: Courteous Anticipation
+title: "Courteous Anticipation: Improving Long-Lived Task Planning in Persistent Shared Environments"
+authors:
+  - Md Ridwan Hossain Talukder
+  - Roshan Dhakal
+  - Elizabeth Phillips
+  - Gregory J. Stein
+venue: arXiv
+year: 2026
+links:
+  paper: https://arxiv.org/abs/2607.20289
+ids:
+  arxiv: "2607.20289"
+provenance: "Librarian Oct 2026, A-8b. L2 per Maithili: a free robot prepares the space before any task is given to it"
+method:
+  knowns:
+    goal: unknown
+    human_policy: unknown
+  action_types:
+    - act
+subproblems:
+  G1:
+    status: addresses
+    relation: direct
+    note: A task is a set of predicates. Each robot's responsibilities are a task set with its distribution
+  G2:
+    status: assumes
+    relation: direct
+    note: Each task is given explicitly to a robot
+  A1:
+    status: assumes
+    relation: direct
+    note: No human. Each robot's task distribution is given
+  A2:
+    status: assumes
+    relation: direct
+    note: Tasks are explicit
+  A3:
+    status: addresses
+    relation: direct
+    note: Implicitly. Per-robot GNNs estimate the cost of one next task, summed across robots
+  P1:
+    status: addresses
+    relation: direct
+    note: Time-like costs from distance-based moves, fixed action costs, and a 100 s help action
+  P2:
+    status: addresses
+    relation: direct
+    note: Picks the plan with the lowest immediate cost plus future cost summed over all robots
+evaluations:
+  - id: courteous-anticipation-sim
+    environment: null
+    datasets: []
+    loop: closed_scripted
+    human_model: No human. Each robot's tasks drawn from a fixed distribution
+    metrics:
+      - avg_task_cost
+      - cost_reduction
+    other_baselines:
+      - Myopic (FastDownward)
+      - Selfish A.P. (single-robot objective)
+    provenance: "Librarian Oct 2026, A-8b A9–A11; Courteous §VI, Table II. Symbolic PDDL on ProcTHOR bases, 1 to 3 robots"
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: simulator

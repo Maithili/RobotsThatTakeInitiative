@@ -1,0 +1,88 @@
+# Added from the librarian's answers (Oct 21, 2026). Placement per Maithili (SPEC §16).
+# The arXiv 2024 preprint (2407.13694) and the RA-L 2026 paper are one paper: same authors, abstract, method, and numbers.
+# Knowns are both unknown because preparation rearranges the scene before any task is given. Each later task is given one at a time.
+# Inputs are left empty. The planner reads the full symbolic and continuous state, which fits no observation modality.
+id: anticipatory-tamp
+short_name: Anticipatory TAMP
+title: "Anticipatory Task and Motion Planning: Improved Rearrangement in Persistent Continuous-Space Environments"
+authors:
+  - Roshan Dhakal
+  - Duc M. Nguyen
+  - Tom Silver
+  - Xuesu Xiao
+  - Gregory J. Stein
+venue: IEEE RA-L
+year: 2026
+links:
+  paper: https://doi.org/10.1109/LRA.2025.3631357
+ids:
+  doi: "10.1109/LRA.2025.3631357"
+  arxiv: "2407.13694"
+provenance: "Librarian Oct 2026, A-7. L2 per Maithili: preparation acts before any task is given. One paper with arXiv 2407.13694"
+method:
+  knowns:
+    goal: unknown
+    human_policy: unknown
+  action_types:
+    - act
+subproblems:
+  G1:
+    status: addresses
+    relation: direct
+    note: A task is a set of goal fluents. The task set and its distribution P(τ) are given
+  G2:
+    status: assumes
+    relation: direct
+    note: Each task is given explicitly
+  A1:
+    status: assumes
+    relation: direct
+    note: No human. The task distribution P(τ) is given and static
+  A2:
+    status: assumes
+    relation: direct
+    note: Each task is given. The next task is not predicted
+  A3:
+    status: addresses
+    relation: direct
+    note: Implicitly. A GNN estimates the expected cost of the next task under P(τ) from the graph-encoded state
+  P1:
+    status: addresses
+    relation: direct
+    note: Fixed action costs plus Euclidean distance, summed with the expected future cost
+  P2:
+    status: addresses
+    relation: direct
+    note: Samples TAMP plans and picks the lowest plan cost plus estimated future cost. Prepares by simulated annealing
+evaluations:
+  - id: anticipatory-tamp-sim
+    environment: pybullet
+    datasets: []
+    loop: closed_scripted
+    human_model: No human. Tasks sampled from a fixed P(τ)
+    metrics:
+      - avg_task_cost
+      - cost_reduction
+      - planning_time
+    other_baselines:
+      - Myopic (TAMP solver, no cost estimator)
+    provenance: "Librarian Oct 2026, A-7 A9–A11; Dhakal §V-A–D, Table I, Fig. 6. Each task starts from the last one's end state"
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: simulator
+  - id: anticipatory-tamp-fetch
+    environment: null
+    datasets: []
+    loop: closed_scripted
+    human_model: No human. A fixed two-task sequence
+    metrics:
+      - task_time
+      - robot_action_count
+    other_baselines:
+      - Myopic (TAMP solver, no cost estimator)
+    provenance: "Librarian Oct 2026, A-7 A9–A10; Dhakal §V-E, Fig. 8. One demonstration on a Fetch robot. Lab or home is not stated"
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: null

@@ -1,0 +1,69 @@
+# Added from the librarian's answers (Oct 21, 2026). Placement per Maithili (SPEC §16).
+# Knowns are both unknown because preparation rearranges the home before any task is given. Each later task is given one at a time.
+# Inputs are left empty. The planner reads the PDDL state, converted to a scene-graph-like graph, which fits no observation modality.
+# The paper introduces an unnamed ProcTHOR-ALFRED and restaurant benchmark, so it has no dataset entry.
+id: talukder-2025-anticipatory-planning
+short_name: Talukder 2025
+title: Anticipatory Planning for Performant Long-Lived Robot in Large-Scale Home-Like Environments
+authors:
+  - Md Ridwan Hossain Talukder
+  - Raihan Islam Arnob
+  - Gregory J. Stein
+venue: IEEE ICRA
+year: 2025
+links:
+  paper: https://doi.org/10.1109/ICRA55743.2025.11128153
+ids:
+  doi: "10.1109/ICRA55743.2025.11128153"
+provenance: "Librarian Oct 2026, A-8a. L2 per Maithili: preparation rearranges the home before any task is given"
+method:
+  knowns:
+    goal: unknown
+    human_policy: unknown
+  action_types:
+    - act
+subproblems:
+  G1:
+    status: addresses
+    relation: direct
+    note: A task is a list of predicates. The task distribution is curated from ALFRED for each home
+  G2:
+    status: assumes
+    relation: direct
+    note: Each task is given explicitly
+  A1:
+    status: assumes
+    relation: direct
+    note: No human. The task distribution P(τ) is given
+  A2:
+    status: assumes
+    relation: direct
+    note: Each task is given. The next task is not predicted
+  A3:
+    status: addresses
+    relation: direct
+    note: Implicitly. A GNN on a scene-graph state estimates the expected cost of one follow-up task
+  P1:
+    status: addresses
+    relation: direct
+    note: Constant action costs, with move cost proportional to distance
+  P2:
+    status: addresses
+    relation: direct
+    note: Focused sampling with FastDownward, then the lowest immediate plus estimated future cost
+evaluations:
+  - id: talukder-2025-anticipatory-planning-sim
+    environment: null
+    datasets: []
+    loop: closed_scripted
+    human_model: No human. Tasks sampled from a fixed P(τ)
+    metrics:
+      - avg_task_cost
+      - cost_reduction
+    other_baselines:
+      - Myopic (FastDownward)
+    provenance: "Librarian Oct 2026, A-8a A9–A11; Talukder 2025 §V-B–C, Table I. Symbolic PDDL on ProcTHOR homes and a restaurant"
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: simulator

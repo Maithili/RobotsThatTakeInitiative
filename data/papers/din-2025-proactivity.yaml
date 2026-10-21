@@ -1,0 +1,74 @@
+# Added from the librarian's answers (Oct 21, 2026). Placement per Maithili (SPEC §16).
+# The framework has no single name, so the short name is "Din 2025". Its annotated image set is unnamed and unreleased.
+id: din-2025-proactivity
+short_name: Din 2025
+title: "Proactivity in Robotics: Towards Learning to Help Without Being Helped"
+authors:
+  - Huzaifa Salah Ud Din
+venue: MSc thesis, Bilkent University
+year: 2025
+links:
+  paper: null
+provenance: Librarian Oct 2026, A-2 Din A1–A12. Implicit Cues per Maithili, Oct 21 2026. The thesis prints no landing page
+method:
+  knowns:
+    goal: unknown
+    human_policy: unknown
+  family: implicit_cues
+  action_types:
+    - act
+  inputs:
+    - video
+subproblems:
+  G1:
+    status: addresses
+    relation: direct
+    note: A proactive task is a short sequence of (action, object) subgoals from a fixed vocabulary
+  G2:
+    status: addresses
+    relation: direct
+    note: A GNN and LSTM map scene context to subgoal sequences. No user actions are observed
+  A1:
+    status: skips
+    relation: direct
+    note: Learns rules from annotator labels, not from observing a user
+  A2:
+    status: skips
+    relation: direct
+    note: Predicts a proactive task from scene context, not the user's goal
+  A3:
+    status: addresses
+    relation: direct
+    note: Partly. Anticipates a needed task from scene cues, not future user goals
+  P1:
+    status: skips
+    relation: direct
+    note: No cost or courtesy model
+  P2:
+    status: addresses
+    relation: direct
+    note: LSTM subgoals executed by bidirectional RRT, triggered by object-of-interest detection
+evaluations:
+  - id: din-2025-offline
+    environment: unity
+    datasets: []
+    loop: offline_replay
+    human_model: Recorded annotator labels
+    metrics:
+      - ooi_precision
+      - ooi_recall
+      - ooi_f1
+      - ooi_accuracy
+      - relation_accuracy
+      - exact_match_accuracy
+      - subgoal_accuracy
+    other_baselines:
+      - Transformer Predictor (Tang et al., CVPR 2020)
+      - Transformer Predictor + GNNs
+      - Sem-MLP
+      - Multi-Label MLP
+    provenance: "Librarian Oct 2026, A-2 Din A9–A11; Din §4.3, Tables 4.1–4.3. Scored against annotations, never executed"
+    realism:
+      robot: task_specific
+      human: recorded
+      environment: simulator
