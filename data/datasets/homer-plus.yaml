@@ -9,8 +9,11 @@ span: Several weeks
 households_or_users: 3
 observations:
   - object_relocations
-goal_annotations: null
+goal_annotations: "yes"
 executable: "yes"
 environment: virtualhome
-notes: Routine behavior sampled from crowdsourced patterns, executable in VirtualHome
-provenance: RTI §IV-A1
+based_on:
+  - id: homer
+    relation: extends
+notes: Modifies HOMER; 24 activities and 93 entities; activity labels per step
+provenance: RTI §IV-A1; SLaTe-PRO §6, App. A.3

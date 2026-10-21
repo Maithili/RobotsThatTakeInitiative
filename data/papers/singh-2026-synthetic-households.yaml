@@ -1,0 +1,22 @@
+# Added from Maithili's list (spec/SEED.md §8.1); read from the arXiv full text.
+id: singh-2026-synthetic-households
+short_name: Singh 2026
+title: Realistic Synthetic Household Data Generation at Scale
+authors:
+  - Siddharth Singh
+  - Ifrah Idrees
+  - Abraham Dauhajre
+venue: null
+year: 2026
+links:
+  paper: https://arxiv.org/abs/2602.07243
+ids:
+  arxiv: "2602.07243"
+provenance: Singh et al., Methodology and Real-World Alignment Validation. Added per Maithili, Oct 2026
+evaluations:
+  - id: singh-2026-synthetic-households-validation
+    datasets:
+      - singh-synthetic-households
+      - homer
+    loop: null
+    provenance: Singh et al., Real-World Alignment Validation (data validation, no robot evaluation)

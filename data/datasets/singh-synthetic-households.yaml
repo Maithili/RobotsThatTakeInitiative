@@ -1,0 +1,14 @@
+id: singh-synthetic-households
+name: Synthetic households (Singh et al.)
+kind: dataset
+introduced_in: singh-2026-synthetic-households
+links:
+  home: null
+sim_or_real: sim
+goal_annotations: null
+executable: null
+based_on:
+  - id: homer
+    relation: validates_against
+notes: Generated layouts, object inventories, activity schedules, and dialogues; no simulator named; compared to HOMER by cosine similarity
+provenance: Singh et al., Methodology and Real-World Alignment Validation

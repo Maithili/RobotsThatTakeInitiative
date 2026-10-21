@@ -46,3 +46,22 @@ subproblems:
     status: assumes
     relation: direct
     note: Assumes uniform cost across actions
+evaluations:
+  - id: saavedra-2026-scene-graphs-original
+    loop: null
+    human_model: Objects moved on a fixed schedule
+    baselines:
+      - stot
+    other_baselines:
+      - ConceptGraphs
+      - CG + LLM
+      - CG + LLM + History
+      - DualMap
+      - FlowMaps
+      - FreMEn
+      - Perpetua
+    provenance: "PredictiveGraphs §VI (STOT appears as the \"HOMER [22]\" baseline)"
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: lab

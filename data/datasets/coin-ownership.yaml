@@ -1,0 +1,19 @@
+id: coin-ownership
+name: HOMER with ownership (COIN)
+kind: dataset
+introduced_in: hashimoto-2026-coin
+links:
+  home: null
+sim_or_real: sim
+span: Seven days
+households_or_users: 3 users
+observations:
+  - language
+goal_annotations: null
+executable: null
+environment: gazebo
+based_on:
+  - id: homer
+    relation: extends
+notes: HOMER schedules turned into 3,425 user-object events over 34 objects, with manually assigned ownership labels
+provenance: COIN §5.1–5.2

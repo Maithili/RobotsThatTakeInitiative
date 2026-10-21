@@ -115,7 +115,8 @@ export function MetricChip({ id, onHover }: { id: string; onHover?: (id: string 
   );
 }
 
-export function LoopPill({ loop }: { loop: string }) {
+export function LoopPill({ loop }: { loop: string | null }) {
+  if (!loop) return <span className="muted small">Loop type not recorded</span>;
   const l = tx.loop_types[loop];
   const idx = Object.keys(tx.loop_types).indexOf(loop);
   return (

@@ -20,3 +20,16 @@ method:
     human_policy: unknown
   core_strength: Adds mode switching that returns brief control to the human for failure recovery
   builds_on: []
+evaluations:
+  - id: huang-2025-intention-tracking-user-study
+    loop: user_study_short
+    human_model: 10 participants
+    other_baselines:
+      - Coexistence mode
+      - Cooperation mode
+      - HIT-IT (ablation)
+    provenance: HIT §V–VI (UR5e in a shared assembly workspace)
+    realism:
+      robot: task_specific
+      human: non_target
+      environment: lab

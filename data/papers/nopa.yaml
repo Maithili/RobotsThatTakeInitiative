@@ -46,3 +46,33 @@ subproblems:
     status: skips
     relation: direct
     note: Does not predict future goals
+evaluations:
+  - id: nopa-simulation
+    environment: virtualhome
+    loop: closed_scripted
+    human_model: Built-in planner agent
+    baselines:
+      - watch-and-help
+    other_baselines:
+      - AFGPN
+      - Empowerment
+      - HPRG
+      - HPGT (oracle)
+    provenance: "NOPA §IV, §V-A, §V-B.1 (HPGPN is the best Watch-And-Help approach)"
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: simulator
+  - id: nopa-user-study
+    environment: virtualhome
+    loop: user_study_short
+    human_model: 10 participants
+    baselines:
+      - watch-and-help
+    other_baselines:
+      - HPRG
+    provenance: NOPA §V-B.2
+    realism:
+      robot: task_specific
+      human: non_target
+      environment: simulator

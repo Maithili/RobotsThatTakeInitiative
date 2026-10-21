@@ -1,0 +1,16 @@
+id: homer
+name: HOMER
+kind: dataset
+introduced_in: stot
+links:
+  home: null
+sim_or_real: sim
+span: 50+ days
+households_or_users: 5
+observations:
+  - object_relocations
+goal_annotations: null
+executable: null
+environment: virtualhome
+notes: Routines from crowdsourced schedules (21 workers) and action scripts (23 participants), 108 objects per household
+provenance: Maithili, Oct 2026; STOT abstract and §5

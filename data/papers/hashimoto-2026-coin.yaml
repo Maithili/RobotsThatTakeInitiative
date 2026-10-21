@@ -1,0 +1,34 @@
+# Added from Maithili's list (spec/SEED.md §8.1); read from the arXiv full text.
+id: hashimoto-2026-coin
+short_name: COIN
+title: "Whose Is This?: Context-Aware Object Ownership Inference with Uncertainty-Guided Questioning"
+authors:
+  - Saki Hashimoto
+  - Akira Taniguchi
+  - Shoichi Hasegawa
+  - Yoshinobu Hagiwara
+  - Tadahiro Taniguchi
+venue: arXiv
+year: 2026
+links:
+  paper: https://arxiv.org/abs/2605.28087
+  project: https://emergentsystemlabstudent.github.io/COIN/
+ids:
+  arxiv: "2605.28087"
+provenance: COIN §4–5, App. F. Added per Maithili, Oct 2026
+evaluations:
+  - id: hashimoto-2026-coin-original
+    environment: gazebo
+    datasets:
+      - coin-ownership
+    loop: null
+    other_baselines:
+      - ActOwL
+      - NLMap + LLM
+      - Last-User
+      - Frequency-Based
+    provenance: COIN §5 (the paper does not say who answers the robot's questions)
+    realism:
+      robot: generalist
+      human: null
+      environment: simulator

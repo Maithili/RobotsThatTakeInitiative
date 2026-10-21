@@ -1,7 +1,7 @@
 // Writes data/citations.json from Semantic Scholar (SPEC §5.5). Run after adding papers:
 //   npm run fetch-citations            (S2_API_KEY in the environment is optional)
 // The build reads the committed file and never calls the network.
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import yaml from 'js-yaml';
 import { buildCitations, type PaperRef, type S2Api, type S2Paper } from '../src/lib/citations.ts';
@@ -12,12 +12,28 @@ const API = 'https://api.semanticscholar.org/graph/v1';
 const KEY = process.env.S2_API_KEY;
 // The shared public pool allows about one request per second; a key allows more.
 const SPACING_MS = KEY ? 150 : 1100;
-const MAX_TRIES = 8;
+const MAX_TRIES = 20;
+// Responses are cached so a run cut short by the rate limit resumes where it stopped.
+const CACHE_DIR = join(root, 'node_modules/.cache');
+const CACHE = join(CACHE_DIR, 'fetch-citations.json');
+const cache: Record<string, unknown> = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE, 'utf8')) : {};
+const saveCache = () => {
+  mkdirSync(CACHE_DIR, { recursive: true });
+  writeFileSync(CACHE, JSON.stringify(cache));
+};
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let last = 0;
 
 async function get(path: string): Promise<unknown | null> {
+  if (path in cache) return cache[path];
+  const body = await fetchWithRetry(path);
+  cache[path] = body;
+  saveCache();
+  return body;
+}
+
+async function fetchWithRetry(path: string): Promise<unknown | null> {
   for (let attempt = 1; attempt <= MAX_TRIES; attempt++) {
     const wait = last + SPACING_MS - Date.now();
     if (wait > 0) await sleep(wait);
@@ -25,7 +41,7 @@ async function get(path: string): Promise<unknown | null> {
     const res = await fetch(`${API}${path}`, { headers: KEY ? { 'x-api-key': KEY } : {} });
     if (res.status === 404) return null;
     if (res.status === 429 || res.status >= 500) {
-      const backoff = Math.min(60_000, 2_000 * 2 ** (attempt - 1));
+      const backoff = Math.min(90_000, 2_000 * 2 ** (attempt - 1));
       console.warn(`  ${res.status} on ${path.split('?')[0]}; retrying in ${backoff / 1000}s (${attempt}/${MAX_TRIES})`);
       await sleep(backoff);
       continue;

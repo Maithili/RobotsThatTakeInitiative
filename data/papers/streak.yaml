@@ -49,5 +49,14 @@ subproblems:
     note: Assumes uniform cost across actions
 evaluations:
   - id: streak-original
+    datasets:
+      - homer
     loop: offline_replay
-    provenance: RTI §I, §IV
+    human_model: Recorded HOMER routines
+    baselines:
+      - stot
+    provenance: "RTI §I, §IV; STREAK §V (baselines are the STOT model, fine-tuned and jointly trained)"
+    realism:
+      robot: task_specific
+      human: recorded
+      environment: simulator

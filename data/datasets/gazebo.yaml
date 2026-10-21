@@ -1,0 +1,9 @@
+id: gazebo
+name: Gazebo
+kind: simulator
+introduced_in: null
+links:
+  home: null
+sim_or_real: sim
+notes: Used with the aws-robomaker-small-house-world environment
+provenance: COIN §5.1

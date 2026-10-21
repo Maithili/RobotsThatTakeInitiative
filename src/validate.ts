@@ -180,7 +180,7 @@ export function buildDb(input: BuildInput): BuildResult {
       if (evalIds.has(e.id)) errors.push(`${eat}: id also used in papers/${evalIds.get(e.id)}.yaml`);
       evalIds.set(e.id, p.id);
       evalById.set(e.id, { paper: p, metrics: e.metrics ?? [] });
-      if (!inSet(t.loop_types, e.loop)) errors.push(`${eat}: unknown loop type "${e.loop}"`);
+      if (e.loop !== null && !inSet(t.loop_types, e.loop)) errors.push(`${eat}: unknown loop type "${e.loop}"`);
       if (e.environment != null) {
         const env = datasetById.get(e.environment);
         if (!env) errors.push(`${eat}: environment "${e.environment}" does not exist`);

@@ -23,3 +23,22 @@ method:
     - timing
   core_strength: Learns preferred strategies from passive observation
   builds_on: []
+evaluations:
+  - id: nemlekar-2023-transfer-user-study
+    loop: user_study_short
+    human_model: "18 graduate students, then 10"
+    other_baselines:
+      - Reactive condition (GUI part selection)
+    provenance: "Nemlekar §5, §7 (in-person model-airplane assembly with a robot)"
+    realism:
+      robot: task_specific
+      human: non_target
+      environment: lab
+  - id: nemlekar-2023-transfer-offline
+    loop: offline_replay
+    human_model: Recorded study sequences
+    provenance: Nemlekar §6 (ablations replay the §5 recordings)
+    realism:
+      robot: task_specific
+      human: recorded
+      environment: lab

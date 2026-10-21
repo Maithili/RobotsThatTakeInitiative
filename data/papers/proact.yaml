@@ -50,3 +50,19 @@ subproblems:
     status: skips
     relation: direct
     note: Does not predict future goals
+evaluations:
+  - id: proact-original
+    loop: offline_replay
+    human_model: Recorded videos (ProAct-75)
+    other_baselines:
+      - GPT-4o
+      - Gemini-2.5-Pro
+      - Gemini-2.5-Flash
+      - Qwen3-VL family
+      - DeepSeek-v3.2
+      - Greedy heuristic
+    provenance: "ProAct §4.1, §6 (action selection simulated against recorded trajectories)"
+    realism:
+      robot: null
+      human: recorded
+      environment: null

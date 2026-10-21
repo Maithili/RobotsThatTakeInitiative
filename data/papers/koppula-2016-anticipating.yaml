@@ -18,3 +18,16 @@ method:
     human_policy: unknown
   core_strength: Learns the timing of actions for fluid interaction
   builds_on: []
+evaluations:
+  - id: koppula-2016-anticipating-cad120
+    loop: offline_replay
+    human_model: Recorded RGB-D videos (CAD-120)
+    other_baselines:
+      - KGS
+      - Nearest-neighbor exemplar
+      - Co-occurrence
+    provenance: Koppula §8.2–8.3
+    realism:
+      robot: task_specific
+      human: recorded
+      environment: null

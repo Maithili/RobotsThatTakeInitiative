@@ -142,7 +142,8 @@ export const EvaluationSchema = z
     id: kebab,
     environment: z.string().nullable().optional(),
     datasets: z.array(z.string()).optional(),
-    loop: z.string(),
+    /** Null until someone reads the paper's evaluation. */
+    loop: z.string().nullable(),
     human_model: capped('human_model').nullable().optional(),
     metrics: z.array(z.string()).optional(),
     baselines: z.array(z.string()).optional(),

@@ -19,3 +19,24 @@ method:
     human_policy: unknown
   core_strength: Learns preferred strategies from collaborative data
   builds_on: []
+evaluations:
+  - id: zhao-2022-strategy-matching-simulation
+    loop: closed_scripted
+    human_model: Behavior-cloned human proxy
+    other_baselines:
+      - PPO agent with a behavior-cloned partner (Carroll et al.)
+    provenance: MESH §V (Overcooked simulator)
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: simulator
+  - id: zhao-2022-strategy-matching-user-study
+    loop: user_study_short
+    human_model: 125 Prolific workers (online)
+    other_baselines:
+      - PPO agent with a behavior-cloned partner (Carroll et al.)
+    provenance: MESH §VI–VII (online Overcooked game)
+    realism:
+      robot: task_specific
+      human: non_target
+      environment: simulator

@@ -47,5 +47,14 @@ subproblems:
     note: Assumes uniform cost across actions
 evaluations:
   - id: slate-pro-original
+    datasets:
+      - homer-plus
     loop: offline_replay
-    provenance: RTI §I, §IV
+    human_model: Generated HOMER+ routines
+    baselines:
+      - stot
+    provenance: "RTI §I, §IV; SLaTe-PRO §6"
+    realism:
+      robot: task_specific
+      human: recorded
+      environment: simulator

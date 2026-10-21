@@ -48,5 +48,29 @@ subproblems:
     note: Does not predict future goals
 evaluations:
   - id: watch-and-help-original
+    environment: virtualhome
     loop: offline_replay
-    provenance: RTI §IV
+    human_model: Recorded demonstrations (goal inference)
+    provenance: RTI §IV; WAH §5.3 (the watch stage scores goal inference offline)
+    realism:
+      robot: task_specific
+      human: recorded
+      environment: simulator
+  - id: watch-and-help-help
+    environment: virtualhome
+    loop: closed_scripted
+    human_model: Built-in planner agent (Alice)
+    provenance: WAH §3–5 (Alice replans each step from her latest observation)
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: simulator
+  - id: watch-and-help-human
+    environment: virtualhome
+    loop: user_study_short
+    human_model: 12 participants
+    provenance: "WAH §6, Experiment 2"
+    realism:
+      robot: task_specific
+      human: non_target
+      environment: simulator

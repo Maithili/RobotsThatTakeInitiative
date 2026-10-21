@@ -45,5 +45,17 @@ subproblems:
     note: Assumes uniform cost across actions
 evaluations:
   - id: stot-original
+    environment: virtualhome
+    datasets:
+      - homer
     loop: offline_replay
-    provenance: RTI §IV
+    human_model: Generated HOMER routines
+    baselines:
+      - zeng-2020-semantic-linking
+    other_baselines:
+      - FreMEn
+    provenance: RTI §IV; STOT §5–6.2
+    realism:
+      robot: task_specific
+      human: recorded
+      environment: simulator

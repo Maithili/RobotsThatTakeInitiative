@@ -1,0 +1,34 @@
+# Added from Maithili's list (spec/SEED.md §8.1); read from the arXiv full text.
+id: globe
+short_name: GLOBE
+title: Personalized and Robust Proactive Robot Assistance with Uncertainty-Guided LLM Reasoning
+authors:
+  - Alvaro Gonzalez
+  - M.H. Hasan Shovo
+  - Ali Ayub
+venue: arXiv
+year: 2026
+links:
+  paper: https://arxiv.org/abs/2606.08458
+  code: https://github.com/PaInt-Lab/GLOBE
+ids:
+  arxiv: "2606.08458"
+provenance: GLOBE §I, §III–IV. Added per Maithili, Oct 2026
+evaluations:
+  - id: globe-original
+    datasets:
+      - homer-plus
+      - homer-noise
+    loop: offline_replay
+    human_model: Recorded HOMER+ and HOMER-Noise behavior
+    baselines:
+      - slate-pro
+      - stot
+    other_baselines:
+      - n-gram Markov model (ablation)
+      - Zero-shot LLM (ablation)
+    provenance: GLOBE §IV (STOT results taken from the SLaTe-PRO paper)
+    realism:
+      robot: task_specific
+      human: recorded
+      environment: simulator
