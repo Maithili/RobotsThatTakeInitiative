@@ -1,0 +1,190 @@
+levels:                       # ordered by increasing unknowns
+  L0:
+    name: Reactive assistance
+    knowns: {goal: known, human_policy: known}
+    definition: The robot has access to the goal g and the human policy π^h, so no proactivity is required.
+    note: Realistic only in rigid settings where the goal is fully specified and the user is absent or the order of user actions is predefined, such as industrial manufacturing.
+  L1:
+    name: Collaborative proactive assistance
+    knowns: {goal: known, human_policy: unknown}
+    definition: The robot has access to g but not π^h, and must infer the user's preferred strategy from the history.
+  L2:
+    name: Unprompted proactive assistance
+    knowns: {goal: unknown, human_policy: unknown}
+    definition: The robot has access to neither g nor π^h, and acts toward any future goal without being asked.
+
+families:                     # L2 only, from RTI §III-B
+  goal_inference:
+    name: Goal inference and planning
+    definition: Online goal inference followed by goal-conditioned planning.
+    scope_line: Addresses A2. Assumes G1, G2, A1 given. Skips A3.
+    limitations:
+      - Needs the full set of goals with ground-truth goal annotations for past actions.
+      - Assists only with the current task, once the belief concentrates.
+      - Ignores habits and preferred variants.
+  temporal_prediction:
+    name: Temporal user action prediction
+    definition: Learns what the user tends to do next from temporal patterns and executes the predicted action.
+    scope_line: Addresses A3. Skips A1 and A2. Assumes uniform cost across actions.
+    strength: Predicts minutes to hours ahead, with no need for close collaboration.
+    limitations:
+      - Discards the intentional structure of behavior that a goal-level model can exploit.
+  full_pipeline:
+    name: Grounding, anticipation, and planning pipeline
+    definition: Instantiates the grounding, anticipation, and planning subproblems in one pipeline.
+    note: Not a family named in the RTI paper. Added for GAP. Pending Maithili's confirmation.
+
+action_types:                 # RTI §II
+  act:      {label: Acts, definition: Executes actions that serve anticipated needs.}
+  timing:   {label: Times, definition: Decides the precise timing of an action.}
+  initiate: {label: Initiates, definition: Chooses to initiate an interaction.}
+  inform:   {label: Informs, definition: Provides extra information.}
+  ask:      {label: Asks, definition: Actively asks questions.}
+
+observation_modalities:       # extend as papers need, one line each
+  object_relocations: {label: Object relocations, definition: Timestamped moves of objects between locations.}
+  scene_graph:        {label: Scene graphs, definition: Graphs of objects and their spatial relations over time.}
+  video:              {label: Video, definition: Camera frames of the user and scene.}
+  language:           {label: Language, definition: Spoken or written user input.}
+
+stages:
+  grounding:    {name: Grounding,    definition: Models the intentional structure behind user actions.}
+  anticipation: {name: Anticipation, definition: Reasons over temporal user behavior to provide an anticipated need, goal, or action.}
+  planning:     {name: Planning,     definition: Predicts robot actions by optimizing toward an anticipated variable.}
+
+subproblems:                  # RTI Table I and §III-A. input/output are TeX.
+  G1:
+    name: Goal-space representation
+    stage: grounding
+    input: '\xi_{0:t}'
+    output: '\mathcal{G}'
+    challenge: Keeping the goal space coarse enough to model intent yet fine enough to separate variations.
+    depends_on: []
+    approaches: {hierarchical: Hierarchical representations, open_set_language: Open-set representations grounded in language}
+  G2:
+    name: Action-goal association
+    stage: grounding
+    input: '\xi_{0:t},\ \mathcal{G}'
+    output: 'g_{0:t}'
+    challenge: Disentangling interleaved actions across concurrent goals and isolating extraneous ones.
+    depends_on: [G1]
+    approaches: {symbolic: Symbolic models, learned: Learned models, hindsight_relabeling: Hindsight relabeling}
+  A1:
+    name: Human policy learning
+    stage: anticipation
+    input: '\xi_{0:t},\ \mathcal{G},\ g_{0:t}'
+    output: '\pi^h'
+    challenge: Adapting based on limited user-specific data.
+    depends_on: [G1, G2]
+    approaches: {lfd: Learning from demonstration, lfo: Learning from observation, clustering_mixture: User clustering and mixture models, guided_demonstration: Guiding users toward effective demonstrations}
+  A2:
+    name: Goal inference
+    stage: anticipation
+    input: '\xi_{t-\Delta t:t},\ \mathcal{G},\ \pi^h'
+    output: 'g_t'
+    challenge: Disambiguating among many goals and assisting despite uncertainty over goals.
+    depends_on: [G1, A1]
+    approaches: {symbolic: Symbolic, learned: Learned, hybrid: Hybrid}
+  A3:
+    name: Goal anticipation
+    stage: anticipation
+    input: '\xi_{0:t},\ \mathcal{G},\ g_{0:t}'
+    output: 'g_{t:t+\Delta t}\ \text{or}\ \phi'
+    challenge: Learning from wider context, such as habitual behavior patterns.
+    depends_on: [G1, G2]
+    approaches: {language_model: Language models, temporal_sequence: Temporal sequence prediction, probabilistic_filtering: Probabilistic filtering of object movement}
+  P1:
+    name: Cost modeling
+    stage: planning
+    input: 's_t,\ a^r_t,\ a^h_t'
+    output: 'c_h(a^h_t)'
+    challenge: Cost components are personal, context-dependent, and depend on the robot's concurrent actions.
+    depends_on: []
+    approaches: {task_complexity: Task complexity, fatigue: Effort and fatigue, preference_feedback: Preferences from user feedback, interruptibility: Interruptibility}
+  P2:
+    name: Coordinated action selection
+    stage: planning
+    input: '\xi_{0:t},\ c_h(\cdot),\ \pi^h,\ g_{t:t+\Delta t}'
+    output: 'a^r_t'
+    challenge: Optimizing against a learned, adaptive human rather than a ground-truth or scripted one.
+    depends_on: [P1, A1, A2, A3]   # A2 -> P2 pending confirmation (see §15)
+    approaches: {cirl: Cooperative inverse RL, proactive_communication: Proactive communication, hedging: Hedging under uncertainty}
+
+themes:                       # cross-cutting, RTI §III-A
+  joint_optimization: {label: Joint optimization, definition: Optimizing across subproblems instead of solving each alone.}
+  personalization:    {label: Personalization, definition: Learning user-specific patterns.}
+  continual_learning: {label: Continual learning, definition: Adapting to drifting needs without forgetting.}
+  user_interaction:   {label: User interaction, definition: Resolving uncertainty and answering user queries.}
+
+statuses:
+  addresses: {glyph: "●", label: Addresses}
+  assumes:   {glyph: "◐", label: Assumes given}
+  skips:     {glyph: "○", label: Skips}
+
+relations:
+  direct:   {label: Direct, definition: Works on this subproblem in a proactivity setting.}
+  adjacent: {label: Adjacent, definition: A starting point from an adjacent field.}
+
+net_value:                    # RTI §II-A
+  headline: '\Delta V - \Delta C'
+  counterfactual: Effectiveness compares the trajectory ξ with the robot against the trajectory ξ′ that would unfold without it.
+  terms:
+    dV:       {label: "ΔV · value gained",      tex: '\Delta V',        definition: Achieving goals the user would otherwise leave uncompleted, or freeing time for other valued goals.}
+    dC_saved: {label: "ΔC↓ · human cost saved", tex: '\Delta C_h\downarrow', definition: Reducing the cost of a goal the user would have completed anyway.}
+    dC_added: {label: "ΔC↑ · human cost added", tex: '\Delta C_h\uparrow',   definition: An incorrect robot action forces the user to undo or redo actions.}
+    Cr:       {label: "C_r · robot cost",       tex: 'C_r',             definition: Physical wear and charge consumption, often assumed zero.}
+
+metric_kinds:
+  direct:    Measures one or more terms.
+  proxy:     Mixes terms or measures them indirectly.
+  unrelated: Does not map to ΔV − ΔC.
+
+metrics:                      # RTI §IV-A2. Add more as papers come in.
+  net_actions_saved:
+    label: Net actions saved
+    definition: Skipped user actions minus undo actions, as a percentage of baseline user actions.
+    terms: [dC_saved, dC_added]
+    kind: direct
+  perturbed_actions:
+    label: Perturbed actions
+    definition: User actions corrected because of a wrong robot action, as a percentage of baseline user actions.
+    terms: [dC_added]
+    kind: direct
+  f1:
+    label: F1
+    definition: Skipped actions as true positives, undo and corrected as false positives, done as-is as false negatives.
+    terms: [dC_saved, dC_added]
+    kind: proxy
+
+loop_types:                   # ordered
+  offline_replay:
+    label: Offline replay
+    definition: Scores each robot action against a fixed record of human behavior.
+  closed_scripted:
+    label: Closed loop, scripted human
+    definition: Robot actions change the state, and a scripted human continues its routine from that state.
+  closed_adaptive:
+    label: Closed loop, adaptive simulated human
+    definition: A simulated human, such as an LLM proxy, adapts its actions to the robot.
+    refs: [zhang-2023-llm-human-models]
+  user_study_short:
+    label: User study, short
+    definition: Real users interact with the robot in one or a few sessions.
+  user_study_longitudinal:
+    label: User study, longitudinal
+    definition: Real users live or work with the robot over weeks or longer.
+
+captures:                     # RTI Appendix I
+  state_drift:     {label: State drift, definition: Robot errors shift the state, which compounds cost (Relaxation 1).}
+  goal_adaptation: {label: Goal adaptation, definition: The user reallocates effort to new goals in response to the robot (Relaxation 2).}
+  values: [yes, partial, no]
+
+featured_comparison:          # drives the chart in §8.2
+  title: Offline evaluation overstates performance
+  metric: f1
+  methods: [slate-pro, streak]
+  columns:
+    - {evaluation: rti-offline,         label: Offline}
+    - {evaluation: rti-closed-llm,      label: "Closed loop, LLM user"}
+    - {evaluation: rti-closed-scripted, label: "Closed loop, scripted user"}
+  source: RTI paper, Table II
