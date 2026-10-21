@@ -534,11 +534,11 @@ A grouped bar chart built from `featured_comparison`. It starts with the Offline
 
 ### 8.3 Loop-type scale
 
-A horizontal strip of the five loop types in order. Each step shows its label, its one-line definition, and a count of evaluations. `refs` show as small links on their step. Clicking steps toggles them in `loop=`. A legend for the two `captures` fields sits under the strip.
+A horizontal strip of the five loop types in order. Each step shows its label, its one-line definition, and a count of papers with at least one evaluation of that type. `refs` show as small links on their step. Clicking steps toggles them in `loop=`. A legend for the two `captures` fields sits under the strip.
 
 ### 8.4 Evaluation protocols table
 
-One row per evaluation entry. Columns: paper (short name and year), environment and datasets, loop type (pill), human model, metrics (chips with term color dots), state drift (glyph), goal adaptation (glyph), baselines (count, expandable). All columns sort. Filters come from `loop=`, `term=`, `metric=`, and the global filters. Clicking a row opens the drawer.
+One row per paper, GAP included, however many evaluation entries the paper has. The row merges them. Columns: paper (short name and year), environment and datasets (union), loop types (one pill per distinct type, in scale order), human models (union), metrics (union, as chips with term color dots), state drift and goal adaptation (the strongest value across the paper's entries, yes over partial over no), baselines (union, count, expandable). All columns sort. Loop type sorts by the paper's furthest type on the scale. A paper matches `loop=`, `term=`, or `metric=` when any of its entries does. Clicking a row opens the drawer, which lists each evaluation entry separately.
 
 ### 8.5 Datasets and evaluation setups table
 
@@ -623,7 +623,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 9. Pinning two papers puts both ids in `compare=`.
 10. At 375 px wide, no page scrolls horizontally.
 11. On Methods, the STOT to SLaTe-PRO edge is solid, and unchecking "Cites" removes every dotted edge.
-12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column.
+12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table has exactly one GAP row, showing three loop-type pills.
 
 **CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes: `npm ci`, validate, typecheck, unit tests, build, end-to-end tests.
 
