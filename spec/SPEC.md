@@ -86,16 +86,15 @@ levels:                       # ordered by increasing unknowns
   L0:
     name: Reactive assistance
     knowns: {goal: known, human_policy: known}
-    definition: The robot has access to the goal g and the human policy π^h, so no proactivity is required.
-    note: Realistic only in rigid settings where the goal is fully specified and the user is absent or the order of user actions is predefined, such as industrial manufacturing.
+    definition: The goal, and user action sequences if collaborating, are known to the robot. Realistic only in rigid settings such as industrial manufacturing.
   L1:
     name: Collaborative proactive assistance
     knowns: {goal: known, human_policy: unknown}
-    definition: The robot has access to g but not π^h, and must infer the user's preferred strategy from the history.
+    definition: The robot knows the task goal but must infer user actions to coordinate effectively.
   L2:
     name: Unprompted proactive assistance
     knowns: {goal: unknown, human_policy: unknown}
-    definition: The robot has access to neither g nor π^h, and acts toward any future goal without being asked.
+    definition: The robot acts towards predicted needs without being prompted at all.
 
 families:                     # L2 only, from RTI §III-B
   goal_inference:
@@ -544,12 +543,12 @@ The page has two parts. A top band holds the level cards, a condensed timeline, 
 
 Left to right: level cards, condensed timeline, legend. Under 900 px the legend moves below the timeline.
 
-- **Level cards.** Three stacked cards, L2 on top, then L1, then L0. The L2 and L1 cards show name, knowns chips, one-line definition, and paper count. The L0 card is a baseline description: name, knowns chips, definition, and its note, with no paper count, no timeline row, and no click action. Clicking the L2 or L1 card selects that level and sets `level=`. Clicking it again clears the selection. No toggle bar for g and π^h.
+- **Level cards.** Three stacked cards, L2 on top, then L1, then L0. The L2 and L1 cards show name, knowns chips, one-line definition, and paper count. The L0 card is a baseline description: name, knowns chips, and definition, with no paper count, no timeline row, and no click action. Clicking the L2 or L1 card selects that level and sets `level=`. Clicking it again clears the selection. No toggle bar for g and π^h.
 - **Condensed timeline.** One row beside the L2 card and one beside the L1 card, holding that level's papers with no breakdown by family. The two rows share one year axis. From 2021 on, each year gets one equal-width band. All earlier papers share one narrow band at the left labeled "Before 2021", in year order, with each paper's year in small text and an axis break mark before 2021. One constant holds the cutoff (`TIMELINE_START = 2021`). Papers show as compact chips with the short name, stacked when they share a year.
   - Hovering a chip highlights the same paper in the graph, and hovering a graph node highlights its chip.
   - Clicking a chip opens the drawer and, if the paper is in the graph, focuses its node.
   - A time brush on the shared axis sets `years=`.
-- **Legend**, in the space right of the timeline: the three edge styles with their checkboxes (bound to `edges=`; builds and benchmarks on by default, "Show all citation lines" off by default), the cluster tints, the level colors, the action type icons, and a "Show tangential works" checkbox bound to `tangents=`.
+- **Legend**, in the space right of the timeline: the three edge styles with their checkboxes (bound to `edges=`; builds and benchmarks on by default, "Show all citation lines" off by default), the cluster tints, the level colors, and a "Show tangential works" checkbox. No action-type legend bound to `tangents=`.
 
 ### 7.2 Literature graph
 

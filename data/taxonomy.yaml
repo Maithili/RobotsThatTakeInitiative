@@ -2,16 +2,15 @@ levels:                       # ordered by increasing unknowns
   L0:
     name: Reactive assistance
     knowns: {goal: known, human_policy: known}
-    definition: The robot has access to the goal g and the human policy π^h, so no proactivity is required.
-    note: Realistic only in rigid settings where the goal is fully specified and the user is absent or the order of user actions is predefined, such as industrial manufacturing.
+    definition: The goal, and user action sequences if collaborating, are known to the robot. Realistic only in rigid settings such as industrial manufacturing.
   L1:
     name: Collaborative proactive assistance
     knowns: {goal: known, human_policy: unknown}
-    definition: The robot has access to g but not π^h, and must infer the user's preferred strategy from the history.
+    definition: The robot knows the task goal but must infer user actions to coordinate effectively.
   L2:
     name: Unprompted proactive assistance
     knowns: {goal: unknown, human_policy: unknown}
-    definition: The robot has access to neither g nor π^h, and acts toward any future goal without being asked.
+    definition: The robot acts towards predicted needs without being prompted at all.
 
 families:                     # L2 only, from RTI §III-B
   goal_inference:
