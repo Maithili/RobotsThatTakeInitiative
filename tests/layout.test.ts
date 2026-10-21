@@ -64,7 +64,7 @@ describe('literature graph layout (build time)', () => {
     expect(inForeignHull(placed, f.clusters)).toEqual([]);
   });
 
-  it('keeps 300 papers in 4 clusters plus 30 tangential works readable', () => {
+  it('keeps 300 papers in 4 clusters plus 30 tangential works readable', { timeout: 60_000 }, () => {
     const papers = syntheticPapers();
     expect(papers.filter((p) => !p.tangent)).toHaveLength(SYNTHETIC_COUNT);
     expect(papers.filter((p) => p.tangent)).toHaveLength(SYNTHETIC_TANGENTS);

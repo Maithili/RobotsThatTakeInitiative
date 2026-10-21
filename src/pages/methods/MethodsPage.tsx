@@ -1,21 +1,40 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ActionChip, InputChip, LevelChip } from '../../components/Chip.tsx';
 import { EmptyState, Missing } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
-import { fixUrl, papers as allPapers, tx } from '../../data.ts';
+import { db, fixUrl, papers as allPapers, tx } from '../../data.ts';
+import type { Routes } from '../../lib/edgeRouting.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
 import { inMethodsGraph, inMethodsTopBand } from '../../lib/scope.ts';
 import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
-import synthLayout from '../../generated/synthetic-layout.json';
 import { TANGENTS_IN_GRAPH, type FamilyInfo } from './constants.ts';
 import { buildLanes } from './groups.ts';
 import { LiteratureGraph } from './LiteratureGraph.tsx';
 import { SYNTHETIC_FAMILIES, syntheticPapers } from './synthetic.ts';
 import { TopBand } from './TopBand.tsx';
 
-/** Build-time layout of the synthetic fixture (scripts/build-data.ts). */
-const SYNTH_XY = synthLayout as unknown as Record<string, [number, number]>;
+/** Build-time layout and edge routes of the synthetic fixture (scripts/build-data.ts). Loaded only when asked for,
+ *  so the fixture stays out of the main bundle. */
+interface SynthLayout {
+  pos: Record<string, [number, number]>;
+  routes: Routes;
+}
+
+function useSynthLayout(on: boolean): SynthLayout | null {
+  const [layout, setLayout] = useState<SynthLayout | null>(null);
+  useEffect(() => {
+    if (!on || layout) return;
+    let live = true;
+    import('../../generated/synthetic-layout.json').then((m) => {
+      if (live) setLayout((m.default ?? m) as unknown as SynthLayout);
+    });
+    return () => {
+      live = false;
+    };
+  }, [on, layout]);
+  return on ? layout : null;
+}
 
 type SortKey = 'short_name' | 'year' | 'title' | 'inputs' | 'actions' | 'core' | 'subs';
 
@@ -128,9 +147,10 @@ function MethodsList({ papers, tangential }: { papers: DbPaper[]; tangential: Db
 export function MethodsPage() {
   const url = useUrl();
   const synthetic = url.get('synthetic') === '1';
+  const synth = useSynthLayout(synthetic);
   const papers = useMemo(
-    () => (synthetic ? syntheticPapers().map((p) => (SYNTH_XY[p.id] ? { ...p, x: SYNTH_XY[p.id][0], y: SYNTH_XY[p.id][1] } : p)) : allPapers),
-    [synthetic],
+    () => (synthetic ? syntheticPapers().map((p) => (synth?.pos[p.id] ? { ...p, x: synth.pos[p.id][0], y: synth.pos[p.id][1] } : p)) : allPapers),
+    [synthetic, synth],
   );
   const families: Record<string, FamilyInfo> = synthetic ? SYNTHETIC_FAMILIES : tx.families;
   // Level scope (SPEC §6.2): the top band holds L2 and L1 methods. The graph and list hold methods at a
@@ -179,7 +199,11 @@ export function MethodsPage() {
       {synthetic && <p className="notice small">Showing synthetic papers (layout test fixture), not real data.</p>}
 
       {view === 'graph' ? (
-        <LiteratureGraph papers={graphPapers} families={families} hoverId={hoverId} setHover={setHover} />
+        synthetic && !synth ? (
+          <p className="muted small">Loading the synthetic fixture…</p>
+        ) : (
+          <LiteratureGraph papers={graphPapers} families={families} routes={synthetic ? synth?.routes : db.routes} hoverId={hoverId} setHover={setHover} />
+        )
       ) : (
         <MethodsList papers={methods} tangential={tangential} />
       )}

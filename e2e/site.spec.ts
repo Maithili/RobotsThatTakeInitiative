@@ -13,6 +13,24 @@ function trackErrors(page: Page) {
 
 const params = (page: Page) => new URLSearchParams(new URL(page.url()).hash.split('?')[1] ?? '');
 
+/** Moves the mouse off the graph, so no hover state leaks into a check, and waits until the graph's zoom transform
+ *  stops changing (fit on load, or a zoom animation). */
+async function settleGraph(page: Page) {
+  await page.mouse.move(1, 1);
+  const view = page.locator('.litg__svg > g').first();
+  await expect(view).toHaveAttribute('transform', /./);
+  await expect(page.locator('.litg.is-hovering')).toHaveCount(0);
+  let last = await view.getAttribute('transform');
+  await expect
+    .poll(async () => {
+      const now = await view.getAttribute('transform');
+      const same = now === last;
+      last = now;
+      return same;
+    }, { intervals: [150] })
+    .toBe(true);
+}
+
 test('1. each page loads with no console errors', async ({ page }) => {
   const errors = trackErrors(page);
   for (const path of ['methods', 'evaluations', 'subproblems']) {
@@ -275,6 +293,7 @@ test('choosing a paper in search zooms the graph to it and labels it', async ({ 
 
 test('11. the STOT to SLaTe-PRO edge is solid; cites show only on hover until "Show all citation lines"; fit shows every node', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
+  await settleGraph(page);
   const e = page.getByTestId('edge-stot-slate-pro');
   await expect(e).toHaveAttribute('data-type', 'builds');
   await expect(e).toHaveCSS('stroke-dasharray', 'none');
@@ -294,6 +313,7 @@ test('11. the STOT to SLaTe-PRO edge is solid; cites show only on hover until "S
 
   // The fit button brings every node into view.
   for (let i = 0; i < 4; i++) await page.getByTestId('zoom-in').click();
+  await settleGraph(page);
   const outside = () =>
     page.evaluate(() => {
       const frame = document.querySelector('.litg__svg')!.getBoundingClientRect();
@@ -304,17 +324,19 @@ test('11. the STOT to SLaTe-PRO edge is solid; cites show only on hover until "S
     });
   await expect.poll(outside).toBeGreaterThan(0);
   await page.getByTestId('zoom-fit').click();
+  await settleGraph(page);
   await expect.poll(outside).toBe(0);
 
   // The seed has no citation between graph papers, so the fixture shows the hover rule.
   await page.goto('/#/methods?view=graph&synthetic=1');
   await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
+  await settleGraph(page);
   await expect(page.locator('[data-type="cites"]')).toHaveCount(0);
   await page.getByTestId('node-synthetic-150').hover();
   const hovered = page.locator('[data-type="cites"]');
   await expect.poll(() => hovered.count()).toBeGreaterThan(0);
   for (const id of await hovered.evaluateAll((els) => els.map((el) => el.getAttribute('data-testid')!))) expect(id).toContain('synthetic-150');
-  await page.mouse.move(2, 2);
+  await settleGraph(page);
   await expect(page.locator('[data-type="cites"]')).toHaveCount(0);
   await page.getByTestId('edges-cites').check();
   await expect.poll(() => params(page).get('edges')).toBe('builds,benchmarks,cites');
@@ -338,7 +360,7 @@ test('selecting a level card highlights its timeline row only; L0 is a baseline 
   await expect.poll(() => params(page).get('level')).toBeNull();
   await expect(page.getByTestId('timeline-L1')).toHaveAttribute('data-selected', 'false');
 
-  // L0: name, knowns, definition, and note, with no count, no timeline row, and no click action.
+  // L0: name, knowns, and definition, with no count, no timeline row, and no click action.
   const l0 = page.getByTestId('levelcard-L0');
   await expect(l0).toBeVisible();
   await expect(l0).toContainText('Reactive assistance');
@@ -433,11 +455,13 @@ test('14. a tangential work renders at half opacity, and unchecking Show tangent
 
   // The fixture has tangential works with edges (citations, shown here for all papers).
   await page.goto('/#/methods?view=graph&synthetic=1&edges=builds,benchmarks,cites');
+  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
+  await settleGraph(page);
   const t = page.getByTestId('node-synthetic-t0');
   await expect(t).toHaveCSS('opacity', '0.5');
   const tangentEdges = page.locator('.litg__edges .litg__edge.is-tangent');
   expect(await tangentEdges.count()).toBeGreaterThan(0);
-  await expect(tangentEdges.first()).toHaveCSS('stroke-opacity', '0.5');
+  await expect(page.locator('.litg__edges .litg__edge.is-tangent:not(.is-dim):not(.is-hl)').first()).toHaveCSS('stroke-opacity', '0.5');
   await page.getByTestId('show-tangents').uncheck();
   await expect.poll(() => params(page).get('tangents')).toBe('0');
   await expect(page.locator('[data-testid^="node-synthetic-t"]')).toHaveCount(0);
@@ -456,6 +480,7 @@ test('a semi-tangential family draws at 75% opacity (dots, hull, name, label, ed
   // Synthetic family D is semi-tangential; synthetic-3 is one of its papers.
   await page.goto('/#/methods?view=graph&synthetic=1&edges=builds,benchmarks,cites');
   await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
+  await settleGraph(page);
   const node = page.getByTestId('node-synthetic-3');
   await expect(node).toHaveClass(/is-semi/);
   await expect(node).toHaveCSS('opacity', '0.75');
@@ -463,7 +488,7 @@ test('a semi-tangential family draws at 75% opacity (dots, hull, name, label, ed
   await expect(page.getByTestId('hull-label-synthetic_d')).toHaveCSS('opacity', '0.75');
   await expect(page.getByTestId('hull-synthetic_a')).toHaveCSS('opacity', '1');
   await expect(page.getByTestId('node-synthetic-0')).toHaveCSS('opacity', '1');
-  const semiEdges = page.locator('.litg__edges .litg__edge.is-semi');
+  const semiEdges = page.locator('.litg__edges .litg__edge.is-semi:not(.is-dim):not(.is-hl)');
   expect(await semiEdges.count()).toBeGreaterThan(0);
   await expect(semiEdges.first()).toHaveCSS('stroke-opacity', '0.75');
   // Tangential works keep half opacity.
@@ -476,7 +501,7 @@ test('a semi-tangential family draws at 75% opacity (dots, hull, name, label, ed
   await node.hover();
   await expect(node).toHaveCSS('opacity', '1');
   await expect(page.getByTestId('hull-synthetic_d')).toHaveCSS('opacity', '1');
-  await page.mouse.move(2, 2);
+  await settleGraph(page);
   await expect(node).toHaveCSS('opacity', '0.75');
   // So does hovering the family name.
   await page.getByTestId('hull-label-synthetic_d').hover();

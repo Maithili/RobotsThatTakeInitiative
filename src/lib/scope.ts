@@ -1,6 +1,10 @@
 // Level scope (SPEC §6.2): which papers each part of the site shows. Pure, so tests can use it without the db.
 import type { DbPaper, LevelId } from '../schema.ts';
 
+/** The paper the site is built on. Its protocol row is pinned and shaded (SPEC §8.4); its realism dot (§8.3) and
+ *  graph dot have a ring. */
+export const FRAMEWORK_PAPER = 'gap';
+
 /** Levels shown outside the Methods top band: the graph, the list, Evaluations, and Subproblems. */
 export const FOCUS_LEVELS: readonly LevelId[] = ['L2'];
 

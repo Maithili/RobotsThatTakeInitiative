@@ -7,6 +7,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { ActionIcon, InputChip, KnownsChips, LevelChip } from '../../components/Chip.tsx';
 import { EmptyState } from '../../components/EmptyState.tsx';
 import { FRAMEWORK_PAPER, paperLabel, tx } from '../../data.ts';
+import { edgeKey, edgeRadius, FRAMEWORK_RING, geometryOf, stepIndex, type EdgeGeometry, type Routes } from '../../lib/edgeRouting.ts';
 import { drawnRelation, EDGE_LABEL, earlierWorks, mergeEdges, parseEdgeTypes, type EdgeType, type PairEdge, type Relation } from '../../lib/edges.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
 import { ancestry } from '../../lib/graph.ts';
@@ -37,8 +38,6 @@ const ZOOM_MIN = 0.12;
 const ZOOM_MAX = 4;
 const MIN_H = 220;
 const MOTION_MS = 280;
-/** Extra radius of the framework paper's ring. */
-const RING = 3.5;
 
 const hullPath = line<[number, number]>().curve(curveCatmullRomClosed.alpha(0.5));
 
@@ -57,32 +56,6 @@ interface GNode {
   cluster: string | null;
   /** In a semi-tangential family: drawn at 75% opacity until its cluster is hovered (SPEC §7.2). */
   semi: boolean;
-}
-
-interface Geometry {
-  d: string;
-  mid: [number, number];
-}
-
-function edgeGeometry(a: GNode, b: GNode): Geometry {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const bend = Math.min(36, len * 0.12);
-  const c: [number, number] = [(a.x + b.x) / 2 - (dy / len) * bend, (a.y + b.y) / 2 + (dx / len) * bend];
-  const trim = (n: GNode, gap: number): [number, number] => {
-    const ux = c[0] - n.x;
-    const uy = c[1] - n.y;
-    const l = Math.hypot(ux, uy) || 1;
-    return [n.x + (ux / l) * (n.rr + gap), n.y + (uy / l) * (n.rr + gap)];
-  };
-  const p0 = trim(a, 1.5);
-  const p1 = trim(b, 1.5);
-  const f = (v: number) => Math.round(v * 10) / 10;
-  return {
-    d: `M${f(p0[0])},${f(p0[1])}Q${f(c[0])},${f(c[1])} ${f(p1[0])},${f(p1[1])}`,
-    mid: [(p0[0] + 2 * c[0] + p1[0]) / 4, (p0[1] + 2 * c[1] + p1[1]) / 4],
-  };
 }
 
 function NodeCard({ p }: { p: DbPaper }) {
@@ -153,7 +126,7 @@ const Dot = memo(function Dot({
       data-r={n.r}
       data-hover={hover ? 'true' : 'false'}
     >
-      {n.id === FRAMEWORK_PAPER && <circle className="litg__ring" r={n.r + RING} />}
+      {n.id === FRAMEWORK_PAPER && <circle className="litg__ring" r={n.r + FRAMEWORK_RING} />}
       <circle className="litg__dot" r={n.r} style={fill ? { fill } : undefined} />
       {pulse > 0 && <circle key={pulse} className="litg__pulse" r={n.r} />}
     </g>
@@ -161,7 +134,7 @@ const Dot = memo(function Dot({
 });
 
 // Arrowheads come from CSS (marker-end), which picks the variant for the edge's state.
-const Edge = memo(function Edge({ id, rel, geo, cls }: { id: string; rel: Relation; geo: Geometry; cls: string }) {
+const Edge = memo(function Edge({ id, rel, geo, cls }: { id: string; rel: Relation; geo: EdgeGeometry; cls: string }) {
   return (
     <>
       <path
@@ -180,11 +153,14 @@ type Tip = { x: number; y: number; body: ReactNode } | null;
 export function LiteratureGraph({
   papers,
   families,
+  routes,
   hoverId,
   setHover,
 }: {
   papers: DbPaper[];
   families: Record<string, FamilyInfo>;
+  /** Edge routes from the build (db.routes, or the synthetic fixture's). */
+  routes?: Routes;
   hoverId: string | null;
   setHover: (id: string | null) => void;
 }) {
@@ -228,7 +204,7 @@ export function LiteratureGraph({
         x: p.x,
         y: p.y,
         r,
-        rr: p.id === FRAMEWORK_PAPER ? r + RING + 1 : r,
+        rr: edgeRadius(r, p.id === FRAMEWORK_PAPER),
         labelW: labelWidth(p.short_name, p.year),
         year: labelYear(p.short_name, p.year),
         hue: familyHue(families, fam),
@@ -264,13 +240,19 @@ export function LiteratureGraph({
     return { pairs, neighbors };
   }, [nodes]);
 
-  const geoCache = useMemo(() => new Map<string, Geometry>(), [nodes]);
+  // Edge routes come from the build, one per zoom step (SPEC §7.2 Edge routing): the route for the largest step at
+  // or below the current zoom keeps clearance. Geometry is memoized by route, so an edge whose route does not change
+  // with the zoom keeps the same path object and does not re-render.
+  const step = stepIndex(labelK);
+  const geoCache = useMemo(() => new Map<string, EdgeGeometry>(), [nodes, routes]);
   const geometry = (r: Relation) => {
-    const k = `${r.from}>${r.to}`;
-    let g = geoCache.get(k);
+    const key = edgeKey(r.from, r.to);
+    const spec = routes?.[key]?.[step] ?? null;
+    const ck = spec ? `${key}|${JSON.stringify(spec)}` : key;
+    let g = geoCache.get(ck);
     if (!g) {
-      g = edgeGeometry(nodes.get(r.from)!, nodes.get(r.to)!);
-      geoCache.set(k, g);
+      g = geometryOf(nodes.get(r.from)!, nodes.get(r.to)!, spec);
+      geoCache.set(ck, g);
     }
     return g;
   };

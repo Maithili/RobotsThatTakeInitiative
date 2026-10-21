@@ -2,6 +2,7 @@
 // Ids that point into the taxonomy or at other files are checked in src/validate.ts,
 // since they depend on the loaded taxonomy.
 import { z } from 'zod';
+import type { Routes } from './lib/edgeRouting.ts';
 import type { PairEdge } from './lib/edges.ts';
 
 export const SUBPROBLEM_IDS = ['G1', 'G2', 'A1', 'A2', 'A3', 'P1', 'P2'] as const;
@@ -328,5 +329,7 @@ export interface Db {
   subproblem_counts: Record<SubproblemId, Record<'addresses' | 'assumes' | 'skips', number>>;
   /** One entry per pair of papers with every relation between them (SPEC §5.5). */
   edges: PairEdge[];
+  /** Literature graph edge routes that differ from the default curve, per zoom step (SPEC §7.2 Edge routing). */
+  routes?: Routes;
   citations: { generated_at: string | null; source: string; unresolved: string[]; resolved: number; manual: number };
 }
