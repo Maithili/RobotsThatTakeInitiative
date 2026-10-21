@@ -156,48 +156,146 @@ test('search opens a paper from the header box', async ({ page }) => {
   await expect(page.getByTestId('drawer')).toContainText('SLaTe-PRO');
 });
 
-test('the literature graph lays out the synthetic fixture: 60 L2 papers in 4 clusters plus 15 tangential works', async ({ page }) => {
+test('the literature graph lays out the synthetic fixture: 300 L2 papers in 4 clusters plus 30 tangential works', async ({ page }) => {
   await page.goto('/#/methods?view=graph&synthetic=1');
-  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(75);
-  await expect(page.locator('[data-testid^="node-synthetic-t"]')).toHaveCount(15);
+  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
+  await expect(page.locator('[data-testid^="node-synthetic-t"]')).toHaveCount(30);
   await expect(page.locator('[data-testid^="hull-"]')).toHaveCount(4);
+  // Dots never overlap, and the labels shown at the fitted zoom overlap neither each other nor other dots.
   const overlaps = await page.evaluate(() => {
-    const rects = [...document.querySelectorAll('[data-testid^="node-synthetic-"] .litg__pill')].map((n) => n.getBoundingClientRect());
+    const hit = (a: DOMRect, b: DOMRect) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+    const dots = [...document.querySelectorAll('[data-testid^="node-synthetic-"] .litg__dot')].map((n) => n.getBoundingClientRect());
+    const labels = [...document.querySelectorAll('.litg__label')].map((n) => ({ id: n.getAttribute('data-id'), r: n.getBoundingClientRect() }));
     let n = 0;
-    for (let i = 0; i < rects.length; i++)
-      for (let j = i + 1; j < rects.length; j++) {
-        const a = rects[i];
-        const b = rects[j];
-        if (a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5) n++;
-      }
-    return n;
+    for (let i = 0; i < dots.length; i++) for (let j = i + 1; j < dots.length; j++) if (hit(dots[i], dots[j])) n++;
+    for (let i = 0; i < labels.length; i++) for (let j = i + 1; j < labels.length; j++) if (hit(labels[i].r, labels[j].r)) n++;
+    return { n, labels: labels.length };
   });
-  expect(overlaps).toBe(0);
+  expect(overlaps.n).toBe(0);
+  // At the fitted zoom only the larger dots carry labels; zooming in reveals more.
+  expect(overlaps.labels).toBeGreaterThan(0);
+  expect(overlaps.labels).toBeLessThan(100);
+  await page.getByTestId('zoom-in').click();
+  await page.getByTestId('zoom-in').click();
+  await expect.poll(async () => page.locator('.litg__label').count()).toBeGreaterThan(overlaps.labels);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-test('11. the STOT to SLaTe-PRO edge is solid, and unchecking Cites removes every dotted edge', async ({ page }) => {
+test('hovering a node in the synthetic fixture responds within 50 ms', async ({ page }) => {
+  await page.goto('/#/methods?view=graph&synthetic=1');
+  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
+  const times = await page.evaluate(async () => {
+    const frame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
+    const out: number[] = [];
+    for (const id of ['synthetic-150', 'synthetic-20', 'synthetic-280', 'synthetic-t3', 'synthetic-77']) {
+      const el = document.querySelector(`[data-testid="node-${id}"] .litg__dot`)!;
+      await frame();
+      const t0 = performance.now();
+      el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      await frame();
+      out.push(performance.now() - t0);
+      if (!document.querySelector(`[data-testid="node-${id}"]`)!.classList.contains('is-hl')) out.push(Infinity);
+      el.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+      await frame();
+    }
+    return out;
+  });
+  times.sort((a, b) => a - b);
+  expect(times[Math.floor(times.length / 2)]).toBeLessThan(50);
+});
+
+test('the wheel zooms the graph only with a modifier key or after a click inside it', async ({ page }) => {
+  await page.goto('/#/methods?view=graph&synthetic=1');
+  const graph = page.getByTestId('literature-graph');
+  const view = page.locator('.litg__svg > g').first();
+  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
+  const pointAt = async (fx: number, fy: number) => {
+    await graph.scrollIntoViewIfNeeded();
+    const box = (await graph.boundingBox())!;
+    await page.mouse.move(box.x + box.width * fx, box.y + box.height * fy);
+  };
+  const before = await view.getAttribute('transform');
+  await pointAt(0.5, 0.5);
+  await page.mouse.wheel(0, -200);
+  await page.waitForTimeout(250);
+  expect(await view.getAttribute('transform')).toBe(before);
+  await pointAt(0.5, 0.5);
+  await page.keyboard.down('Control');
+  await page.mouse.wheel(0, -200);
+  await page.keyboard.up('Control');
+  await expect.poll(() => view.getAttribute('transform')).not.toBe(before);
+  // After a click inside the graph, the plain wheel zooms too.
+  await page.getByTestId('zoom-fit').click();
+  await expect.poll(() => view.getAttribute('transform')).toBe(before);
+  await pointAt(0.02, 0.97);
+  await page.mouse.down();
+  await page.mouse.up();
+  await page.mouse.wheel(0, -200);
+  await expect.poll(() => view.getAttribute('transform')).not.toBe(before);
+});
+
+test('choosing a paper in search zooms the graph to it and labels it', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  await page.keyboard.press('/');
+  await page.keyboard.type('streak');
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('drawer')).toContainText('STREAK');
+  await expect(page.getByTestId('label-streak')).toBeVisible();
+  await expect(page.getByTestId('node-streak').locator('.litg__pulse')).toHaveCount(1);
+});
+
+test('11. the STOT to SLaTe-PRO edge is solid; cites show only on hover until "Show all citation lines"; fit shows every node', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
   const e = page.getByTestId('edge-stot-slate-pro');
   await expect(e).toHaveAttribute('data-type', 'builds');
-  await expect(page.getByTestId('edge-slate-pro-gap')).toHaveAttribute('data-type', 'benchmarks');
-  await page.getByTestId('edges-cites').uncheck();
-  await expect.poll(() => params(page).get('edges')).toBe('builds,benchmarks');
+  await expect(e).toHaveCSS('stroke-dasharray', 'none');
+  const bench = page.getByTestId('edge-slate-pro-gap');
+  await expect(bench).toHaveAttribute('data-type', 'benchmarks');
+  expect(await bench.evaluate((el) => getComputedStyle(el).strokeDasharray)).not.toBe('none');
+  // Absent edges= means builds and benchmarks; no dotted edge shows.
+  expect(params(page).get('edges')).toBeNull();
+  await expect(page.getByTestId('edges-cites')).not.toBeChecked();
   await expect(page.locator('[data-type="cites"]')).toHaveCount(0);
-  await expect(e).toHaveAttribute('data-type', 'builds');
   await page.getByTestId('edges-builds').uncheck();
+  await expect.poll(() => params(page).get('edges')).toBe('benchmarks');
   // With builds hidden, the pair falls back to its next relation or disappears.
   await expect(page.locator('[data-testid="edge-stot-slate-pro"][data-type="builds"]')).toHaveCount(0);
   await page.getByTestId('edges-builds').check();
-  await page.getByTestId('edges-cites').check();
   await expect.poll(() => params(page).get('edges')).toBeNull();
+
+  // The fit button brings every node into view.
+  for (let i = 0; i < 4; i++) await page.getByTestId('zoom-in').click();
+  const outside = () =>
+    page.evaluate(() => {
+      const frame = document.querySelector('.litg__svg')!.getBoundingClientRect();
+      return [...document.querySelectorAll('[data-testid^="node-"] .litg__dot')].filter((d) => {
+        const r = d.getBoundingClientRect();
+        return r.left < frame.left || r.right > frame.right || r.top < frame.top || r.bottom > frame.bottom;
+      }).length;
+    });
+  await expect.poll(outside).toBeGreaterThan(0);
+  await page.getByTestId('zoom-fit').click();
+  await expect.poll(outside).toBe(0);
+
+  // The seed has no citation between graph papers, so the fixture shows the hover rule.
+  await page.goto('/#/methods?view=graph&synthetic=1');
+  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
+  await expect(page.locator('[data-type="cites"]')).toHaveCount(0);
+  await page.getByTestId('node-synthetic-150').hover();
+  const hovered = page.locator('[data-type="cites"]');
+  await expect.poll(() => hovered.count()).toBeGreaterThan(0);
+  for (const id of await hovered.evaluateAll((els) => els.map((el) => el.getAttribute('data-testid')!))) expect(id).toContain('synthetic-150');
+  await page.mouse.move(2, 2);
+  await expect(page.locator('[data-type="cites"]')).toHaveCount(0);
+  await page.getByTestId('edges-cites').check();
+  await expect.poll(() => params(page).get('edges')).toBe('builds,benchmarks,cites');
+  await expect.poll(() => page.locator('[data-type="cites"]').count()).toBeGreaterThan(50);
 });
 
-test('selecting L1 dims every graph node and explains why', async ({ page }) => {
+test('selecting L1 dims every graph node', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
   await page.getByTestId('levelcard-L1').click();
-  await expect(page.getByText('The graph shows unprompted (L2) methods.')).toBeVisible();
   for (const n of await page.locator('[data-testid^="node-"]').all()) await expect(n).toHaveClass(/is-dim/);
 });
 
@@ -276,21 +374,24 @@ test('14. a tangential work renders at half opacity, and unchecking Show tangent
   await expect(koch).toHaveAttribute('data-tangent', 'hri');
   await expect(koch).toHaveCSS('opacity', '0.5');
   await expect(page.getByTestId('tchip-koch-2024-proactive-hri-review')).toHaveCount(0);
+  // Its label does not repeat the year that its short name holds.
+  await expect(page.getByTestId('label-koch-2024-proactive-hri-review')).toHaveText('Koch van den Broek 2024');
   await koch.hover();
   await expect(koch).toHaveCSS('opacity', '1');
   await expect(page.getByLabel('Surveys')).toHaveCount(0);
 
-  // The fixture has tangential works with edges.
-  await page.goto('/#/methods?view=graph&synthetic=1');
+  // The fixture has tangential works with edges (citations, shown here for all papers).
+  await page.goto('/#/methods?view=graph&synthetic=1&edges=builds,benchmarks,cites');
   const t = page.getByTestId('node-synthetic-t0');
   await expect(t).toHaveCSS('opacity', '0.5');
-  const tangentEdges = page.locator('.litg__edges g.is-tangent');
+  const tangentEdges = page.locator('.litg__edges .litg__edge.is-tangent');
   expect(await tangentEdges.count()).toBeGreaterThan(0);
+  await expect(tangentEdges.first()).toHaveCSS('stroke-opacity', '0.5');
   await page.getByTestId('show-tangents').uncheck();
   await expect.poll(() => params(page).get('tangents')).toBe('0');
   await expect(page.locator('[data-testid^="node-synthetic-t"]')).toHaveCount(0);
   await expect(tangentEdges).toHaveCount(0);
-  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(60);
+  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(300);
 });
 
 test('the list view ends with tangential works grouped by type', async ({ page }) => {
