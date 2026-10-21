@@ -6,6 +6,7 @@ import { Math as TeX } from '../../components/Math.tsx';
 import { StatusGlyph } from '../../components/StatusGlyph.tsx';
 import { addressesAny, papers, SUBS, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
+import { yearAfterName } from '../../lib/year.ts';
 import { inSubproblems } from '../../lib/scope.ts';
 import { SUBPROBLEM_IDS, type DbPaper, type SubproblemId, type SubproblemTag } from '../../schema.ts';
 import { toggleInList, useUrl } from '../../state/url.ts';
@@ -100,7 +101,7 @@ function Detail({ sub, visible }: { sub: SubproblemId; visible: DbPaper[] }) {
                   <li key={p.id}>
                     <button type="button" className="work-row" data-locate={p.id} data-testid={`work-${p.id}`} onClick={() => url.openPaper(p.id)}>
                       <span className="work-row__name">
-                        <strong>{p.short_name}</strong> <span className="muted">{p.year}</span>
+                        <strong>{p.short_name}</strong>{yearAfterName(p) !== null && <> <span className="muted">{p.year}</span></>}
                       </span>
                       <span className={`rel rel--${t.relation}`}>{tx.relations[t.relation].label}</span>
                       <span className="work-row__note small">{t.note}</span>
@@ -175,7 +176,7 @@ function Matrix({ visible }: { visible: DbPaper[] }) {
                     <button type="button" className="linkish" onClick={() => url.openPaper(p.id)}>
                       {p.short_name}
                     </button>{' '}
-                    <span className="muted small">{p.year}</span>
+                    {yearAfterName(p) !== null && <span className="muted small">{p.year}</span>}
                   </th>
                   {SUBS.map((s) => {
                     const t = addresses(p, s) ? p.subproblems![s]! : null;

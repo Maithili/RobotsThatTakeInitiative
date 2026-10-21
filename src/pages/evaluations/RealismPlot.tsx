@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { datasetById, FRAMEWORK_PAPER, paperLabel, tx } from '../../data.ts';
 import { useUrl } from '../../state/url.ts';
 import type { PaperEvalRow } from './merge.ts';
+import { yearAfterName } from '../../lib/year.ts';
 
 const R = 7;
 const STEP = 2 * R + 5;
@@ -149,7 +150,7 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
             onMouseLeave={scheduleClose}
           >
             <div className="hovercard__top">
-              <strong>{card.row.paper.short_name}</strong> <span className="muted">{card.row.paper.year}</span>
+              <strong>{card.row.paper.short_name}</strong>{yearAfterName(card.row.paper) !== null && <> <span className="muted">{card.row.paper.year}</span></>}
             </div>
             <div className="one-line small">{card.row.paper.title}</div>
             <div className="realism__links">

@@ -1771,8 +1771,8 @@ tr.clickable:hover td {
 .work-row {
   width: 100%;
   display: grid;
-  grid-template-columns: 20px minmax(130px, 200px) auto minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: minmax(140px, 220px) 76px minmax(0, 1fr);
+  gap: 12px;
   align-items: baseline;
   text-align: left;
   border: 0;
@@ -1783,6 +1783,9 @@ tr.clickable:hover td {
 }
 .work-row:hover {
   background: var(--surface-2);
+}
+.work-row .rel {
+  justify-self: start;
 }
 .work-row__note {
   color: var(--text-2);
@@ -1917,10 +1920,10 @@ tr.clickable:hover td {
     grid-column: 1 / -1;
   }
   .work-row {
-    grid-template-columns: 20px 1fr auto;
+    grid-template-columns: 1fr auto;
   }
   .work-row__note {
-    grid-column: 2 / -1;
+    grid-column: 1 / -1;
   }
   .overview__row {
     grid-template-columns: 1fr auto;
