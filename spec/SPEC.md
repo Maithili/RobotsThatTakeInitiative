@@ -1,0 +1,615 @@
+# Robots That Take Initiative: Literature Map
+
+Implementation spec, draft of Oct 21, 2026.
+Owner: Maithili Patel. Builder: coding agent.
+Companion file: `spec/SEED.md` lists the initial data, drawn from the RTI paper.
+
+---
+
+## 1. Goal
+
+Build an interactive static website that organizes the literature on robot proactivity through the framework in Patel and Chernova, *Robots That Take Initiative: A Framework for Building and Evaluating Proactive Robots* (https://arxiv.org/abs/2609.28910). This spec calls it **the RTI paper**.
+
+Readers come to find papers. The site gives them three entry points, one per page.
+
+1. **Methods.** Proactive methods classified by level (L0, L1, L2), shown on a lineage graph with each method's core strength and its input and output modalities.
+2. **Evaluations.** Datasets and their characteristics, the metrics people use and which terms of the net value ΔV − ΔC each one measures, and whether each evaluation runs open loop or closed loop.
+3. **Subproblems.** Works under each subproblem (G1 to P2), with the part of the subproblem each one solves.
+
+## 2. Principles
+
+- **One database, three lenses.** The site stores each paper once. The three pages are views of the same data. Clicking a paper on any page opens the same detail drawer.
+- **The formalism is the schema.** Levels, families, subproblems, net value terms, and loop types come from the RTI paper and live in one taxonomy file.
+- **Lists and visuals, not prose.** Every text field has a length cap. No page shows a paragraph longer than two lines. Each definition is one line.
+- **Links only.** The site links to paper landing pages (DOI, publisher or proceedings page, arXiv abstract, OpenReview). The repo never stores PDF files, and no link points to a PDF file.
+- **No guessed data.** A field is either filled from a stated source or left empty. Empty fields render as "—" with a link to suggest a value. The builder never infers a level, a lineage edge, a modality, or a metric from a title or abstract.
+- **Every view has a URL.** Filters, the open paper, and the comparison set live in the URL, so any view can be shared or linked from a slide.
+
+## 3. Scope
+
+**In scope.** Three pages. A shared shell with navigation, search, the paper drawer, and a compare tray. Data files with validation. Contributions through GitHub issues and pull requests. CI and deployment to GitHub Pages.
+
+**Out of scope.** User accounts, comments, a backend database, hosted PDFs, automatic paper scraping, and a results leaderboard. The site shows one featured results chart (§8.2) and nothing more.
+
+## 4. Stack and repo layout
+
+- Vite, React 18, TypeScript in strict mode, npm.
+- `react-router-dom` with `HashRouter`, since GitHub Pages has no server-side routing.
+- `d3-scale`, `d3-shape`, and `d3-brush` (individual modules) for the lineage graph and the chart. No chart library.
+- KaTeX for math.
+- `js-yaml` 4 and `zod` for loading and validating data. js-yaml 4 loads `yes` and `no` as strings, which the schemas expect. `tsx` runs the scripts.
+- Plain CSS with custom-property tokens. No CSS framework.
+- Vitest for unit tests and Playwright for end-to-end tests.
+- Pin exact versions in `package.json` and commit the lockfile.
+- Vite `base` is `/RobotsThatTakeInitiative/`.
+
+```
+data/
+  taxonomy.yaml          the formalism (§5.1). Only Maithili changes its definitions.
+  papers/<id>.yaml       one file per paper (§5.2)
+  datasets/<id>.yaml     datasets, simulators, benchmarks (§5.3)
+  SEED_REPORT.md         written during seeding (§14, M2)
+scripts/
+  build-data.ts          validates data and writes src/generated/db.json
+  new-paper.ts           `npm run new-paper -- <id>` scaffolds a paper file
+src/
+  schema.ts              zod schemas, shared by the script and the app
+  generated/db.json      build output, gitignored
+  state/url.ts           URL state read and write
+  components/            Shell, Search, PaperDrawer, CompareTray, FilterBar, Chip, StatusGlyph, Math
+  pages/methods/
+  pages/evaluations/
+  pages/subproblems/
+  styles/tokens.css
+tests/                   Vitest
+e2e/                     Playwright
+.github/workflows/       ci.yml, deploy.yml
+.github/ISSUE_TEMPLATE/  add-paper.yml, fix-paper.yml
+.github/pull_request_template.md
+CONTRIBUTING.md
+README.md
+spec/                    this spec. Do not edit.
+```
+
+Replace the current Java `.gitignore` with Node entries (`node_modules`, `dist`, `src/generated`, Playwright reports) and add `*.pdf`.
+
+## 5. Data model
+
+### 5.1 `data/taxonomy.yaml`
+
+Create this file with the content below. The definitions come from the RTI paper. Keep their wording.
+
+```yaml
+levels:                       # ordered by increasing unknowns
+  L0:
+    name: Reactive assistance
+    knowns: {goal: known, human_policy: known}
+    definition: The robot has access to the goal g and the human policy π^h, so no proactivity is required.
+    note: Realistic only in rigid settings where the goal is fully specified and the user is absent or the order of user actions is predefined, such as industrial manufacturing.
+  L1:
+    name: Collaborative proactive assistance
+    knowns: {goal: known, human_policy: unknown}
+    definition: The robot has access to g but not π^h, and must infer the user's preferred strategy from the history.
+  L2:
+    name: Unprompted proactive assistance
+    knowns: {goal: unknown, human_policy: unknown}
+    definition: The robot has access to neither g nor π^h, and acts toward any future goal without being asked.
+
+families:                     # L2 only, from RTI §III-B
+  goal_inference:
+    name: Goal inference and planning
+    definition: Online goal inference followed by goal-conditioned planning.
+    scope_line: Addresses A2. Assumes G1, G2, A1 given. Skips A3.
+    limitations:
+      - Needs the full set of goals with ground-truth goal annotations for past actions.
+      - Assists only with the current task, once the belief concentrates.
+      - Ignores habits and preferred variants.
+  temporal_prediction:
+    name: Temporal user action prediction
+    definition: Learns what the user tends to do next from temporal patterns and executes the predicted action.
+    scope_line: Addresses A3. Skips A1 and A2. Assumes uniform cost across actions.
+    strength: Predicts minutes to hours ahead, with no need for close collaboration.
+    limitations:
+      - Discards the intentional structure of behavior that a goal-level model can exploit.
+  full_pipeline:
+    name: Grounding, anticipation, and planning pipeline
+    definition: Instantiates the grounding, anticipation, and planning subproblems in one pipeline.
+    note: Not a family named in the RTI paper. Added for GAP. Pending Maithili's confirmation.
+
+action_types:                 # RTI §II
+  act:      {label: Acts, definition: Executes actions that serve anticipated needs.}
+  timing:   {label: Times, definition: Decides the precise timing of an action.}
+  initiate: {label: Initiates, definition: Chooses to initiate an interaction.}
+  inform:   {label: Informs, definition: Provides extra information.}
+  ask:      {label: Asks, definition: Actively asks questions.}
+
+observation_modalities:       # extend as papers need, one line each
+  object_relocations: {label: Object relocations, definition: Timestamped moves of objects between locations.}
+  scene_graph:        {label: Scene graphs, definition: Graphs of objects and their spatial relations over time.}
+  video:              {label: Video, definition: Camera frames of the user and scene.}
+  language:           {label: Language, definition: Spoken or written user input.}
+
+stages:
+  grounding:    {name: Grounding,    definition: Models the intentional structure behind user actions.}
+  anticipation: {name: Anticipation, definition: Reasons over temporal user behavior to provide an anticipated need, goal, or action.}
+  planning:     {name: Planning,     definition: Predicts robot actions by optimizing toward an anticipated variable.}
+
+subproblems:                  # RTI Table I and §III-A. input/output are TeX.
+  G1:
+    name: Goal-space representation
+    stage: grounding
+    input: '\xi_{0:t}'
+    output: '\mathcal{G}'
+    challenge: Keeping the goal space coarse enough to model intent yet fine enough to separate variations.
+    depends_on: []
+    approaches: {hierarchical: Hierarchical representations, open_set_language: Open-set representations grounded in language}
+  G2:
+    name: Action-goal association
+    stage: grounding
+    input: '\xi_{0:t},\ \mathcal{G}'
+    output: 'g_{0:t}'
+    challenge: Disentangling interleaved actions across concurrent goals and isolating extraneous ones.
+    depends_on: [G1]
+    approaches: {symbolic: Symbolic models, learned: Learned models, hindsight_relabeling: Hindsight relabeling}
+  A1:
+    name: Human policy learning
+    stage: anticipation
+    input: '\xi_{0:t},\ \mathcal{G},\ g_{0:t}'
+    output: '\pi^h'
+    challenge: Adapting based on limited user-specific data.
+    depends_on: [G1, G2]
+    approaches: {lfd: Learning from demonstration, lfo: Learning from observation, clustering_mixture: User clustering and mixture models, guided_demonstration: Guiding users toward effective demonstrations}
+  A2:
+    name: Goal inference
+    stage: anticipation
+    input: '\xi_{t-\Delta t:t},\ \mathcal{G},\ \pi^h'
+    output: 'g_t'
+    challenge: Disambiguating among many goals and assisting despite uncertainty over goals.
+    depends_on: [G1, A1]
+    approaches: {symbolic: Symbolic, learned: Learned, hybrid: Hybrid}
+  A3:
+    name: Goal anticipation
+    stage: anticipation
+    input: '\xi_{0:t},\ \mathcal{G},\ g_{0:t}'
+    output: 'g_{t:t+\Delta t}\ \text{or}\ \phi'
+    challenge: Learning from wider context, such as habitual behavior patterns.
+    depends_on: [G1, G2]
+    approaches: {language_model: Language models, temporal_sequence: Temporal sequence prediction, probabilistic_filtering: Probabilistic filtering of object movement}
+  P1:
+    name: Cost modeling
+    stage: planning
+    input: 's_t,\ a^r_t,\ a^h_t'
+    output: 'c_h(a^h_t)'
+    challenge: Cost components are personal, context-dependent, and depend on the robot's concurrent actions.
+    depends_on: []
+    approaches: {task_complexity: Task complexity, fatigue: Effort and fatigue, preference_feedback: Preferences from user feedback, interruptibility: Interruptibility}
+  P2:
+    name: Coordinated action selection
+    stage: planning
+    input: '\xi_{0:t},\ c_h(\cdot),\ \pi^h,\ g_{t:t+\Delta t}'
+    output: 'a^r_t'
+    challenge: Optimizing against a learned, adaptive human rather than a ground-truth or scripted one.
+    depends_on: [P1, A1, A2, A3]   # A2 -> P2 pending confirmation (see §15)
+    approaches: {cirl: Cooperative inverse RL, proactive_communication: Proactive communication, hedging: Hedging under uncertainty}
+
+themes:                       # cross-cutting, RTI §III-A
+  joint_optimization: {label: Joint optimization, definition: Optimizing across subproblems instead of solving each alone.}
+  personalization:    {label: Personalization, definition: Learning user-specific patterns.}
+  continual_learning: {label: Continual learning, definition: Adapting to drifting needs without forgetting.}
+  user_interaction:   {label: User interaction, definition: Resolving uncertainty and answering user queries.}
+
+statuses:
+  addresses: {glyph: "●", label: Addresses}
+  assumes:   {glyph: "◐", label: Assumes given}
+  skips:     {glyph: "○", label: Skips}
+
+relations:
+  direct:   {label: Direct, definition: Works on this subproblem in a proactivity setting.}
+  adjacent: {label: Adjacent, definition: A starting point from an adjacent field.}
+
+net_value:                    # RTI §II-A
+  headline: '\Delta V - \Delta C'
+  counterfactual: Effectiveness compares the trajectory ξ with the robot against the trajectory ξ′ that would unfold without it.
+  terms:
+    dV:       {label: "ΔV · value gained",      tex: '\Delta V',        definition: Achieving goals the user would otherwise leave uncompleted, or freeing time for other valued goals.}
+    dC_saved: {label: "ΔC↓ · human cost saved", tex: '\Delta C_h\downarrow', definition: Reducing the cost of a goal the user would have completed anyway.}
+    dC_added: {label: "ΔC↑ · human cost added", tex: '\Delta C_h\uparrow',   definition: An incorrect robot action forces the user to undo or redo actions.}
+    Cr:       {label: "C_r · robot cost",       tex: 'C_r',             definition: Physical wear and charge consumption, often assumed zero.}
+
+metric_kinds:
+  direct:    Measures one or more terms.
+  proxy:     Mixes terms or measures them indirectly.
+  unrelated: Does not map to ΔV − ΔC.
+
+metrics:                      # RTI §IV-A2. Add more as papers come in.
+  net_actions_saved:
+    label: Net actions saved
+    definition: Skipped user actions minus undo actions, as a percentage of baseline user actions.
+    terms: [dC_saved, dC_added]
+    kind: direct
+  perturbed_actions:
+    label: Perturbed actions
+    definition: User actions corrected because of a wrong robot action, as a percentage of baseline user actions.
+    terms: [dC_added]
+    kind: direct
+  f1:
+    label: F1
+    definition: Skipped actions as true positives, undo and corrected as false positives, done as-is as false negatives.
+    terms: [dC_saved, dC_added]
+    kind: proxy
+
+loop_types:                   # ordered
+  offline_replay:
+    label: Offline replay
+    definition: Scores each robot action against a fixed record of human behavior.
+  closed_scripted:
+    label: Closed loop, scripted human
+    definition: Robot actions change the state, and a scripted human continues its routine from that state.
+  closed_adaptive:
+    label: Closed loop, adaptive simulated human
+    definition: A simulated human, such as an LLM proxy, adapts its actions to the robot.
+    refs: [zhang-2023-llm-human-models]
+  user_study_short:
+    label: User study, short
+    definition: Real users interact with the robot in one or a few sessions.
+  user_study_longitudinal:
+    label: User study, longitudinal
+    definition: Real users live or work with the robot over weeks or longer.
+
+captures:                     # RTI Appendix I
+  state_drift:     {label: State drift, definition: Robot errors shift the state, which compounds cost (Relaxation 1).}
+  goal_adaptation: {label: Goal adaptation, definition: The user reallocates effort to new goals in response to the robot (Relaxation 2).}
+  values: [yes, partial, no]
+
+featured_comparison:          # drives the chart in §8.2
+  title: Offline evaluation overstates performance
+  metric: f1
+  methods: [slate-pro, streak]
+  columns:
+    - {evaluation: rti-offline,         label: Offline}
+    - {evaluation: rti-closed-llm,      label: "Closed loop, LLM user"}
+    - {evaluation: rti-closed-scripted, label: "Closed loop, scripted user"}
+  source: RTI paper, Table II
+```
+
+### 5.2 `data/papers/<id>.yaml`
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `id` | kebab-case string | yes | Equals the file name. Use the method's own name if it has one (`slate-pro`), else `firstauthor-year-keyword`. |
+| `short_name` | string ≤ 24 | yes | The name the paper gives its method or system. Otherwise "FirstAuthor Year". |
+| `title` | string | yes | |
+| `authors` | string[] | yes | |
+| `venue` | string | no | |
+| `year` | int | yes | |
+| `type` | `research` or `survey` | no | Default `research`. Surveys show in the surveys strip (§7.2). |
+| `links.paper` | URL or null | yes | Landing page. The validator rejects URLs whose path ends in `.pdf`. |
+| `links.code`, `links.project` | URL | no | |
+| `bibtex` | string | no | |
+| `provenance` | string ≤ 140 | yes | Where the tags come from, such as "RTI §III-B, Table I" or "Read by MP, Oct 2026". |
+| `method` | object | no | Its presence puts the paper on the Methods page. |
+| `method.knowns` | `{goal, human_policy}`, each `known` or `unknown`, or null | no | Level is derived (§5.4). Null puts the paper in the "Not yet classified" tray. |
+| `method.family` | family id | no | L2 only. |
+| `method.action_types` | action type id[] | no | Output side. |
+| `method.inputs` | modality id[] | no | Input side. |
+| `method.core_strength` | string ≤ 120 | no | One line. |
+| `method.builds_on` | paper id[] | no | Lineage edges. This paper extends those papers. Only edges stated by a paper's authors or by Maithili. |
+| `themes` | theme id[] | no | |
+| `subproblems` | map from G1…P2 to `{status, relation, approach?, note}` | no | `note` ≤ 140 says what part of the subproblem the work solves. `approach` must be one of that subproblem's approaches. |
+| `evaluations` | list of evaluation entries | no | Their presence puts the paper on the Evaluations page. |
+
+Evaluation entry:
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | kebab-case string | Unique across all papers. |
+| `environment` | dataset id (kind `simulator`) or null | |
+| `datasets` | dataset id[] | |
+| `loop` | loop type id | Required. |
+| `human_model` | string ≤ 60 or null | Such as "LLM (gpt-4o-mini)", "Scripted", "Real users (n=12)". |
+| `metrics` | metric id[] | |
+| `baselines` | paper id[] | Also drives the optional baseline edges on the lineage graph. |
+| `other_baselines` | string[] | Baselines with no paper, such as "Oracle". |
+| `captures` | `{state_drift, goal_adaptation}`, each `yes`, `partial`, `no`, or null | |
+| `provenance` | string ≤ 140 | |
+| `results` | list of `{method, method_label?, metric, value, sd?}` | `method` is a paper id. Use `method_label` alone for a baseline with no paper. |
+
+Example:
+
+```yaml
+id: slate-pro
+short_name: SLaTe-PRO
+title: Predicting Routine Object Usage for Proactive Robot Assistance
+authors: [M. Patel, A. G. Prakash, S. Chernova]
+venue: CoRL
+year: 2023
+links: {paper: null}
+provenance: RTI §II, §III-B, Table I, §IV
+method:
+  knowns: {goal: unknown, human_policy: unknown}
+  family: temporal_prediction
+  action_types: [act]
+  inputs: [scene_graph]
+  core_strength: null
+  builds_on: []
+subproblems:
+  A3: {status: addresses, relation: direct, approach: temporal_sequence, note: Extracts habitual patterns from a history of observed actions}
+  A1: {status: skips, relation: direct, note: Skips human-policy learning}
+evaluations:
+  - id: slate-pro-original
+    loop: offline_replay
+    provenance: RTI §I, §IV
+```
+
+### 5.3 `data/datasets/<id>.yaml`
+
+| Field | Type | Notes |
+|---|---|---|
+| `id`, `name` | string | |
+| `kind` | `dataset`, `simulator`, or `benchmark` | |
+| `introduced_in` | paper id or null | |
+| `links.home` | URL or null | Landing page, never a PDF. |
+| `sim_or_real` | `sim`, `real`, or `both` | |
+| `span` | string ≤ 40 or null | Such as "Several weeks". |
+| `households_or_users` | int, string, or null | |
+| `observations` | modality id[] | |
+| `goal_annotations` | `yes`, `partial`, `no`, or null | Goal-inference methods need these. |
+| `executable` | `yes`, `no`, or null | Whether user actions can run in a simulator so robot actions change the state. Closed loop needs this. |
+| `environment` | dataset id or null | The simulator it runs in. |
+| `notes` | string ≤ 140 | |
+| `provenance` | string ≤ 140 | |
+
+### 5.4 Validation and derived fields (`scripts/build-data.ts`)
+
+The build fails on any of these errors.
+
+- A file does not match its schema, or uses an id that is not in the taxonomy.
+- An id in `builds_on`, `baselines`, `datasets`, `environment`, `introduced_in`, `results.method`, or `loop_types.*.refs` does not exist.
+- A paper `id` differs from its file name, or two evaluations share an id.
+- A text field exceeds its cap.
+- A link path ends in `.pdf` (ignore case and query string), or any `.pdf` file exists in the repo.
+- `knowns` is `{goal: unknown, human_policy: known}`. That combination is not a level in the formalism.
+- `family` is set on a paper whose level is not L2.
+- `builds_on` contains a cycle.
+
+The build prints these warnings and passes.
+
+- `links.paper` is null.
+- A `builds_on` target is newer than the paper. Preprints can cause this.
+- A result's metric is not in its evaluation's `metrics`.
+- A paper has no method, subproblem, or evaluation block and nothing references it.
+
+`db.json` adds these derived fields.
+
+- `level`: L0 if both known, L1 if goal known and policy unknown, L2 if both unknown, null if `knowns` is null.
+- `built_upon_by` and `compared_in`: reverse edges of `builds_on` and `baselines`.
+- `used_by` for each dataset and each metric.
+- Per-subproblem counts by status.
+- A lowercase search string per paper built from short name, title, authors, venue, and year.
+
+## 6. Shared shell
+
+### 6.1 Header
+
+Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, the search box, a "Contribute" button, and a "Paper ↗" link to the RTI arXiv page. The active tab is marked. Switching tabs keeps the query string.
+
+### 6.2 URL state
+
+| Param | Scope | Example | Meaning |
+|---|---|---|---|
+| `level` | global | `L1,L2` | Level filter |
+| `family` | global | `temporal_prediction` | Family filter |
+| `action` | global | `act,ask` | Action type filter |
+| `input` | global | `scene_graph` | Input modality filter |
+| `theme` | global | `continual_learning` | Theme filter |
+| `years` | global | `2015-2026` | Year range |
+| `q` | global | `goal` | Text filter |
+| `paper` | global | `gap` | Open drawer |
+| `compare` | global | `gap,slate-pro` | Compare set, up to 3 |
+| `view` | per page | `list`, `matrix` | View toggle |
+| `edges` | Methods | `baselines` | Show baseline edges |
+| `focus` | Methods | `slate-pro` | Ancestry focus |
+| `term` | Evaluations | `dC_added` | Net value term |
+| `loop` | Evaluations | `closed_scripted,closed_adaptive` | Loop type filter |
+| `metric` | Evaluations | `f1` | Metric filter |
+| `sub` | Subproblems | `A2` | Selected subproblem |
+| `status` | Subproblems | `addresses` | Status filter |
+| `gaps` | Subproblems | `1` | Gaps mode in the matrix |
+
+Rules.
+
+- Global filters apply on every page. A paper with no method block fails any `level`, `family`, `action`, or `input` filter.
+- Page params stay in the URL when the reader switches pages, so coming back restores the view. Each page ignores params that are not its own.
+- Filter changes use `replaceState`. Opening a paper or switching pages uses `pushState`, so Back closes the drawer.
+- Every page has a filter bar that shows active global filters as removable chips, with "Clear all".
+- On graphs, filters dim non-matching items to 20% opacity. In lists and tables, filters hide them.
+
+### 6.3 Search
+
+A header box, focused by `/` or Ctrl/⌘+K. It matches short name, title, authors, venue, and year with simple token-prefix scoring (no library). The dropdown shows up to 8 results with short name, year, and level chip. Enter opens the drawer. On Methods it also scrolls to the node and pulses it once. On Subproblems it scrolls to the row.
+
+### 6.4 Paper drawer
+
+A 420 px right-side panel, and a bottom sheet under 640 px. Sections in order, with empty sections omitted (except Level).
+
+1. Short name, year, venue. Title. Authors, truncated after six with "+n".
+2. Links as buttons: Paper ↗, Code ↗, Project ↗ (only those present). "Copy BibTeX" if present.
+3. Level: knowns chips in the style of the RTI Fig. 1 right panel ("g known · π^h unknown → L1"), then family.
+4. Core strength (one line). Inputs → action types as chips.
+5. Subproblems: a strip of seven cells (G1 to P2) with status glyphs, then one row per tagged subproblem with note and relation.
+6. Evaluations: per entry, a loop-type pill, datasets, metric chips colored by net value term, and captures glyphs.
+7. Lineage: builds on, built upon by, compared against, compared in. All clickable.
+8. "Appears on": links to each page that shows this paper, focused on it.
+9. Footer: provenance line, "Suggest a correction" (§10), "Pin to compare".
+
+Fields that exist but are empty render "—". Esc closes the drawer.
+
+### 6.5 Compare tray
+
+Readers pin up to 3 papers. The pin button disables at 3 with a short message. A bottom bar shows pinned chips and a "Compare" button. The compare view puts papers in columns and these rows: level and knowns, family, action types, inputs, core strength, G1 to P2 status glyphs, evaluations (loop types and metrics), year, links. Rows where all values match are greyed.
+
+### 6.6 Empty states
+
+Every list, graph, and panel has an empty state that says what is missing and links to "Suggest a paper", such as "No L0 works yet. Suggest one."
+
+## 7. Methods page
+
+### 7.1 Level navigator
+
+A compact, interactive version of the RTI Fig. 1 right panel, at the top left.
+
+- Three stacked level cards, L2 on top, then L1, then L0. Each shows name, knowns chips, one-line definition, and paper count. The L0 note shows on hover and focus.
+- Two toggles, "Goal g" and "Human policy π^h", each known or unknown. The toggle state selects a level and sets `level=`. The combination goal unknown with policy known shows "Not a level in the formalism" and selects nothing.
+- Clicking a card selects that level and moves the toggles to match. Clicking it again clears the selection.
+
+### 7.2 Lineage graph
+
+- **Lanes**, top to bottom: one L2 sub-lane per family (goal inference, temporal prediction, full pipeline, then "family not set"), then L1, then L0. Below the axis, a "Not yet classified" tray shows papers with null `knowns` as chips.
+- **Lane headers** show name and count. Each L2 family header also shows its `scope_line`, with strength and limitations on hover.
+- **x axis** is year, one band per year from the earliest to the latest paper shown. Nodes in the same lane and year stack vertically, and lane height grows to fit.
+- **Nodes** are pills with the short name, a left edge in the level color, and small icons for action types.
+- **Edges.** `builds_on` edges are solid curved arrows from older to newer. Baseline edges from evaluations are dashed and hidden by default, with a "Show baseline comparisons" toggle (`edges=baselines`).
+- **Hover or focus** on a node shows a card with short name and year, title (one line, truncated), core strength, inputs → action types, and knowns chips.
+- **Click** on a node highlights all its ancestors and descendants through `builds_on`, dims the rest, sets `focus=`, and opens the drawer. Clicking empty canvas or pressing Esc clears the focus.
+- **Time brush** on the year axis sets `years=`.
+- **Filter bar**: family, action type, input modality, theme, years.
+- **View toggle**, Graph or List. The list groups by level then family, with sortable columns for short name, year, title, inputs, action types, core strength, and count of subproblems addressed. List is the default under 640 px.
+- **Surveys strip** above the graph shows papers with `type: survey` as chips.
+- The graph stays readable at 150 nodes. It scrolls horizontally inside its container when needed. The page itself never scrolls horizontally.
+
+## 8. Evaluations page
+
+Sections from top to bottom.
+
+### 8.1 Net value navigator
+
+- The headline ΔV − ΔC in KaTeX, with the `counterfactual` line under it.
+- Below, four focusable term buttons in order: ΔV, ΔC↓, ΔC↑, C_r. Each shows its label, its one-line definition on hover and focus, and a count of metrics that measure it.
+- Clicking a term sets `term=` and filters the metrics list and the protocol table to metrics that measure that term.
+- Hovering or focusing a metric anywhere on the page highlights its terms.
+- A term with no metrics shows "No metric in the database measures this term yet." With the seed data, ΔV and C_r show this.
+
+### 8.2 Featured comparison
+
+A grouped bar chart built from `featured_comparison`. It starts with the Offline bars only. An "Add closed loop" toggle brings in the two closed-loop bars per method in 300 ms (instant under `prefers-reduced-motion`). Bars carry value labels. The caption names the source ("RTI paper, Table II"). Clicking a bar opens that method's drawer.
+
+### 8.3 Loop-type scale
+
+A horizontal strip of the five loop types in order. Each step shows its label, its one-line definition, and a count of evaluations. `refs` show as small links on their step. Clicking steps toggles them in `loop=`. A legend for the two `captures` fields sits under the strip.
+
+### 8.4 Evaluation protocols table
+
+One row per evaluation entry. Columns: paper (short name and year), environment and datasets, loop type (pill), human model, metrics (chips with term color dots), state drift (glyph), goal adaptation (glyph), baselines (count, expandable). All columns sort. Filters come from `loop=`, `term=`, `metric=`, and the global filters. Clicking a row opens the drawer.
+
+### 8.5 Datasets and simulators table
+
+Columns: name, kind, sim or real, span, households or users, observations, goal annotations, executable, used by. Column filters for kind, sim or real, goal annotations, and executable. The name links to `links.home`. An info button opens a small panel with notes and the introducing paper. Clicking "used by" filters the protocol table to evaluations that use that dataset.
+
+### 8.6 Metrics list
+
+Rows show metric label, one-line definition, term chips, kind, and used-by count. Clicking a row sets `metric=`.
+
+## 9. Subproblems page
+
+### 9.1 Navigator
+
+An interactive version of RTI Fig. 2. It runs left to right on wide screens and top to bottom under 900 px: ξ₀:ₜ → Grounding (G1, G2) → Anticipation (A1, A2, A3) → Planning (P1, P2) → aʳₜ. Each node shows its id, name, and a badge counting works that address it under the current filters. Edges come from `depends_on`.
+
+Selecting a node sets `sub=`. Its upstream dependencies (all transitive ancestors through `depends_on`) take one highlight color, its downstream dependents (all transitive descendants) another, and the rest dim.
+
+### 9.2 Detail panel
+
+With nothing selected, the panel lists all seven subproblems with counts by status. With a subproblem selected, it shows:
+
+- id and name, input → output in KaTeX, and the one-line challenge;
+- works grouped by approach (taxonomy order, then "Other"), each row with status glyph, short name, year, relation tag, and note, and a click that opens the drawer;
+- filter chips for status and relation;
+- an empty state when no work addresses it directly, such as "No work in the database addresses G1 directly. Suggest one."
+
+### 9.3 Themes
+
+Filter chips for the four themes, bound to the global `theme=`.
+
+### 9.4 Matrix view
+
+`view=matrix` replaces the detail panel with a matrix. Rows are papers with any subproblem tag, grouped by level and family (method papers first). Columns are G1 to P2 under their stage headers, and each column header shows how many works address it. Cells show status glyphs. Clicking a cell opens the drawer. The header row and first column stay sticky. The "Gaps" toggle (`gaps=1`) dims filled cells and outlines empty cells in method rows.
+
+## 10. Contribution flow
+
+- **CONTRIBUTING.md** explains how to add a paper (copy the template or run `npm run new-paper -- <id>`), links each field to its taxonomy definition, and states the rules: landing-page links only, no PDFs, tag only what the paper states, provenance required, run `npm run validate`.
+- **`add-paper.yml` issue form** with fields for title, link, short name, goal known or unknown, human policy known or unknown, family, action types, inputs, subproblems (text, one per line like "A2: addresses, note"), evaluation (loop type, datasets, metrics), and provenance.
+- **`fix-paper.yml` issue form** with fields for paper id, field, correction, and source. The drawer's "Suggest a correction" opens it with the id and title prefilled through query parameters.
+- **Contribute button** opens a small popover with "Suggest a paper" (the add form), "Edit data on GitHub" (the `data/papers` folder), and "Read the guide" (CONTRIBUTING.md).
+- **PR template** with a checklist: validate passes, provenance filled, links are landing pages.
+
+## 11. Visual design
+
+- Calm and academic. Dense but scannable. Content width up to 1280 px, with the graph and matrix allowed full width.
+- Color tokens on `:root`, redefined for dark mode under `prefers-color-scheme`, plus a manual theme toggle saved in `localStorage` inside try/catch.
+- **Levels** use one sequential hue ramp, lightest for L0 and darkest for L2, since levels are ordered by unknowns. Color never carries meaning alone. Lanes have labels and chips say "L1".
+- **Statuses** use glyphs ● ◐ ○, with a blank cell for "not tagged". Every view that uses them shows a legend.
+- **Net value terms** use four categorical colors plus their symbols. The same colors appear in the equation, metric chips, and table dots.
+- System UI sans-serif for the interface, KaTeX for math, tabular numerals in tables.
+- Motion stays at or under 300 ms and turns off under `prefers-reduced-motion`.
+
+## 12. Accessibility, responsiveness, performance
+
+- Every interactive element is reachable by keyboard. Graph nodes take focus in lane order, then year order. Enter opens the drawer and Esc closes it.
+- Glyphs and icons carry ARIA labels ("Addresses", "Acts").
+- Text and UI contrast meets WCAG AA in both themes.
+- The site works from 360 px to 1920 px wide. The page never scrolls horizontally. The graph and matrix scroll inside their own containers.
+- `db.json` stays under 500 KB at 300 papers. Filtering responds in under 100 ms.
+
+## 13. Testing, CI, deployment
+
+**npm scripts**: `dev`, `build` (runs `build-data` first), `validate`, `test`, `e2e`, `new-paper`, `preview`.
+
+**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal.
+
+**End-to-end tests (Playwright)** on the seed data:
+
+1. Each page loads with no console errors.
+2. Setting L2 on Methods and switching to Subproblems keeps the filter. Back restores the previous view.
+3. `?paper=gap` opens the drawer, and Esc closes it.
+4. Setting both toggles to unknown highlights the L2 lanes.
+5. Clicking ΔC↑ leaves net actions saved, perturbed actions, and F1 in the metrics list.
+6. The featured chart shows 2 bars, then 6 after the toggle.
+7. Selecting A2 lists NOPA, highlights G1, G2, and A1 upstream, and highlights P2 downstream.
+8. In matrix view, clicking a cell opens the drawer.
+9. Pinning two papers puts both ids in `compare=`.
+10. At 375 px wide, no page scrolls horizontally.
+
+**CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes: `npm ci`, validate, typecheck, unit tests, build, end-to-end tests.
+
+**Deploy** (`.github/workflows/deploy.yml`) runs on pushes to `main`: build, then `actions/upload-pages-artifact` and `actions/deploy-pages`. Maithili sets Settings → Pages → Source to "GitHub Actions" once.
+
+## 14. Milestones
+
+Work on `main`. Commit at the end of each milestone and push to `origin main` right away; do not use feature branches. Each milestone ends with passing tests and a short note on what was built and what is blocked.
+
+| | Milestone | Done when |
+|---|---|---|
+| M1 | Data foundation: taxonomy, schemas, validator, `build-data`, `new-paper` | `npm run validate` passes on an empty `papers/` folder, and each §5.4 rule has a failing fixture |
+| M2 | Seed data from `spec/SEED.md` | Every SEED entry has a file. Links come only from confirmed landing pages. `data/SEED_REPORT.md` lists missing links and every difference between the RTI reference list and the landing page. Validate passes. |
+| M3 | Shell: routing, header, URL state, search, drawer, compare tray, theme toggle | E2E tests 3 and 9 pass |
+| M4 | Methods page | E2E tests 2 and 4 pass. Graph readable with seed data and with a 150-node synthetic fixture. |
+| M5 | Evaluations page | E2E tests 5 and 6 pass |
+| M6 | Subproblems page | E2E tests 7 and 8 pass |
+| M7 | Contribution flow, CI, deploy, README | CI green on `main`. README links the live site and CONTRIBUTING.md. |
+| M8 | Polish: keyboard and ARIA pass, responsive pass, empty states | All E2E tests pass, including test 10 |
+
+M2 can run alongside M3.
+
+## 15. Decisions taken by default
+
+Maithili can reverse any of these.
+
+1. **Lineage edges.** Solid edges show only "extends" (`builds_on`). Baseline comparisons come from evaluations and show as dashed edges behind a toggle. Seed data has no `builds_on` edges, since the RTI paper does not state lineage. Maithili adds them.
+2. **L0 lane.** The lane exists and starts empty, since the RTI paper names no L0 works.
+3. **Unleveled works.** Works the RTI paper discusses without assigning a level (§II refs 14–19) go in the "Not yet classified" tray.
+4. **GAP's family.** "Full pipeline" is a new family label. The RTI paper names two families only.
+5. **Subproblem dependencies** come from the Table I inputs and outputs. A2 → P2 assumes the anticipated goals g_{t:t+Δt} include the current goal g_t.
+6. **Direct vs adjacent.** A work is direct for a subproblem if Table I or §III-B lists it there, and adjacent if only Appendix II-A does.
+7. **Hosting.** GitHub Pages from this repo, with hash URLs.
+8. **Contributions.** GitHub issues and pull requests, with no backend.
+9. **Results.** Only the Table II comparison appears as a chart.
