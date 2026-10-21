@@ -113,6 +113,10 @@ families:                     # L2 only, from RTI §III-B
     strength: Predicts minutes to hours ahead, with no need for close collaboration.
     limitations:
       - Discards the intentional structure of behavior that a goal-level model can exploit.
+  implicit_cues:
+    name: Implicit Cues
+    definition: Reacts to implicit cues in the scene or from people, without a stated goal.
+    semi_tangential: true     # per Maithili, Oct 21 2026. Drawn part-way transparent (§7.2).
 
 action_types:                 # RTI §II
   act:      {label: Acts, definition: Executes actions that serve anticipated needs.}
@@ -200,6 +204,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
 tangent_types:                # works next to the algorithmic core. Maithili adds more.
   hri:            {label: HRI studies, definition: HRI work on proactivity, such as user studies on its desirability and reviews of the field.}
   conversational: {label: Conversational proactivity, definition: Proactivity in conversational settings.}
+  search:         {label: Search in changing homes, definition: Finds objects or people in homes that change over time, given what to find.}
 
 themes:                       # cross-cutting, RTI §III-A
   joint_optimization: {label: Joint optimization, definition: Optimizing across subproblems instead of solving each alone.}
@@ -225,7 +230,7 @@ net_value:                    # RTI §II-A
     dC_added: {label: "ΔC↑ · human cost added", tex: '\Delta C_h\uparrow',   definition: An incorrect robot action forces the user to undo or redo actions.}
     Cr:       {label: "C_r · robot cost",       tex: 'C_r',             definition: Physical wear and charge consumption, often assumed zero.}
 
-metric_kinds:
+metric_kinds:                 # each metric also carries direction (higher or lower is better), unit, and a one-line `mapping_note` on why it serves its terms
   direct:    Measures one or more terms.
   proxy:     Mixes terms or measures them indirectly.
   unrelated: Does not map to ΔV − ΔC.
@@ -236,16 +241,22 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     definition: Skipped user actions minus undo actions, as a percentage of baseline user actions.
     terms: [dC_saved, dC_added]
     kind: direct
+    direction: higher
+    unit: "%"
   perturbed_actions:
     label: Perturbed actions
     definition: User actions corrected because of a wrong robot action, as a percentage of baseline user actions.
     terms: [dC_added]
     kind: direct
+    direction: lower
+    unit: "%"
   f1:
     label: F1
     definition: Skipped actions as true positives, undo and corrected as false positives, done as-is as false negatives.
     terms: [dC_saved, dC_added]
     kind: proxy
+    direction: higher
+    unit: fraction
 
 loop_types:                   # ordered
   offline_replay:
@@ -396,6 +407,7 @@ evaluations:
 | `human_models` | string[], each ≤ 60 | Setups only. Such as "LLM (gpt-4o-mini)", "Scripted". |
 | `loops` | loop type id[] | Setups only. |
 | `notes` | string ≤ 140 | |
+| `tangent` | boolean | Default false. A tangential dataset shows part-way transparent in its own group at the bottom of the datasets table (§8.5). Datasets introduced by tangential papers are tangential. |
 | `provenance` | string ≤ 140 | |
 
 ### 5.4 Validation and derived fields (`scripts/build-data.ts`)
@@ -436,7 +448,9 @@ The lineage graph draws three kinds of edges between papers. Each kind has one s
 |---|---|---|---|
 | Builds on | Solid, 2 px, arrowhead | `method.builds_on` | Maithili only |
 | Benchmarks against | Dashed, 1.5 px, arrowhead | `evaluations[].baselines` | Read from the paper's experiments section, with the section in that evaluation's `provenance` |
-| Cites | Thin dotted, 1 px, low contrast, small arrowhead | `data/citations.json` | `scripts/fetch-citations.ts` |
+| Cites | Thin dotted, 1 px, low contrast, small arrowhead | `data/citations.json` plus `data/citations-manual.yaml` | `scripts/fetch-citations.ts`, plus hand-curated entries checked against each paper's reference list |
+
+`data/citations-manual.yaml` holds hand-curated citations: a list of `{from, to, source, where?}`, where `from` cites `to`, both paper ids. `source` names who checked it (such as "Librarian, Oct 21 2026") and `where` gives the location in `from`'s text. The build merges these with `citations.json` and drops duplicates. The validator rejects unknown ids. The drawer's cites and cited-by lists show the source on hover.
 
 Rules.
 
@@ -540,9 +554,10 @@ Left to right: level cards, condensed timeline, legend. Under 900 px the legend 
 ### 7.2 Literature graph
 
 - **Scope.** The core of the graph is algorithmic: every paper at a level in `FOCUS_LEVELS` (L2) with a method block and no `tangent`. L1 papers appear only in the top band (§6.2 Level scope).
+- **Semi-tangential families.** A family with `semi_tangential: true` (Implicit Cues to start) gets its own cluster like any family, drawn at 75% opacity: dots, hull, label, and its edges. Hover brings it to full opacity. Its papers count as L2 everywhere else.
 - **Tangential works.** Papers with a `tangent` also show in the graph, at half opacity, along with the edges that touch them. Hover or focus brings a tangential node and its edges to full opacity, and its hover card names its tangent type. They sit outside the cluster hulls (§7.2 Layout). They do not appear in the timeline.
 - **Clusters.** One cluster per L2 family, so Goal Inference and Temporal Imitation to start. Each cluster draws as a soft tinted hull behind its nodes, labeled with the family name, with the scope line, strength, and limitations on hover. Papers with no family sit outside the hulls, in the space between the clusters. GAP is one of these.
-- **Layout.** Computed once at build time in `scripts/build-data.ts` and stored as x, y per paper in `db.json`, so the graph loads instantly and papers keep their positions between visits. `d3-force` runs a fixed number of ticks from seeded positions. Cluster centers sit evenly spaced on a circle, which puts two clusters left and right. Each node pulls toward its cluster center, and nodes with no family pull toward the point between clusters. Tangential works take no cluster pull and sit in a band just outside the clusters, never far off. Links pull connected nodes together weakly, and a collision force keeps dots and their labels apart. Filters dim nodes and never move them.
+- **Layout.** Computed once at build time in `scripts/build-data.ts` and stored as x, y per paper in `db.json`, so the graph loads instantly and papers keep their positions between visits. `d3-force` runs a fixed number of ticks from seeded positions. Cluster centers sit evenly spaced on a circle, which puts two clusters left and right. Each node pulls toward its cluster center, and nodes with no family pull toward the point between clusters. Tangential works take no cluster pull and sit in a band just outside the clusters, never far off. The layout is spring-style, to keep edges from crossing nodes and each other. Every edge type (builds on, benchmarks, cites) acts as a spring that pulls its two papers together, all nodes repel each other, and a collision force keeps dots and their labels apart. An extra force pushes each node away from edges it is not part of. After the simulation settles, a deterministic clean-up pass nudges nodes within their cluster to remove remaining edge–node overlaps and reduce edge crossings. Filters dim nodes and never move them.
 - **Growth.** Adding papers or a new family needs no layout code change. A new family gets its own cluster. The graph stays readable and responsive with a synthetic fixture of 300 papers in 4 clusters plus 30 tangential works: pan and zoom stay smooth, and hover responds within 50 ms.
 - **Nodes** are dots, in the style of ResearchRabbit, matching the mock Maithili approved:
   - Radius grows with the number of database papers the node connects to by any edge type, from 7 px to a capped maximum.
@@ -553,6 +568,7 @@ Left to right: level cards, condensed timeline, legend. Under 900 px the legend 
   - No pills, no boxes, no action-type icons on the node.
 - **Labels** sit to the right of the dot as plain text: short name, then the two-digit year in muted text (" '23"). Don't repeat a year that the short name already contains. At the fitted zoom, only the larger dots show labels, with collision-aware placement that hides overlapping labels. Zooming in reveals more. Hover, focus, selection, and search always show a node's label.
 - **Clusters** draw as soft tinted ellipses or rounded hulls behind their dots, with the family name above in the cluster's dark stop. The scope line, strength, and limitations show on hover over the name.
+- **Edge routing.** No edge may pass through or touch a node that isn't one of its two ends. If one still would after layout, the edge bends around that node. Its curve's control point moves sideways, to whichever side clears every node with the smaller bend. If one bend isn't enough, the edge becomes a smooth path through a waypoint beside each obstacle. Clearance is the node's drawn radius plus 6 px, and it holds at every zoom level.
 - **Edges** follow §5.5 as thin gray curves that start and end at the dot edges, with small arrowheads. Builds on is solid, benchmarks dashed, and cites dotted and lighter. Cites lines draw only for the hovered or selected paper unless "Show all citation lines" is on. Hovering an edge lists every relation between its two papers.
 - **Zoom and pan** use `d3-zoom`. On load, the graph fits its content with a small margin, so no large empty areas remain. Controls for zoom in, zoom out, and fit sit in the graph's corner. Choosing a paper in search zooms to it and pulses it once. The wheel zooms only with a modifier key or inside the graph after a click, so page scrolling isn't hijacked.
 - **Hover or focus** on a node fades everything except that paper and its direct neighbors, colors its edges with its family's dark stop, and shows a card with short name and year, title, core strength, inputs → action types, and knowns chips.
@@ -600,7 +616,7 @@ GAP's row sits at the top in a shaded band, since GAP is part of the paper the s
 
 ### 8.5 Datasets and evaluation setups table
 
-Rows are entries of kind `dataset` or `evaluation_setup`. Simulators never appear as rows. They show only in the environment column.
+Rows are entries of kind `dataset` or `evaluation_setup`. Simulators never appear as rows. They show only in the environment column. Tangential datasets (`tangent: true`) form their own group at the bottom, drawn at 60% opacity, under a "Tangential" divider.
 
 Columns: name, kind (Dataset or Setup), environment, based on (such as "Extends HOMER" or "Validated against HOMER", each linked to that row), sim or real, span, households or users, observations, goal annotations, executable, human models and loops (setups only), used by. Column filters for kind, sim or real, goal annotations, and executable. The name links to `links.home`. An info button opens a small panel with notes and the introducing paper. Clicking "used by" filters the protocol table to evaluations that use that dataset.
 
@@ -680,7 +696,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 8. In matrix view, clicking a filled cell opens the drawer. Selecting goal inference does not list SLaTe-PRO, which skips it.
 9. Pinning two papers puts both ids in `compare=`.
 10. At 375 px wide, no page scrolls horizontally.
-11. On Methods, the STOT to SLaTe-PRO edge is solid. With "Show all citation lines" off, no dotted edge shows until a node is hovered. The fit button brings every node into view.
+11. On Methods, the STOT to SLaTe-PRO edge is solid. With "Show all citation lines" off, no dotted edge shows until a node is hovered. The fit button brings every node into view. No drawn edge, in the seed data or the synthetic fixture, passes within clearance of a node that isn't one of its ends. A unit test over the edge geometry checks this; it would catch Watch-And-Help to NOPA passing through ProAct.
 12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table has exactly one GAP row, shaded and first, showing three loop-type pills, and it stays first after sorting by year.
 13. The realism plot shows GAP's dot at task-specific policy and adaptive simulated user, at simulator opacity. Hovering it shows a card with a working Paper link.
 14. With a fixture tangential paper, its graph node renders at half opacity, and unchecking "Show tangential works" removes it and its edges.
@@ -718,6 +734,9 @@ Maithili can reverse any of these.
 6. **Results.** Only the Table II comparison appears as a chart.
 
 ## 16. Open items for Maithili
+
+Placements decided by Maithili (Oct 21, 2026): SGM, FlowMaps, EvolvingNav, Dorbala (TAP), and Mullen (HomeEmergency) are tangential works of type `search`. Dhakal 2026 and both Talukder papers are L2 with no family, between the clusters like GAP. Din 2025 is L2 in the semi-tangential Implicit Cues family. COIN appears only as a tangential dataset, with no node anywhere. GLOBE joins Temporal Imitation as proposed earlier (no objection raised).
+
 
 1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them.
 2. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.
