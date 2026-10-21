@@ -706,4 +706,4 @@ Maithili can reverse any of these.
 
 1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them.
 2. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.
-3. **Tangential works.** Maithili lists them. Candidates from the RTI references that fit the two tangent types: Peng et al. 2019 [16] (a CHI design and evaluation of service-robot proactivity), and the works that ask questions [17]–[19]. [16]–[18] left the database earlier, and ADAPT [19] is in it now with only its action-selection tag.
+3. **Tangential works.** Maithili lists them. Candidates from the RTI references that fit the two tangent types: Peng et al. 2019 [16] (a CHI design and evaluation of service-robot proactivity), and the works that ask questions [17] and [18]. Both left the database earlier. ADAPT [19] stays on the Subproblems page only and is not tangential, per Maithili.
