@@ -559,7 +559,7 @@ A grouped bar chart built from `featured_comparison`. It starts with the Offline
 
 ### 8.3 Evaluation realism plot
 
-This plot shows how close each paper's evaluation is to the real target, on three axes from `realism` in the taxonomy. Maithili's own figure inspired the idea.
+This plot shows how close each paper's evaluation is to the real target, on three axes from `realism` in the taxonomy. The idea comes from a figure in a paper that is not yet public (§16).
 
 - **x axis**: robot realism. **y axis**: human realism. Each axis has one band per level, in taxonomy order, labeled with the level names.
 - **Environment realism** sets each dot's opacity, from faint (simulator) to solid (users' own homes). Every dot keeps a thin solid outline so faint dots stay visible. A legend shows the four opacity steps with their labels.
@@ -697,5 +697,5 @@ Maithili can reverse any of these.
 
 ## 16. Open items for Maithili
 
-1. **Realism levels** in `realism` (§5.1) adapt the levels from Maithili's figure to proactive assistance. Maithili reviews them.
+1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them.
 2. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.
