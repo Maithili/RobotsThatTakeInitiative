@@ -1,0 +1,84 @@
+# Added from the librarian's answers (Oct 21, 2026). Placement per Maithili (SPEC §16).
+# HomeEmergency names the task and dataset, not the method, so the short name is "Mullen 2025".
+# The HomeEmergency dataset was not yet released at publication, so it has no dataset entry.
+id: mullen-2025-home-emergency
+short_name: Mullen 2025
+title: HomeEmergency - Using Audio to Find and Respond to Emergencies in the Home
+authors:
+  - James F. Mullen, Jr.
+  - Dhruva Kumar
+  - Xuewei Qi
+  - Rajasimman Madhivanan
+  - Arnie Sen
+  - Dinesh Manocha
+  - Richard Kim
+venue: IEEE RA-L
+year: 2025
+links:
+  paper: https://doi.org/10.1109/LRA.2025.3561570
+ids:
+  doi: "10.1109/LRA.2025.3561570"
+provenance: Librarian Oct 2026, A-5 Mullen A1–A12. Search tangent per Maithili, Oct 21 2026
+tangent: search
+subproblems:
+  G1:
+    status: assumes
+    relation: direct
+    note: A fixed emergency space (fall, fire, or none), given by design
+  G2:
+    status: assumes
+    relation: direct
+    note: A hand-specified list maps audio labels to emergency classes
+  A1:
+    status: assumes
+    relation: direct
+    note: Given a room-level activity heatmap from HOMER, with added noise
+  A2:
+    status: skips
+    relation: direct
+    note: Infers whether an emergency is happening (Bayes over rooms, VLM check), not a task goal
+  A3:
+    status: skips
+    relation: direct
+    note: No future prediction. The heatmap is a prior over where the user is now
+  P1:
+    status: skips
+    relation: direct
+    note: No cost model. The cost of false positives is only discussed
+  P2:
+    status: addresses
+    relation: direct
+    note: Goes to the most likely room and updates room beliefs as rooms are cleared
+evaluations:
+  - id: mullen-2025-home-emergency-sim
+    environment: tdw
+    datasets:
+      - homer
+    loop: closed_scripted
+    human_model: Scripted fallen humanoid in a HOMER-chosen room
+    metrics:
+      - search_success_rate
+      - spl
+      - emergency_false_negative_rate
+      - emergency_false_positive_rate
+    other_baselines:
+      - DF (Direction Following)
+      - FFO (Finding Fallen Objects)
+      - PPO
+    provenance: "Librarian Oct 2026, A-5 Mullen A8–A11; Mullen §III, §V, Tables II–III. Hand-built planner. Only the robot's pose changes"
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: simulator
+  - id: mullen-2025-home-emergency-real
+    environment: null
+    datasets:
+      - homer
+    loop: closed_scripted
+    human_model: Staged fallen person or object (who plays it not stated)
+    metrics: []
+    provenance: "Librarian Oct 2026, A-5 Mullen A9; Mullen §V-F, Table V (values unreadable). 4 real apartments, not users' own"
+    realism:
+      robot: task_specific
+      human: null
+      environment: own_home

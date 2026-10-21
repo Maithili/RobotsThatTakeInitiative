@@ -1,0 +1,83 @@
+# Added from the librarian's answers (Oct 21, 2026). Placement per Maithili (SPEC §16).
+# The method is Transit-Aware Planning (TAP), run as TAP-RL and TAP-LLM. FlowMaps' TAP-LGX baseline cites this paper.
+id: tap
+short_name: TAP
+title: Personalized Embodied Navigation for Portable Object Finding
+authors:
+  - Vishnu Sashank Dorbala
+  - Bhrij Patel
+  - Amrit Singh Bedi
+  - Dinesh Manocha
+venue: arXiv
+year: 2026
+links:
+  paper: https://arxiv.org/abs/2403.09905
+ids:
+  arxiv: "2403.09905"
+provenance: Librarian Oct 2026, A-6 Dorbala A1–A12. Search tangent per Maithili, Oct 21 2026
+tangent: search
+subproblems:
+  G1:
+    status: assumes
+    relation: direct
+    note: The goal space is the given set of 21 portable objects, all treated alike
+  G2:
+    status: skips
+    relation: direct
+    note: Observes no human actions
+  A1:
+    status: addresses
+    relation: direct
+    note: Indirectly. Learns object transit paths that stand in for user habits, by RL or in-context memory
+  A2:
+    status: skips
+    relation: direct
+    note: Does not infer a goal
+  A3:
+    status: addresses
+    relation: direct
+    note: Partly. Anticipates where and when objects will be in order to intercept them
+  P1:
+    status: skips
+    relation: direct
+    note: Rewards count found objects. No user cost
+  P2:
+    status: addresses
+    relation: direct
+    note: Picks the next graph node with an RL policy or an LLM
+evaluations:
+  - id: tap-mp3d
+    environment: dynamic-object-maps
+    datasets: []
+    loop: closed_scripted
+    human_model: No human. Scripted object transit
+    metrics:
+      - objects_found_ratio
+      - trajectory_alignment
+      - relative_change_in_success
+    other_baselines:
+      - Random
+      - Oracle (greedy, privileged)
+      - DD-PPO
+      - LGX (LLM)
+    provenance: "Librarian Oct 2026, A-6 Dorbala A9–A11; Dorbala §VI, Table II. Robot level is TAP-LLM's; TAP-RL is task-specific"
+    realism:
+      robot: generalist
+      human: scripted
+      environment: simulator
+  - id: tap-lab-replay
+    environment: dynamic-object-maps
+    datasets: []
+    loop: closed_scripted
+    human_model: No human. Scripted object transit over lab images
+    metrics:
+      - objects_found_ratio
+      - cumulative_success_rate
+      - steps_to_find
+    other_baselines:
+      - LGX (LLM)
+    provenance: "Librarian Oct 2026, A-6 Dorbala A9–A10; Dorbala §VI-D, Table III, Figs. 5–7. Real lab images replayed in simulation"
+    realism:
+      robot: generalist
+      human: scripted
+      environment: simulator

@@ -1,0 +1,140 @@
+# Added from the librarian's answers (Oct 21, 2026). Placement per Maithili (SPEC §16).
+id: evolvingnav
+short_name: EvolvingNav
+title: "Beyond the Remembered World: Predictive 4D Belief for Persistent Navigation in Evolving Worlds"
+authors:
+  - Mingjian Gao
+  - Zhaocheng Li
+  - Haoyang Huang
+  - Wenqiao Zhang
+  - Yingjie Niu
+  - Hao Zhou
+  - Chao Li
+  - Juncheng Li
+  - Siliang Tang
+  - Yueting Zhuang
+venue: arXiv
+year: 2026
+links:
+  paper: https://arxiv.org/abs/2609.39166
+  code: https://github.com/ZJU4EmbodiedAI/EvolvingNav
+  project: https://zju4embodiedai.github.io/EvolvingNav/
+ids:
+  arxiv: "2609.39166"
+provenance: Librarian Oct 2026, A-4 EvolvingNav A1–A12. Search tangent per Maithili, Oct 21 2026
+tangent: search
+subproblems:
+  G1:
+    status: assumes
+    relation: direct
+    note: The target and its candidate locations are given, with an unknown state that triggers exploring
+  G2:
+    status: skips
+    relation: direct
+    note: Trains without change or activity labels. Activities live only in the benchmark generator
+  A1:
+    status: addresses
+    relation: direct
+    note: Partly. Learns object-relocation dynamics from timestamped histories as a proxy for household routines
+  A2:
+    status: assumes
+    relation: direct
+    note: The search target is given
+  A3:
+    status: addresses
+    relation: direct
+    note: Anticipates object state, not user goals. Predicts where the target will be at each arrival time
+  P1:
+    status: addresses
+    relation: direct
+    note: Partly. Models robot travel and inspection cost, not user cost
+  P2:
+    status: addresses
+    relation: direct
+    note: A frozen VLM controller replans in a predict-observe loop, picking sites by arrival-time utility
+evaluations:
+  - id: evolvingnav-evoworld
+    environment: habitat
+    datasets:
+      - evoworld-bench
+    loop: closed_scripted
+    human_model: Generated routines grounded in human traces
+    metrics:
+      - search_success_rate
+      - spl
+      - eventual_search_success
+      - first_inspection_success
+      - recovery_success
+      - dynamic_success
+      - online_recovery_success
+      - excess_distance
+      - revisit_success
+      - inspections
+      - path_length
+    baselines:
+      - slate-pro
+      - sgm
+      - flowmaps
+      - saavedra-2026-scene-graphs
+    other_baselines:
+      - VLFM
+      - ZSON
+      - FindingDory Agent
+      - LagMemo GLUE
+      - HOV-SG
+      - DynaMem
+    provenance: "Librarian Oct 2026, A-4 EvolvingNav A9–A11; EvolvingNav Tables 1, 2, 11, 12, 15, App. B.6. Robot never moves objects"
+    realism:
+      robot: generalist
+      human: scripted
+      environment: simulator
+  - id: evolvingnav-prediction
+    environment: habitat
+    datasets:
+      - evoworld-bench
+    loop: offline_replay
+    human_model: Generated household histories
+    metrics:
+      - top1_accuracy
+      - mrr
+      - nll
+      - true_state_rank
+      - ece
+    other_baselines:
+      - Last Seen
+      - Frequency Prior
+      - Markov Transition
+      - Time-Conditioned Prior
+      - Instance Hotspot
+      - Activity-Markov
+      - Uniform Random
+      - Random Forest
+      - Packed MLP
+      - GRU
+      - Shared semantic prior
+      - GRU Direct
+      - Transformer Direct
+    provenance: "Librarian Oct 2026, A-4 EvolvingNav A9–A11; EvolvingNav Tables 5, 10, App. A.5, A.7, B.6"
+    realism:
+      robot: task_specific
+      human: recorded
+      environment: simulator
+  - id: evolvingnav-real-robot
+    environment: null
+    datasets: []
+    loop: closed_scripted
+    human_model: Not stated (four routine-change conditions)
+    metrics:
+      - recovery_success
+      - inspections
+      - path_length
+      - task_time
+    other_baselines:
+      - Last Seen + Search
+      - Time Frequency
+      - Retrieval + Reasoning
+    provenance: "Librarian Oct 2026, A-4 EvolvingNav A9; EvolvingNav Table 3, App. D. Who moved objects is not stated. Real sites, not homes"
+    realism:
+      robot: generalist
+      human: null
+      environment: lab

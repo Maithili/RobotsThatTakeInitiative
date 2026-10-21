@@ -1,0 +1,91 @@
+# Added from the librarian's answers (Oct 21, 2026). Placement per Maithili (SPEC §16).
+id: sgm
+short_name: SGM
+title: Modeling Dynamic Environments with Scene Graph Memory
+authors:
+  - Andrey Kurenkov
+  - Michael Lingelbach
+  - Tanmay Agarwal
+  - Emily Jin
+  - Chengshu Li
+  - Ruohan Zhang
+  - Li Fei-Fei
+  - Jiajun Wu
+  - Silvio Savarese
+  - Roberto Martín-Martín
+venue: ICML
+year: 2023
+links:
+  paper: null
+provenance: Librarian Oct 2026, A-1 SGM A1–A12. Search tangent per Maithili, Oct 21 2026. SGM prints no landing page, arXiv id, or DOI
+tangent: search
+subproblems:
+  G1:
+    status: assumes
+    relation: direct
+    note: The goal is always a given query, find object X
+  G2:
+    status: skips
+    relation: direct
+    note: Observes no user actions
+  A1:
+    status: addresses
+    relation: direct
+    note: Partly and indirectly. Learns object-relocation dynamics from partial observations, with no human model
+  A2:
+    status: assumes
+    relation: direct
+    note: The query object is given
+  A3:
+    status: skips
+    relation: direct
+    note: Predicts next-step object locations by temporal link prediction, not user goals
+  P1:
+    status: skips
+    relation: direct
+    note: No cost model. Path length is only an outcome
+  P2:
+    status: addresses
+    relation: direct
+    note: Simply visits the furniture node with the highest posterior, with no planner
+evaluations:
+  - id: sgm-dynamic-house
+    environment: dynamic-house-simulator
+    datasets: []
+    loop: closed_scripted
+    human_model: No human. Scripted stochastic object moves
+    metrics:
+      - location_accuracy
+      - ndcg
+      - steps_to_find
+    other_baselines:
+      - Random
+      - Frequentist
+      - Priors
+      - Myopic
+      - Bayesian
+      - Oracle (upper bound)
+      - HMS (Kurenkov et al. 2021)
+    provenance: "Librarian Oct 2026, A-1 SGM A9–A11; SGM §5–6, Table 1. The agent picks nodes to observe and never changes object state"
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: simulator
+  - id: sgm-igridson
+    environment: dynamic-house-simulator
+    datasets: []
+    loop: closed_scripted
+    human_model: No human. Scripted object moves in iGridson
+    metrics:
+      - search_success_rate
+      - steps_to_find
+      - path_length
+    other_baselines:
+      - Random
+      - Myopic
+      - Bayesian
+    provenance: "Librarian Oct 2026, A-1 SGM A9–A11; SGM §6.3, Table 3, App. F. The agent moves but never changes object state"
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: simulator

@@ -1,0 +1,10 @@
+# Added from the librarian's answers (Oct 21, 2026), as the environment for FlowMaps and PredictiveGraphs.
+id: procthor
+name: ProcTHOR (AI2-THOR)
+kind: simulator
+introduced_in: null
+links:
+  home: null
+sim_or_real: sim
+notes: Procedurally generated houses in AI2-THOR. FlowMaps and PredictiveGraphs script hourly object moves in them
+provenance: Librarian Oct 2026, A-3 FlowMaps A8–A9; B-5 PredictiveGraphs P2–P3

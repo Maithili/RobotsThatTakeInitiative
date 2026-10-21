@@ -1,0 +1,11 @@
+# Added from the librarian's answers (Oct 21, 2026). SGM calls it a benchmark, but it is a generator, not a recorded dataset.
+id: dynamic-house-simulator
+name: Dynamic House Simulator
+kind: simulator
+introduced_in: sgm
+links:
+  home: null
+sim_or_real: sim
+notes: Generates dynamic scene graphs with scripted object moves. iGridson is its gridworld form. Priors from iGibson 2.0 and ProcTHOR-10k
+tangent: true
+provenance: Librarian Oct 2026, A-1 SGM A3, A8; SGM §4.1, App. A

@@ -1,0 +1,24 @@
+# Added from the librarian's answers (Oct 21, 2026).
+id: evoworld-bench
+name: EvoWorld-Bench
+kind: evaluation_setup
+introduced_in: evolvingnav
+links:
+  home: null
+sim_or_real: sim
+span: 90 days per scene
+households_or_users: 54 scenes
+observations:
+  - object_relocations
+  - video
+goal_annotations: partial
+executable: "no"
+environment: habitat
+human_models:
+  - Generated routines grounded in human traces
+loops:
+  - offline_replay
+  - closed_scripted
+notes: 803,680 tasks. Activity labels are hidden from agents. HOMER+ is one of six sources, giving only activity-order and end-state priors
+tangent: true
+provenance: Librarian Oct 2026, A-4 EvolvingNav A8; EvolvingNav §4, App. B.1–B.2

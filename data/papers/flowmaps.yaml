@@ -1,0 +1,96 @@
+# Added from the librarian's answers (Oct 21, 2026). Placement per Maithili (SPEC §16).
+id: flowmaps
+short_name: FlowMaps
+title: "FlowMaps: Modeling Long-Term Multimodal Object Dynamics with Flow Matching"
+authors:
+  - Francesco Argenziano
+  - Miguel Saavedra-Ruiz
+  - Sacha Morin
+  - Charlie Gauthier
+  - Daniele Nardi
+  - Liam Paull
+venue: arXiv
+year: 2026
+links:
+  paper: https://arxiv.org/abs/2606.20209
+  project: https://fra-tsuna.github.io/flowmaps/
+ids:
+  arxiv: "2606.20209"
+provenance: Librarian Oct 2026, A-3 FlowMaps A1–A12. Search tangent per Maithili, Oct 21 2026
+tangent: search
+subproblems:
+  G1:
+    status: skips
+    relation: direct
+    note: Models no goal or activity space
+  G2:
+    status: skips
+    relation: direct
+    note: Does not associate actions with goals
+  A1:
+    status: addresses
+    relation: direct
+    note: Implicitly. Learns habit-induced object placement from data, with no explicit human model
+  A2:
+    status: skips
+    relation: direct
+    note: Does not infer the user's goal. Only the object to find and the query times are given
+  A3:
+    status: addresses
+    relation: direct
+    note: Partly. Predicts a distribution over future object locations, not the user's goal
+  P1:
+    status: skips
+    relation: direct
+    note: No cost model. Ranks targets by cluster mass and breaks ties by distance
+  P2:
+    status: addresses
+    relation: direct
+    note: Minimally. Visits the predicted clusters in order of mass
+evaluations:
+  - id: flowmaps-distribution
+    environment: procthor
+    datasets: []
+    loop: offline_replay
+    human_model: Generated habit routines (3 habits)
+    metrics:
+      - min_fde
+      - recall_at_1m
+      - sample_density
+      - sample_coverage
+      - total_variation
+      - js_divergence
+    other_baselines:
+      - FreqPrior
+      - LLMPrior
+      - EmpiricalMean (oracle point predictor)
+    provenance: "Librarian Oct 2026, A-3 FlowMaps A9–A11; FlowMaps §5, Table 1, App. C.1. Unnamed generated data"
+    realism:
+      robot: task_specific
+      human: recorded
+      environment: simulator
+  - id: flowmaps-objnav
+    environment: procthor
+    datasets: []
+    loop: closed_scripted
+    human_model: Scripted habit routines (3 habits)
+    metrics:
+      - success_at_k
+      - spl_at_k
+      - path_length
+      - steps_to_find
+    baselines:
+      - stot
+      - sgm
+      - tap
+    other_baselines:
+      - OSG+SP (Rudra et al.)
+      - OSG+LLM (Rudra et al.)
+      - CEG+SP (Wang et al.)
+      - CEG+LLM (Wang et al.)
+      - Naive LLM
+    provenance: "Librarian Oct 2026, A-3 FlowMaps A9–A11; FlowMaps §5, Table 2, App. C.2. Robot moves, objects follow the schedule"
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: simulator

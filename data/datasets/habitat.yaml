@@ -1,0 +1,10 @@
+# Added from the librarian's answers (Oct 21, 2026), as the environment for EvolvingNav.
+id: habitat
+name: Habitat (HSSD scenes)
+kind: simulator
+introduced_in: null
+links:
+  home: null
+sim_or_real: sim
+notes: Habitat-Sim and Habitat-Lab, run on 54 HSSD scenes for EvoWorld-Bench
+provenance: Librarian Oct 2026, A-4 EvolvingNav A8; EvolvingNav §4.2, App. A.6
