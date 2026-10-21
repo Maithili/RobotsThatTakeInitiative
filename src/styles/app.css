@@ -1161,6 +1161,18 @@ tr.clickable:hover td {
 .levelcard:focus-visible .levelcard__note {
   display: block;
 }
+/* L0 is a baseline description with no click action (SPEC §7.1). */
+.levelcard--baseline {
+  cursor: default;
+  border-style: dashed;
+  border-left-style: solid;
+}
+.levelcard--baseline:hover {
+  background: var(--surface);
+}
+.levelcard--baseline .levelcard__note {
+  display: block;
+}
 
 .hovercard {
   position: absolute;
@@ -1937,7 +1949,7 @@ tr.clickable:hover td {
   grid-template-areas:
     'c2 t2 lg'
     'c1 t1 lg'
-    '.  ax lg';
+    'c0 ax lg';
   gap: 8px 14px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1947,9 +1959,10 @@ tr.clickable:hover td {
 }
 .mtop__card--L2 { grid-area: c2; }
 .mtop__card--L1 { grid-area: c1; }
+.mtop__card--L0 { grid-area: c0; }
 .mtop__tl--L2 { grid-area: t2; }
 .mtop__tl--L1 { grid-area: t1; }
-.mtop__axis { grid-area: ax; min-width: 0; }
+.mtop__axis { grid-area: ax; min-width: 0; align-self: start; }
 .mtop__legend {
   grid-area: lg;
   display: flex;
@@ -2248,7 +2261,7 @@ tr.clickable:hover td {
     grid-template-areas:
       'c2 t2'
       'c1 t1'
-      '.  ax'
+      'c0 ax'
       'lg lg';
   }
   .mtop__legend {
@@ -2263,9 +2276,10 @@ tr.clickable:hover td {
 @media (max-width: 639px) {
   .mtop {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: 'c2' 't2' 'c1' 't1' 'ax' 'lg';
+    grid-template-areas: 'c2' 't2' 'c1' 't1' 'ax' 'c0' 'lg';
   }
-  .mtop__card .levelcard__def {
+  .mtop__card .levelcard__def,
+  .mtop__card .levelcard__note {
     display: none;
   }
 }

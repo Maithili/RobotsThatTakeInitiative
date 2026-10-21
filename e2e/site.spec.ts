@@ -81,7 +81,6 @@ test('3. ?paper=gap opens the drawer and Esc closes it', async ({ page }) => {
 test('4. hovering a timeline chip highlights the graph node; GAP sits outside both cluster hulls', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
   await expect(page.locator('.levelnav__toggles')).toHaveCount(0);
-  await expect(page.getByTestId('levelcard-L0')).toHaveCount(0);
   await page.getByTestId('tchip-slate-pro').hover();
   await expect(page.getByTestId('node-slate-pro')).toHaveAttribute('data-hover', 'true');
   await page.getByTestId('node-nopa').hover();
@@ -221,7 +220,7 @@ test('11. the STOT to SLaTe-PRO edge is solid, and unchecking Cites removes ever
   await expect.poll(() => params(page).get('edges')).toBeNull();
 });
 
-test('selecting a level card highlights its timeline row only', async ({ page }) => {
+test('selecting a level card highlights its timeline row only; L0 is a baseline card', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
   const nodes = page.locator('[data-testid^="node-"]');
   const count = await nodes.count();
@@ -237,6 +236,17 @@ test('selecting a level card highlights its timeline row only', async ({ page })
   await page.getByTestId('levelcard-L1').click();
   await expect.poll(() => params(page).get('level')).toBeNull();
   await expect(page.getByTestId('timeline-L1')).toHaveAttribute('data-selected', 'false');
+
+  // L0: name, knowns, definition, and note, with no count, no timeline row, and no click action.
+  const l0 = page.getByTestId('levelcard-L0');
+  await expect(l0).toBeVisible();
+  await expect(l0).toContainText('Reactive assistance');
+  await expect(l0).toContainText('industrial manufacturing');
+  await expect(l0).not.toHaveRole('button');
+  await expect(l0.locator('.levelcard__count')).toHaveCount(0);
+  await expect(page.getByTestId('timeline-L0')).toHaveCount(0);
+  await expect(page.getByTestId('levelcard-L2').locator('.levelcard__count')).toBeVisible();
+  await expect(page.getByTestId('levelcard-L1').locator('.levelcard__count')).toBeVisible();
 });
 
 test('no subproblem codes appear as visible text', async ({ page }) => {
