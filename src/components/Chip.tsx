@@ -40,7 +40,7 @@ export function Chip({
 }
 
 export function LevelChip({ level }: { level: LevelId | null }) {
-  if (!level) return <span className="level-chip level-chip--none" title="Not yet classified">—</span>;
+  if (!level) return <span className="level-chip level-chip--none" title="No level">—</span>;
   return (
     <span className={`level-chip level-chip--${level}`} title={tx.levels[level].name}>
       {level}
@@ -49,7 +49,7 @@ export function LevelChip({ level }: { level: LevelId | null }) {
 }
 
 export function KnownsChips({ knowns }: { knowns: { goal: string; human_policy: string } | null | undefined }) {
-  if (!knowns) return <span className="muted">Not yet classified</span>;
+  if (!knowns) return <span className="muted">—</span>;
   return (
     <span className="knowns">
       <span className={`known known--${knowns.goal}`}>g {knowns.goal}</span>

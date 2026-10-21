@@ -142,8 +142,6 @@ function Matrix({ visible }: { visible: DbPaper[] }) {
     const out: { id: string; title: string; level: DbPaper['level']; method: boolean; rows: DbPaper[] }[] = buildLanes(methodPapers)
       .filter((l) => l.papers.length)
       .map((l) => ({ id: l.id, title: l.family ? `${l.level} · ${l.title}` : l.title, level: l.level, method: true, rows: l.papers }));
-    const unc = methodPapers.filter((p) => !p.level);
-    if (unc.length) out.push({ id: 'unclassified', title: 'Not yet classified', level: null, method: true, rows: unc });
     const others = tagged.filter((p) => !p.method);
     if (others.length) out.push({ id: 'works', title: 'Subproblem works', level: null, method: false, rows: others });
     return out;

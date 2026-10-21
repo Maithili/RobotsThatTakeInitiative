@@ -88,7 +88,7 @@ describe('search scoring', () => {
 });
 
 describe('filters', () => {
-  const m = P('m', 'M', { level: 'L2', method: { family: 'temporal_prediction', action_types: ['act'], inputs: ['scene_graph'] }, search: 'm predicting routine 2023' });
+  const m = P('m', 'M', { level: 'L2', method: { knowns: { goal: 'unknown', human_policy: 'unknown' }, family: 'temporal_prediction', action_types: ['act'], inputs: ['scene_graph'] }, search: 'm predicting routine 2023' });
   const s = P('s', 'S', { subproblems: { G1: { status: 'addresses', relation: 'direct', note: '' } } });
   const f = (q: string) => readGlobalFilters(new URLSearchParams(q));
   it('fails method filters for papers without a method block', () => {

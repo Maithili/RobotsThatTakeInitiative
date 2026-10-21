@@ -48,8 +48,6 @@ function MethodsList({ papers }: { papers: DbPaper[] }) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'year', dir: 1 });
   const visible = papers.filter((p) => matchesGlobal(p, url.filters));
   const groups = buildLanes(visible).filter((l) => l.papers.length);
-  const unclassified = visible.filter((p) => p.method && !p.level);
-  if (unclassified.length) groups.push({ id: 'none', level: 'L0', family: null, title: 'Not yet classified', papers: unclassified });
 
   if (!visible.length) return <EmptyState>No methods match these filters.</EmptyState>;
 
@@ -79,7 +77,7 @@ function MethodsList({ papers }: { papers: DbPaper[] }) {
           <tbody key={g.id}>
             <tr className="group-row">
               <th colSpan={COLS.length} scope="colgroup">
-                {g.id === 'none' ? <LevelChip level={null} /> : <LevelChip level={g.level} />} {g.title} <span className="muted">· {g.papers.length}</span>
+                <LevelChip level={g.level} /> {g.title} <span className="muted">· {g.papers.length}</span>
               </th>
             </tr>
             {sorted(g.papers).map((p) => (
@@ -111,22 +109,20 @@ export function MethodsPage() {
   const url = useUrl();
   const synthetic = Number(url.get('synthetic')) || 0;
   const papers = useMemo(() => (synthetic ? syntheticPapers(synthetic) : allPapers), [synthetic]);
-  const methods = useMemo(() => papers.filter((p) => p.method), [papers]);
-  const classified = methods.filter((p) => p.level);
-  const unclassified = methods.filter((p) => !p.level);
+  // Only classified works appear on this page (SPEC §7.2).
+  const methods = useMemo(() => papers.filter((p) => p.method && p.level), [papers]);
   const surveys = papers.filter((p) => p.type === 'survey');
   const counts = useMemo(() => {
     const c: Record<LevelId, number> = { L0: 0, L1: 0, L2: 0 };
-    for (const p of classified) c[p.level!]++;
+    for (const p of methods) c[p.level!]++;
     return c;
-  }, [classified]);
+  }, [methods]);
   const narrow = typeof window !== 'undefined' && window.innerWidth < 640;
   const view = url.get('view') === 'list' || (url.get('view') !== 'graph' && narrow) ? 'list' : 'graph';
   const yearSpan = useMemo<[number, number]>(() => {
     const ys = methods.map((p) => p.year);
     return [Math.min(...ys), Math.max(...ys)];
   }, [methods]);
-  const f = url.filters;
 
   return (
     <div className="page page--wide">
@@ -150,34 +146,6 @@ export function MethodsPage() {
               </div>
             </section>
           )}
-          <section className="strip" aria-label="Not yet classified">
-            <h2 className="strip__title">
-              Not yet classified <span className="muted">· {unclassified.length}</span>
-            </h2>
-            <p className="small muted">Proactive behaviors with no level assigned.</p>
-            {unclassified.length ? (
-              <div className="chips">
-                {unclassified.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    className={`chip chip--paper${matchesGlobal(p, f) ? '' : ' is-dim'}`}
-                    data-locate={p.id}
-                    onClick={() => url.openPaper(p.id)}
-                  >
-                    {p.short_name} <span className="muted">{p.year}</span>
-                    {(p.method?.action_types ?? []).map((a) => (
-                      <span key={a} className="small muted">
-                        · {tx.action_types[a]?.label}
-                      </span>
-                    ))}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <EmptyState compact>Every method has a level.</EmptyState>
-            )}
-          </section>
           <section className="strip legend-strip" aria-label="Legend">
             <h2 className="strip__title">Legend</h2>
             <ul className="legend">
@@ -230,11 +198,11 @@ export function MethodsPage() {
       />
 
       {synthetic > 0 && <p className="notice small">Showing {synthetic} synthetic papers (layout test fixture), not real data.</p>}
-      {classified.every((p) => !(p.method?.builds_on ?? []).length) && view === 'graph' && (
+      {methods.every((p) => !(p.method?.builds_on ?? []).length) && view === 'graph' && (
         <p className="small muted">No lineage edges yet: the RTI paper does not state which methods extend which. Turn on baseline comparisons to see evaluation links.</p>
       )}
 
-      {view === 'graph' ? <LineageGraph papers={classified} /> : <MethodsList papers={methods} />}
+      {view === 'graph' ? <LineageGraph papers={methods} /> : <MethodsList papers={methods} />}
     </div>
   );
 }

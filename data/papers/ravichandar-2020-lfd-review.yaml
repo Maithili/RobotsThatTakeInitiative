@@ -11,7 +11,6 @@ venue: Annual Review of Control, Robotics, and Autonomous Systems
 year: 2020
 links:
   paper: https://doi.org/10.1146/annurev-control-100819-063206
-type: survey
 provenance: RTI App. II-A
 subproblems:
   A1:

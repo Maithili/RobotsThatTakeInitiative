@@ -235,7 +235,7 @@ export function buildDb(input: BuildInput): BuildResult {
   for (const c of fc.columns) if (!evalById.has(c.evaluation)) errors.push(`taxonomy.yaml: featured_comparison evaluation "${c.evaluation}" does not exist`);
 
   for (const p of papers) {
-    if (!p.method && !p.subproblems && !p.evaluations && !referenced.has(p.id)) {
+    if (!p.method && !p.subproblems && !p.evaluations && p.type !== 'survey' && !referenced.has(p.id)) {
       warnings.push(`papers/${p.id}.yaml: no method, subproblem, or evaluation block and nothing references it`);
     }
   }

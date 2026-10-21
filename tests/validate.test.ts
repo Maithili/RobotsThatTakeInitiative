@@ -27,6 +27,7 @@ const base = (id: string, extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
+const L2K = { knowns: { goal: 'unknown', human_policy: 'unknown' } } as const;
 const sim = { id: 'sim', name: 'Sim', kind: 'simulator', links: { home: null }, sim_or_real: 'sim', provenance: 'test' };
 const ds = { id: 'ds', name: 'DS', kind: 'dataset', links: { home: null }, sim_or_real: 'sim', provenance: 'test' };
 
@@ -66,8 +67,8 @@ describe('validator', () => {
 
   it('rejects ids that are not in the taxonomy', () => {
     expectError(run([base('a', { themes: ['vibes'] })]), /unknown theme/);
-    expectError(run([base('a', { method: { action_types: ['dance'] } })]), /unknown action type/);
-    expectError(run([base('a', { method: { inputs: ['smell'] } })]), /unknown input modality/);
+    expectError(run([base('a', { method: { ...L2K, action_types: ['dance'] } })]), /unknown action type/);
+    expectError(run([base('a', { method: { ...L2K, inputs: ['smell'] } })]), /unknown input modality/);
     expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'vibes' }] })]), /unknown loop type/);
     expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', metrics: ['bleu'] }] })]), /unknown metric/);
     expectError(
@@ -77,7 +78,7 @@ describe('validator', () => {
   });
 
   it('rejects references to missing ids', () => {
-    expectError(run([base('a', { method: { builds_on: ['ghost'] } })]), /builds_on "ghost" does not exist/);
+    expectError(run([base('a', { method: { ...L2K, builds_on: ['ghost'] } })]), /builds_on "ghost" does not exist/);
     expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', baselines: ['ghost'] }] })]), /baseline "ghost"/);
     expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', datasets: ['ghost'] }] })]), /dataset "ghost"/);
     expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', environment: 'ghost' }] })]), /environment "ghost"/);
@@ -104,7 +105,7 @@ describe('validator', () => {
   it('rejects text over its cap', () => {
     expectError(run([base('a', { short_name: 'x'.repeat(25) })]), /short_name exceeds 24/);
     expectError(run([base('a', { provenance: 'x'.repeat(141) })]), /provenance exceeds 140/);
-    expectError(run([base('a', { method: { core_strength: 'x'.repeat(121) } })]), /core_strength exceeds 120/);
+    expectError(run([base('a', { method: { ...L2K, core_strength: 'x'.repeat(121) } })]), /core_strength exceeds 120/);
     expectError(run([base('a', { subproblems: { G1: { status: 'addresses', relation: 'direct', note: 'x'.repeat(141) } } })]), /note exceeds 140/);
     expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', human_model: 'x'.repeat(61) }] })]), /human_model exceeds 60/);
     expectError(run([], { datasets: [{ ...ds, span: 'x'.repeat(41) }] }), /span exceeds 40/);
@@ -125,12 +126,16 @@ describe('validator', () => {
 
   it('rejects a family on a non-L2 paper', () => {
     expectError(run([base('a', { method: { knowns: { goal: 'known', human_policy: 'unknown' }, family: 'goal_inference' } })]), /not L2/);
-    expectError(run([base('a', { method: { knowns: null, family: 'goal_inference' } })]), /not L2/);
+  });
+
+  it('rejects a method block without knowns', () => {
+    expectError(run([base('a', { method: { family: 'goal_inference' } })]), /knowns/);
+    expectError(run([base('a', { method: { knowns: null } })]), /knowns/);
   });
 
   it('rejects a builds_on cycle', () => {
     expectError(
-      run([base('a', { method: { builds_on: ['b'] } }), base('b', { method: { builds_on: ['c'] } }), base('c', { method: { builds_on: ['a'] } })]),
+      run([base('a', { method: { ...L2K, builds_on: ['b'] } }), base('b', { method: { ...L2K, builds_on: ['c'] } }), base('c', { method: { ...L2K, builds_on: ['a'] } })]),
       /cycle/,
     );
     expect(findCycle(new Map([['a', ['b']], ['b', []]]))).toBeNull();
@@ -138,7 +143,7 @@ describe('validator', () => {
 
   it('warns without failing', () => {
     const r = run([
-      base('old', { links: { paper: null }, method: { builds_on: ['new'] } }),
+      base('old', { links: { paper: null }, method: { ...L2K, builds_on: ['new'] } }),
       base('new', { year: 2024, evaluations: [{ id: 'e', loop: 'offline_replay', metrics: [], results: [{ method: 'old', metric: 'f1', value: 1 }] }] }),
       base('lonely'),
     ]);

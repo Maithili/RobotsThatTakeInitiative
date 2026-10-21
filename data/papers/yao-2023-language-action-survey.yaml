@@ -22,7 +22,6 @@ venue: arXiv
 year: 2023
 links:
   paper: https://arxiv.org/abs/2312.10807
-type: survey
 provenance: RTI App. II-A
 subproblems:
   G1:

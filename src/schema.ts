@@ -144,7 +144,7 @@ export type Evaluation = z.infer<typeof EvaluationSchema>;
 
 export const MethodSchema = z
   .object({
-    knowns: z.object({ goal: known, human_policy: known }).strict().nullable().optional(),
+    knowns: z.object({ goal: known, human_policy: known }).strict(),
     family: z.string().nullable().optional(),
     action_types: z.array(z.string()).optional(),
     inputs: z.array(z.string()).optional(),

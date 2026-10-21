@@ -51,17 +51,17 @@ test('3. ?paper=gap opens the drawer and Esc closes it', async ({ page }) => {
   expect(params(page).get('paper')).toBeNull();
 });
 
-test('4. setting both toggles to unknown highlights the L2 lanes', async ({ page }) => {
+test('4. clicking the L2 card highlights the L2 lanes', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
-  const toggles = page.locator('.levelnav__toggles');
-  await toggles.getByRole('group', { name: 'Goal g' }).getByRole('button', { name: 'unknown' }).click();
-  await toggles.getByRole('group', { name: 'Human policy πʰ' }).getByRole('button', { name: 'unknown' }).click();
+  await expect(page.locator('.levelnav__toggles')).toHaveCount(0);
+  await page.getByTestId('levelcard-L2').click();
   await expect.poll(() => params(page).get('level')).toBe('L2');
   const lanes = page.locator('[data-testid^="lane-L2"]');
   expect(await lanes.count()).toBeGreaterThan(0);
   for (const lane of await lanes.all()) await expect(lane).toHaveAttribute('data-active', 'true');
   await expect(page.getByTestId('lane-L1')).toHaveAttribute('data-active', 'false');
   await expect(page.getByTestId('lane-L0')).toHaveAttribute('data-active', 'false');
+  await expect(page.getByLabel('Not yet classified')).toHaveCount(0);
 });
 
 test('5. clicking ΔC↑ leaves net actions saved, perturbed actions, and F1 in the metrics list', async ({ page }) => {
