@@ -94,7 +94,7 @@ evaluations:
 
 All have `knowns: {goal: unknown, human_policy: unknown}`.
 
-### 2.1 Temporal prediction family
+### 2.1 Temporal Imitation family
 
 Provenance: RTI §II, §III-A3, §III-B, Table I, §IV.
 

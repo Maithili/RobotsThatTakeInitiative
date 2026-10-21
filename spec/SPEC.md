@@ -14,7 +14,7 @@ Readers come to find papers. The site gives them three entry points, one per pag
 
 1. **Methods.** Proactive methods classified by level (L0, L1, L2), shown on a lineage graph with each method's core strength and its input and output modalities.
 2. **Evaluations.** Datasets and their characteristics, the metrics people use and which terms of the net value ΔV − ΔC each one measures, and whether each evaluation runs open loop or closed loop.
-3. **Subproblems.** Works under each subproblem (G1 to P2), with the part of the subproblem each one solves.
+3. **Subproblems.** Works under each of the seven subproblems, with the part of the subproblem each one solves.
 
 ## 2. Principles
 
@@ -99,17 +99,17 @@ levels:                       # ordered by increasing unknowns
 
 families:                     # L2 only, from RTI §III-B
   goal_inference:
-    name: Goal inference and planning
+    name: Goal Inference
     definition: Online goal inference followed by goal-conditioned planning.
-    scope_line: Addresses A2. Assumes G1, G2, A1 given. Skips A3.
+    scope_line: Infers the current goal. Assumes the goal space, action-goal association, and human policy are given. Does not anticipate future goals.
     limitations:
       - Needs the full set of goals with ground-truth goal annotations for past actions.
       - Assists only with the current task, once the belief concentrates.
       - Ignores habits and preferred variants.
-  temporal_prediction:
-    name: Temporal user action prediction
-    definition: Learns what the user tends to do next from temporal patterns and executes the predicted action.
-    scope_line: Addresses A3. Skips A1 and A2. Assumes uniform cost across actions.
+  temporal_imitation:
+    name: Temporal Imitation
+    definition: Learns what the user tends to do next from temporal patterns and imitates the predicted action.
+    scope_line: Anticipates future goals at the action level. Skips goal inference and human policy learning. Assumes uniform cost across actions.
     strength: Predicts minutes to hours ahead, with no need for close collaboration.
     limitations:
       - Discards the intentional structure of behavior that a goal-level model can exploit.
@@ -139,6 +139,7 @@ stages:
 subproblems:                  # RTI Table I and §III-A. input/output are TeX.
   G1:
     name: Goal-space representation
+    short: Goal space
     stage: grounding
     input: '\xi_{0:t}'
     output: '\mathcal{G}'
@@ -147,6 +148,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {hierarchical: Hierarchical representations, open_set_language: Open-set representations grounded in language}
   G2:
     name: Action-goal association
+    short: Action-goal association
     stage: grounding
     input: '\xi_{0:t},\ \mathcal{G}'
     output: 'g_{0:t}'
@@ -155,6 +157,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {symbolic: Symbolic models, learned: Learned models, hindsight_relabeling: Hindsight relabeling}
   A1:
     name: Human policy learning
+    short: Human policy
     stage: anticipation
     input: '\xi_{0:t},\ \mathcal{G},\ g_{0:t}'
     output: '\pi^h'
@@ -163,6 +166,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {lfd: Learning from demonstration, lfo: Learning from observation, clustering_mixture: User clustering and mixture models, guided_demonstration: Guiding users toward effective demonstrations}
   A2:
     name: Goal inference
+    short: Goal inference
     stage: anticipation
     input: '\xi_{t-\Delta t:t},\ \mathcal{G},\ \pi^h'
     output: 'g_t'
@@ -171,6 +175,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {symbolic: Symbolic, learned: Learned, hybrid: Hybrid}
   A3:
     name: Goal anticipation
+    short: Goal anticipation
     stage: anticipation
     input: '\xi_{0:t},\ \mathcal{G},\ g_{0:t}'
     output: 'g_{t:t+\Delta t}\ \text{or}\ \phi'
@@ -179,6 +184,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {language_model: Language models, temporal_sequence: Temporal sequence prediction, probabilistic_filtering: Probabilistic filtering of object movement}
   P1:
     name: Cost modeling
+    short: Cost model
     stage: planning
     input: 's_t,\ a^r_t,\ a^h_t'
     output: 'c_h(a^h_t)'
@@ -187,6 +193,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {task_complexity: Task complexity, fatigue: Effort and fatigue, preference_feedback: Preferences from user feedback, interruptibility: Interruptibility}
   P2:
     name: Coordinated action selection
+    short: Action selection
     stage: planning
     input: '\xi_{0:t},\ c_h(\cdot),\ \pi^h,\ g_{t:t+\Delta t}'
     output: 'a^r_t'
@@ -330,7 +337,7 @@ links: {paper: null}
 provenance: RTI §II, §III-B, Table I, §IV
 method:
   knowns: {goal: unknown, human_policy: unknown}
-  family: temporal_prediction
+  family: temporal_imitation
   action_types: [act]
   inputs: [scene_graph]
   core_strength: null
@@ -427,7 +434,7 @@ Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, th
 | Param | Scope | Example | Meaning |
 |---|---|---|---|
 | `level` | global | `L1,L2` | Level filter |
-| `family` | global | `temporal_prediction` | Family filter |
+| `family` | global | `temporal_imitation` | Family filter |
 | `action` | global | `act,ask` | Action type filter |
 | `input` | global | `scene_graph` | Input modality filter |
 | `theme` | global | `continual_learning` | Theme filter |
@@ -465,7 +472,7 @@ A 420 px right-side panel, and a bottom sheet under 640 px. Sections in order, w
 2. Links as buttons: Paper ↗, Code ↗, Project ↗ (only those present). "Copy BibTeX" if present.
 3. Level: knowns chips in the style of the RTI Fig. 1 right panel ("g known · π^h unknown → L1"), then family.
 4. Core strength (one line). Inputs → action types as chips.
-5. Subproblems: a strip of seven cells (G1 to P2) with status glyphs, then one row per tagged subproblem with note and relation.
+5. Subproblems: a strip of seven cells labeled with subproblem short names and status glyphs, then one row per tagged subproblem with note and relation.
 6. Evaluations: per entry, a loop-type pill, datasets, metric chips colored by net value term, and captures glyphs.
 7. Lineage: builds on, built upon by, benchmarks against, benchmarked in, cites, cited by. Only papers in the database. All clickable.
 8. "Appears on": links to each page that shows this paper, focused on it.
@@ -475,7 +482,7 @@ Fields that exist but are empty render "—". Esc closes the drawer.
 
 ### 6.5 Compare tray
 
-Readers pin up to 3 papers. The pin button disables at 3 with a short message. A bottom bar shows pinned chips and a "Compare" button. The compare view puts papers in columns and these rows: level and knowns, family, action types, inputs, core strength, G1 to P2 status glyphs, evaluations (loop types and metrics), year, links. Rows where all values match are greyed.
+Readers pin up to 3 papers. The pin button disables at 3 with a short message. A bottom bar shows pinned chips and a "Compare" button. The compare view puts papers in columns and these rows: level and knowns, family, action types, inputs, core strength, the seven subproblem status glyphs, evaluations (loop types and metrics), year, links. Rows where all values match are greyed.
 
 ### 6.6 Empty states
 
@@ -493,9 +500,9 @@ A compact, interactive version of the RTI Fig. 1 right panel, at the top left.
 
 ### 7.2 Lineage graph
 
-- **Lanes**, top to bottom: one L2 sub-lane per family (goal inference, temporal prediction, full pipeline, then "family not set"), then L1, then L0. The page has no tray for unclassified works.
+- **Lanes**, top to bottom: one L2 sub-lane per family (Goal Inference, Temporal Imitation, full pipeline, then "family not set"), then L1, then L0. The page has no tray for unclassified works.
 - **Lane headers** show name and count. Each L2 family header also shows its `scope_line`, with strength and limitations on hover.
-- **x axis** is year, one band per year from the earliest to the latest paper shown. Nodes in the same lane and year stack vertically, and lane height grows to fit.
+- **x axis** starts at 2021, with one equal-width band per year from 2021 to the latest paper shown. All earlier papers share one narrow band at the far left labeled "Before 2021", stacked in year order with each node's year in small text. An axis break mark separates that band from 2021. One constant holds the cutoff (`TIMELINE_START = 2021`). Nodes in the same lane and year stack vertically, and lane height grows to fit. The time brush works across both parts.
 - **Nodes** are pills with the short name, a left edge in the level color, and small icons for action types.
 - **Edges** follow §5.5 and draw as curves. A legend shows the three line styles, each with a checkbox bound to `edges=`, all on by default. Hovering an edge lists every relation between its two papers.
 - **Hover or focus** on a node shows a card with short name and year, title (one line, truncated), core strength, inputs → action types, and knowns chips.
@@ -542,7 +549,7 @@ Rows show metric label, one-line definition, term chips, kind, and used-by count
 
 ### 9.1 Navigator
 
-An interactive version of RTI Fig. 2. It runs left to right on wide screens and top to bottom under 900 px: ξ₀:ₜ → Grounding (G1, G2) → Anticipation (A1, A2, A3) → Planning (P1, P2) → aʳₜ. Each node shows its id, name, and a badge counting works that address it under the current filters. Edges come from `depends_on`.
+An interactive version of RTI Fig. 2. It runs left to right on wide screens and top to bottom under 900 px: ξ₀:ₜ → Grounding (goal space, action-goal association) → Anticipation (human policy, goal inference, goal anticipation) → Planning (cost model, action selection) → aʳₜ. Each node shows its name and a badge counting works that address it under the current filters. Edges come from `depends_on`.
 
 Selecting a node sets `sub=`. Its upstream dependencies (all transitive ancestors through `depends_on`) take one highlight color, its downstream dependents (all transitive descendants) another, and the rest dim.
 
@@ -550,10 +557,10 @@ Selecting a node sets `sub=`. Its upstream dependencies (all transitive ancestor
 
 With nothing selected, the panel lists all seven subproblems with counts by status. With a subproblem selected, it shows:
 
-- id and name, input → output in KaTeX, and the one-line challenge;
+- name, input → output in KaTeX, and the one-line challenge;
 - works grouped by approach (taxonomy order, then "Other"), each row with status glyph, short name, year, relation tag, and note, and a click that opens the drawer;
 - filter chips for status and relation;
-- an empty state when no work addresses it directly, such as "No work in the database addresses G1 directly. Suggest one."
+- an empty state when no work addresses it directly, such as "No work in the database addresses goal-space representation directly. Suggest one."
 
 ### 9.3 Themes
 
@@ -561,7 +568,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 
 ### 9.4 Matrix view
 
-`view=matrix` replaces the detail panel with a matrix. Rows are papers with any subproblem tag, grouped by level and family (method papers first). Columns are G1 to P2 under their stage headers, and each column header shows how many works address it. Cells show status glyphs. Clicking a cell opens the drawer. The header row and first column stay sticky. The "Gaps" toggle (`gaps=1`) dims filled cells and outlines empty cells in method rows.
+`view=matrix` replaces the detail panel with a matrix. Rows are papers with any subproblem tag, grouped by level and family (method papers first). Columns are the seven subproblems, labeled with short names under their stage headers, and each column header shows how many works address it. Cells show status glyphs. Clicking a cell opens the drawer. The header row and first column stay sticky. The "Gaps" toggle (`gaps=1`) dims filled cells and outlines empty cells in method rows.
 
 ## 10. Contribution flow
 
@@ -577,6 +584,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 - Color tokens on `:root`, redefined for dark mode under `prefers-color-scheme`, plus a manual theme toggle saved in `localStorage` inside try/catch.
 - **Levels** use one sequential hue ramp, lightest for L0 and darkest for L2, since levels are ordered by unknowns. Color never carries meaning alone. Lanes have labels and chips say "L1".
 - **Statuses** use glyphs ● ◐ ○, with a blank cell for "not tagged". Every view that uses them shows a legend.
+- **No subproblem codes.** G1, G2, A1, A2, A3, P1, and P2 never appear as visible text. The UI uses subproblem names, or the `short` labels where space is tight. Codes stay in data files and URLs.
 - **Net value terms** use four categorical colors plus their symbols. The same colors appear in the equation, metric chips, and table dots.
 - System UI sans-serif for the interface, KaTeX for math, tabular numerals in tables.
 - Motion stays at or under 300 ms and turns off under `prefers-reduced-motion`.
