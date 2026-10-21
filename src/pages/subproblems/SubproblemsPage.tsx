@@ -6,6 +6,7 @@ import { Math as TeX } from '../../components/Math.tsx';
 import { StatusGlyph } from '../../components/StatusGlyph.tsx';
 import { addressesAny, papers, SUBS, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
+import { inSubproblems } from '../../lib/scope.ts';
 import { SUBPROBLEM_IDS, type DbPaper, type SubproblemId, type SubproblemTag } from '../../schema.ts';
 import { toggleInList, useUrl } from '../../state/url.ts';
 import { buildLanes } from '../methods/groups.ts';
@@ -213,7 +214,8 @@ export function SubproblemsPage() {
   const sub = isSub(raw) ? raw : null;
   const view = url.get('view') === 'matrix' ? 'matrix' : 'detail';
   const themes = url.filters.theme;
-  const visible = papers.filter((p) => matchesGlobal(p, url.filters));
+  // Level scope (SPEC §6.2): papers at a focus level plus papers with no level. Never L1 papers.
+  const visible = papers.filter((p) => inSubproblems(p) && matchesGlobal(p, url.filters));
   const counts = Object.fromEntries(SUBS.map((s) => [s, visible.filter((p) => addresses(p, s)).length]));
 
   return (

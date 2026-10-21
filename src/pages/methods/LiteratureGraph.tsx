@@ -11,7 +11,7 @@ import { ancestry } from '../../lib/graph.ts';
 import { layoutLiterature, type PlacedNode } from '../../lib/literatureLayout.ts';
 import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
-import { CLUSTER_TINTS, GRAPH_LEVELS, type FamilyInfo } from './constants.ts';
+import { CLUSTER_TINTS, FOCUS_LEVELS, type FamilyInfo } from './constants.ts';
 
 const ACTION_ICON: Record<string, string> = { act: '▸', timing: '◷', initiate: '✦', inform: 'i', ask: '?' };
 // A closed B-spline stays inside the hull polygon, so it never cuts into a pill of another cluster.
@@ -100,7 +100,7 @@ export function LiteratureGraph({
   const [scale, setScale] = useState(1);
 
   // Core: L2 papers with a method block and no tangent. Tangential works join at half opacity (SPEC §7.2).
-  const nodesIn = useMemo(() => papers.filter((p) => p.tangent || (p.method && p.level && GRAPH_LEVELS.includes(p.level))), [papers]);
+  const nodesIn = useMemo(() => papers.filter((p) => p.tangent || (p.method && p.level && FOCUS_LEVELS.includes(p.level))), [papers]);
   const showTangents = url.get('tangents') !== '0';
   const byId = useMemo(() => new Map(nodesIn.map((p) => [p.id, p])), [nodesIn]);
   const isTangent = (id: string) => !!byId.get(id)?.tangent;

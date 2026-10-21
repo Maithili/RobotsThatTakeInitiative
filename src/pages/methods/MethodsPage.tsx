@@ -4,9 +4,10 @@ import { EmptyState, Missing } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
 import { fixUrl, papers as allPapers, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
+import { inMethodsGraph, inMethodsTopBand } from '../../lib/scope.ts';
 import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
-import { GRAPH_LEVELS, type FamilyInfo } from './constants.ts';
+import type { FamilyInfo } from './constants.ts';
 import { buildLanes } from './groups.ts';
 import { LiteratureGraph } from './LiteratureGraph.tsx';
 import { SYNTHETIC_FAMILIES, syntheticPapers } from './synthetic.ts';
@@ -125,21 +126,20 @@ export function MethodsPage() {
   const synthetic = url.get('synthetic') === '1';
   const papers = useMemo(() => (synthetic ? syntheticPapers() : allPapers), [synthetic]);
   const families: Record<string, FamilyInfo> = synthetic ? SYNTHETIC_FAMILIES : tx.families;
-  // Classified, non-tangential works fill the timeline and the graph core (SPEC §7).
-  const methods = useMemo(() => papers.filter((p) => p.method && p.level && !p.tangent), [papers]);
+  // Level scope (SPEC §6.2): the top band holds L2 and L1 methods. The graph and list hold methods at a
+  // focus level, plus tangential works.
+  const bandPapers = useMemo(() => papers.filter(inMethodsTopBand), [papers]);
+  const methods = useMemo(() => papers.filter((p) => inMethodsGraph(p) && !p.tangent), [papers]);
   const tangential = useMemo(() => papers.filter((p) => p.tangent), [papers]);
   const graphPapers = useMemo(() => [...methods, ...tangential], [methods, tangential]);
-  const clusters = useMemo(
-    () => Object.keys(families).filter((fam) => methods.some((p) => p.level && GRAPH_LEVELS.includes(p.level) && p.method?.family === fam)),
-    [families, methods],
-  );
+  const clusters = useMemo(() => Object.keys(families).filter((fam) => methods.some((p) => p.method?.family === fam)), [families, methods]);
   const [hoverId, setHover] = useState<string | null>(null);
   const narrow = typeof window !== 'undefined' && window.innerWidth < 640;
   const view = url.get('view') === 'list' || (url.get('view') !== 'graph' && narrow) ? 'list' : 'graph';
   const yearSpan = useMemo<[number, number]>(() => {
-    const ys = methods.map((p) => p.year);
+    const ys = bandPapers.map((p) => p.year);
     return [Math.min(...ys), Math.max(...ys)];
-  }, [methods]);
+  }, [bandPapers]);
 
   return (
     <div className="page page--wide">
@@ -150,7 +150,7 @@ export function MethodsPage() {
         </p>
       </div>
 
-      <TopBand papers={methods} clusters={clusters} families={families} hoverId={hoverId} setHover={setHover} />
+      <TopBand papers={bandPapers} clusters={clusters} families={families} hoverId={hoverId} setHover={setHover} />
 
       <FilterBar
         controls={['family', 'action', 'input', 'theme']}

@@ -8,7 +8,7 @@ import { EDGE_LABEL, EDGE_TYPES, edgeParam, parseEdgeTypes } from '../../lib/edg
 import { matchesGlobal } from '../../lib/filters.ts';
 import type { DbPaper, LevelId } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
-import { BAND_LEVELS, CLUSTER_TINTS, GRAPH_LEVELS, TIMELINE_START, type FamilyInfo } from './constants.ts';
+import { BAND_LEVELS, CLUSTER_TINTS, FOCUS_LEVELS, TIMELINE_START, type FamilyInfo } from './constants.ts';
 
 const PRE_W = 86;
 const BREAK_W = 12;
@@ -123,7 +123,7 @@ function TimelineRow({
   }, [papers, bands]);
   const maxSlot = Math.max(0, ...placed.map((x) => x.slot + 1));
   const height = Math.max(44, ROW_PAD * 2 + maxSlot * (CHIP_H + CHIP_GAP) - CHIP_GAP);
-  const inGraph = GRAPH_LEVELS.includes(level);
+  const inGraph = FOCUS_LEVELS.includes(level);
 
   return (
     <div

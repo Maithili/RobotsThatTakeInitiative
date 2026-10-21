@@ -1,5 +1,6 @@
 // The generated database, plus lookup maps the UI uses everywhere.
 import raw from './generated/db.json';
+import { inEvaluations, inMethodsGraph, inMethodsTopBand, inSubproblems } from './lib/scope.ts';
 import type { Db, DbDataset, DbPaper, LevelId, SubproblemId } from './schema.ts';
 import { SUBPROBLEM_IDS } from './schema.ts';
 
@@ -43,12 +44,12 @@ export function addressesAny(p: DbPaper) {
   return Object.values(p.subproblems ?? {}).some((t) => t?.status === 'addresses');
 }
 
-/** Pages that show a paper (SPEC §6.4 item 8). */
+/** Pages that show a paper (SPEC §6.4 item 8), following the level scope (§6.2). */
 export function pagesFor(p: DbPaper): ('methods' | 'evaluations' | 'subproblems')[] {
   const out: ('methods' | 'evaluations' | 'subproblems')[] = [];
-  if ((p.method && p.level) || p.tangent) out.push('methods');
-  if (p.evaluations?.length) out.push('evaluations');
-  if (addressesAny(p)) out.push('subproblems');
+  if (inMethodsTopBand(p) || inMethodsGraph(p)) out.push('methods');
+  if (p.evaluations?.length && inEvaluations(p)) out.push('evaluations');
+  if (addressesAny(p) && inSubproblems(p)) out.push('subproblems');
   return out;
 }
 

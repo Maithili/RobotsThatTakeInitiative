@@ -26,7 +26,7 @@ test('1. each page loads with no console errors', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('2. a family filter set on Methods survives switching to Subproblems, and Back restores it', async ({ page }) => {
+test('2. a family filter set on Methods survives switching to Subproblems, Back restores it, and no L1 paper shows outside the top band', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
   await page.getByRole('button', { name: /^Filters/ }).click();
   await page.getByRole('group', { name: 'Family' }).getByRole('button', { name: 'Goal Inference' }).click();
@@ -39,6 +39,32 @@ test('2. a family filter set on Methods survives switching to Subproblems, and B
   await expect(page).toHaveURL(/#\/methods/);
   expect(params(page).get('family')).toBe('goal_inference');
   await expect(page.getByRole('button', { name: 'Remove filter Family: Goal Inference' })).toBeVisible();
+
+  // L1 papers sit in the Methods top band only (SPEC §6.2 Level scope).
+  await page.goto('/#/methods?view=graph');
+  const l1 = await page.getByTestId('timeline-L1').locator('[data-testid^="tchip-"]').evaluateAll((els) => els.map((e) => e.getAttribute('data-testid')!.slice('tchip-'.length)));
+  expect(l1.length).toBeGreaterThan(0);
+  const none = async (selector: (id: string) => string, where: string) => {
+    for (const id of l1) await expect(page.locator(selector(id)), `${id} on ${where}`).toHaveCount(0);
+  };
+  await expect(page.getByTestId('node-gap')).toBeVisible();
+  await none((id) => `[data-testid="node-${id}"]`, 'the graph');
+  await page.goto('/#/methods?view=list');
+  await expect(page.getByTestId('methods-list')).toBeVisible();
+  await none((id) => `[data-testid="methods-list"] [data-locate="${id}"]`, 'the list');
+  await page.goto('/#/evaluations');
+  await expect(page.getByTestId('protocol-gap')).toBeVisible();
+  await none((id) => `[data-testid="protocol-${id}"]`, 'the protocols table');
+  await expect(page.getByTestId('realism-dot-gap')).toBeVisible();
+  await none((id) => `[data-testid="realism-dot-${id}"]`, 'the realism plot');
+  await page.goto('/#/subproblems?view=matrix');
+  await expect(page.getByTestId('matrix')).toBeVisible();
+  await none((id) => `[data-testid="matrix"] [data-locate="${id}"]`, 'the matrix');
+  for (const sub of ['G1', 'G2', 'A1', 'A2', 'A3', 'P1', 'P2']) {
+    await page.goto(`/#/subproblems?sub=${sub}`);
+    await expect(page.getByTestId('sub-detail')).toBeVisible();
+    await none((id) => `[data-testid="work-${id}"]`, `the ${sub} detail`);
+  }
 });
 
 test('3. ?paper=gap opens the drawer and Esc closes it', async ({ page }) => {
