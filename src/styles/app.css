@@ -1434,75 +1434,6 @@ tr.clickable:hover td {
   height: 10px;
   border-radius: 2px;
 }
-.loopscale {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0;
-  counter-reset: step;
-}
-.loopscale__step {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  position: relative;
-}
-.loopscale__step > button {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  text-align: left;
-  border: 1px solid var(--border);
-  border-left-width: 0;
-  background: var(--surface);
-  padding: 8px 18px 8px 12px;
-  cursor: pointer;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%, 10px 50%);
-  color: var(--text-2);
-}
-.loopscale__step:first-child > button {
-  border-left-width: 1px;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%);
-}
-.loopscale__step--0 > button {
-  background: var(--surface-2);
-}
-.loopscale__step--1 > button {
-  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
-}
-.loopscale__step--2 > button {
-  background: color-mix(in srgb, var(--accent) 13%, var(--surface));
-}
-.loopscale__step--3 > button {
-  background: color-mix(in srgb, var(--accent) 20%, var(--surface));
-}
-.loopscale__step--4 > button {
-  background: color-mix(in srgb, var(--accent) 28%, var(--surface));
-}
-.loopscale__step.is-on > button {
-  background: var(--accent);
-  color: var(--bg);
-}
-.loopscale__step.is-on strong {
-  color: var(--bg);
-}
-.loopscale__top {
-  display: flex;
-  gap: 6px;
-  align-items: baseline;
-  color: var(--text);
-}
-.loopscale__count {
-  margin-left: auto;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-.loopscale__refs {
-  padding-left: 12px;
-}
 .captures-legend {
   margin-top: 10px;
   flex-direction: column;
@@ -1962,16 +1893,6 @@ tr.clickable:hover td {
   .eval-top {
     grid-template-columns: 1fr;
   }
-  .loopscale {
-    grid-template-columns: 1fr;
-    gap: 4px;
-  }
-  .loopscale__step > button,
-  .loopscale__step:first-child > button {
-    clip-path: none;
-    border-left-width: 1px;
-    border-radius: var(--radius-sm);
-  }
 }
 @media (max-width: 639px) {
   .terms {
@@ -2342,4 +2263,126 @@ tr.clickable:hover td {
   .mtop__card .levelcard__def {
     display: none;
   }
+}
+
+
+/* ---------- evaluations: realism plot (SPEC §8.3) ---------- */
+:root {
+  --framework: #b5651d;
+}
+:root[data-theme='dark'] {
+  --framework: #f0a15c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --framework: #f0a15c;
+  }
+}
+.realism__wrap {
+  position: relative;
+}
+.realism__svg {
+  display: block;
+  width: 100%;
+  max-width: 760px;
+  height: auto;
+  overflow: visible;
+}
+.realism__cell {
+  fill: var(--surface-2);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.realism__cell.is-alt {
+  fill: var(--surface-3);
+  fill-opacity: 0.55;
+}
+.realism__tick {
+  font-size: 11px;
+  fill: var(--text-2);
+}
+.realism__axis {
+  font-size: 12px;
+  font-weight: 650;
+  fill: var(--text);
+}
+.realism__target circle {
+  fill: none;
+  stroke: var(--text-2);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 3;
+}
+.realism__star {
+  font-size: 20px;
+  fill: var(--text-2);
+}
+.realism__fill {
+  fill: var(--accent);
+}
+.realism__outline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.2;
+}
+.realism__ring {
+  fill: none;
+  stroke: var(--framework);
+  stroke-width: 2.4;
+}
+.realism__dot {
+  cursor: pointer;
+  outline: none;
+  transition: opacity 200ms;
+}
+.realism__dot.is-dim {
+  opacity: 0.2;
+}
+.realism__dot:hover .realism__outline,
+.realism__dot:focus-visible .realism__outline {
+  stroke: var(--focus);
+  stroke-width: 2.4;
+}
+.realism__card {
+  pointer-events: auto;
+  width: 280px;
+}
+.realism__links {
+  display: flex;
+  gap: 6px;
+}
+.realism__levels {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  margin: 0;
+}
+.realism__levels dt {
+  color: var(--text-3);
+}
+.realism__levels dd {
+  margin: 0;
+}
+.realism__legend svg {
+  vertical-align: middle;
+}
+
+/* ---------- evaluations: framework paper row (SPEC §8.4) ---------- */
+.table tr.is-framework > td {
+  background: color-mix(in srgb, var(--framework) 9%, var(--surface));
+}
+.table tr.is-framework > td:first-child {
+  box-shadow: inset 4px 0 0 var(--framework);
+}
+.tag--framework {
+  margin-left: 6px;
+  font-size: 10.5px;
+  border: 1px solid var(--framework);
+  color: var(--framework);
+  border-radius: 999px;
+  padding: 0 6px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.tag--framework:hover {
+  background: color-mix(in srgb, var(--framework) 14%, transparent);
 }

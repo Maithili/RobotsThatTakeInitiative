@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { matchesGlobal, matchesQuery, parseYears, readGlobalFilters } from '../src/lib/filters.ts';
 import { ancestry, subproblemFlow } from '../src/lib/graph.ts';
 import { scorePaper, search } from '../src/lib/search.ts';
+import { closest, furthestLoop, mergePaper, rowMatches, strongest } from '../src/pages/evaluations/merge.ts';
 import { applyParams, toggleInList } from '../src/state/url.ts';
 import type { DbPaper } from '../src/schema.ts';
 
@@ -124,5 +125,47 @@ describe('graph traversal', () => {
     const g1 = subproblemFlow('G1', dependsOn);
     expect(g1.upstream.size).toBe(0);
     expect([...g1.downstream].sort()).toEqual(['A1', 'A2', 'A3', 'G2', 'P2']);
+  });
+});
+
+
+describe('protocols table rows', () => {
+  const LOOPS = ['offline_replay', 'closed_scripted', 'closed_adaptive', 'user_study_short'];
+  const R = { robot: ['wizard', 'task_specific', 'generalist'], human: ['recorded', 'scripted', 'adaptive_sim'], environment: ['simulator', 'lab'] };
+  const paper = P('gap', 'GAP', {
+    evaluations: [
+      { id: 'a', loop: 'offline_replay', datasets: ['d1'], metrics: ['f1'], baselines: ['x'], captures: { state_drift: 'no', goal_adaptation: 'no' }, realism: { robot: 'task_specific', human: 'recorded' } },
+      { id: 'b', loop: 'closed_adaptive', environment: 'sim', datasets: ['d1', 'd2'], metrics: ['f1', 'nas'], baselines: ['x', 'y'], other_baselines: ['Oracle'], human_model: 'LLM', captures: { state_drift: 'yes', goal_adaptation: 'partial' }, realism: { robot: 'task_specific', human: 'adaptive_sim', environment: 'simulator' } },
+      { id: 'c', loop: 'closed_scripted', human_model: 'Scripted', captures: { state_drift: 'yes', goal_adaptation: 'no' }, realism: { human: 'scripted' } },
+    ],
+  });
+  const row = mergePaper(paper, LOOPS, R);
+  it('merges entries into one row', () => {
+    expect(row.loops).toEqual(['offline_replay', 'closed_scripted', 'closed_adaptive']);
+    expect(row.datasets).toEqual(['d1', 'd2']);
+    expect(row.environments).toEqual(['sim']);
+    expect(row.humans).toEqual(['LLM', 'Scripted']);
+    expect(row.metrics).toEqual(['f1', 'nas']);
+    expect(row.baselines).toEqual(['x', 'y']);
+    expect(row.otherBaselines).toEqual(['Oracle']);
+    expect(row.drift).toBe('yes');
+    expect(row.adapt).toBe('partial');
+    expect(row.realism).toEqual({ robot: 'task_specific', human: 'adaptive_sim', environment: 'simulator' });
+    expect(furthestLoop(row, LOOPS)).toBe(2);
+  });
+  it('takes the strongest capture and the closest realism level', () => {
+    expect(strongest(['no', null, 'partial'])).toBe('partial');
+    expect(strongest([null, undefined])).toBeNull();
+    expect(closest(['recorded', 'adaptive_sim', 'scripted'], R.human)).toBe('adaptive_sim');
+    expect(closest([null], R.human)).toBeNull();
+  });
+  it('matches filters when any entry matches', () => {
+    const f = { loop: null, term: null, metric: null, dataset: null, metricTerms: (m: string) => (m === 'nas' ? ['dC_saved'] : ['dC_added']) };
+    expect(rowMatches(row, { ...f, loop: 'closed_scripted' })).toBe(true);
+    expect(rowMatches(row, { ...f, loop: 'user_study_short' })).toBe(false);
+    expect(rowMatches(row, { ...f, term: 'dC_saved' })).toBe(true);
+    expect(rowMatches(row, { ...f, dataset: 'sim' })).toBe(true);
+    // Both conditions must hold in the same entry.
+    expect(rowMatches(row, { ...f, loop: 'offline_replay', metric: 'nas' })).toBe(false);
   });
 });

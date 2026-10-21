@@ -227,3 +227,44 @@ test('no subproblem codes appear as visible text', async ({ page }) => {
     expect(hit?.[0] ?? null, `subproblem code visible on ${v}`).toBeNull();
   }
 });
+
+test('12. datasets table has no simulator rows; GAP has one shaded protocol row that stays first', async ({ page }) => {
+  await page.goto('/#/evaluations');
+  const ds = page.getByTestId('dataset-table');
+  await expect(ds.getByTestId('ds-row-virtualhome')).toHaveCount(0);
+  await expect(ds.getByTestId('ds-row-homer-plus')).toContainText('VirtualHome');
+  await expect(ds.getByTestId('ds-row-rti-closed-loop')).toContainText('Setup');
+  const table = page.getByTestId('protocol-table');
+  await expect(table.getByTestId('protocol-gap')).toHaveCount(1);
+  const first = table.locator('tbody tr').first();
+  await expect(first).toHaveAttribute('data-testid', 'protocol-gap');
+  await expect(first).toHaveClass(/is-framework/);
+  await expect(first.getByRole('link', { name: /Framework paper/ })).toHaveAttribute('href', 'https://arxiv.org/abs/2609.28910');
+  await expect(first.locator('.loop-pill')).toHaveCount(3);
+  for (const k of ['year', 'year', 'paper', 'loop']) {
+    await page.getByTestId(`psort-${k}`).click();
+    await expect(table.locator('tbody tr').first()).toHaveAttribute('data-testid', 'protocol-gap');
+  }
+  // Filters can still hide it.
+  await page.getByTestId('loop-filter').selectOption('offline_replay');
+  await expect.poll(() => params(page).get('loop')).toBe('offline_replay');
+  await page.goto('/#/evaluations?loop=user_study_short');
+  await expect(page.getByTestId('protocol-gap')).toHaveCount(0);
+});
+
+test('13. the realism plot puts GAP at task-specific policy and adaptive simulated user, simulator opacity', async ({ page }) => {
+  await page.goto('/#/evaluations');
+  const dot = page.getByTestId('realism-dot-gap');
+  await expect(dot).toHaveAttribute('data-robot', 'task_specific');
+  await expect(dot).toHaveAttribute('data-human', 'adaptive_sim');
+  await expect(dot).toHaveAttribute('data-env', 'simulator');
+  await expect(dot).toHaveAttribute('data-opacity', '0.25');
+  await dot.hover();
+  const card = page.getByTestId('realism-card');
+  await expect(card).toBeVisible();
+  const link = card.getByRole('link', { name: 'Paper ↗' });
+  await expect(link).toHaveAttribute('href', 'https://arxiv.org/abs/2609.28910');
+  await link.hover();
+  await expect(card).toBeVisible();
+  await expect(page.getByText('Organization adapted from')).toHaveCount(0);
+});

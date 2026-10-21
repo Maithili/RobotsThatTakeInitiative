@@ -49,6 +49,13 @@ const subproblemDef = z.object({
   approaches: z.record(z.string()),
 });
 
+const realismAxis = z.object({
+  label: z.string(),
+  levels: z.record(
+    z.object({ label: z.string(), definition: z.string().optional(), opacity: z.number().min(0).max(1).optional(), refs: z.array(z.string()).optional() }).strict(),
+  ),
+});
+
 export const TaxonomySchema = z.object({
   levels: z.object({ L0: levelDef, L1: levelDef, L2: levelDef }),
   families: z.record(
@@ -89,6 +96,12 @@ export const TaxonomySchema = z.object({
     state_drift: defn,
     goal_adaptation: defn,
     values: z.array(z.string()),
+  }),
+  realism: z.object({
+    robot: realismAxis,
+    human: realismAxis,
+    environment: realismAxis,
+    source_url: url.nullable(),
   }),
   featured_comparison: z.object({
     title: z.string(),
@@ -139,6 +152,10 @@ export const EvaluationSchema = z
       .nullable()
       .optional(),
     provenance: capped('provenance').optional(),
+    realism: z
+      .object({ robot: z.string().nullable().optional(), human: z.string().nullable().optional(), environment: z.string().nullable().optional() })
+      .strict()
+      .optional(),
     results: z.array(ResultSchema).optional(),
   })
   .strict();
@@ -195,7 +212,7 @@ export const DatasetSchema = z
   .object({
     id: kebab,
     name: z.string(),
-    kind: z.enum(['dataset', 'simulator', 'benchmark']),
+    kind: z.enum(['dataset', 'evaluation_setup', 'simulator']),
     introduced_in: z.string().nullable().optional(),
     links: z.object({ home: url.nullable() }).strict(),
     sim_or_real: z.enum(['sim', 'real', 'both']),
@@ -205,6 +222,9 @@ export const DatasetSchema = z
     goal_annotations: ynp.nullable().optional(),
     executable: yn.nullable().optional(),
     environment: z.string().nullable().optional(),
+    based_on: z.array(z.object({ id: z.string(), relation: z.enum(['extends', 'uses', 'validates_against']) }).strict()).optional(),
+    human_models: z.array(capped('human_model')).optional(),
+    loops: z.array(z.string()).optional(),
     notes: capped('notes').nullable().optional(),
     provenance: capped('provenance'),
   })
@@ -255,6 +275,8 @@ export interface DbPaper extends Paper {
 
 export interface DbDataset extends Dataset {
   used_by: EvalRef[];
+  /** Datasets and setups that name this one in their based_on. */
+  basis_of: { id: string; relation: 'extends' | 'uses' | 'validates_against' }[];
 }
 
 export interface Db {

@@ -69,6 +69,10 @@ evaluations:
       state_drift: "no"
       goal_adaptation: "no"
     provenance: RTI Table II
+    realism:
+      robot: task_specific
+      human: recorded
+      environment: simulator
     results:
       - method: slate-pro
         metric: f1
@@ -80,6 +84,7 @@ evaluations:
     environment: virtualhome
     datasets:
       - homer-plus
+      - rti-closed-loop
     loop: closed_adaptive
     human_model: LLM (gpt-4o-mini)
     metrics:
@@ -96,6 +101,10 @@ evaluations:
       state_drift: "yes"
       goal_adaptation: partial
     provenance: RTI §IV-A, Table II, App. I-C
+    realism:
+      robot: task_specific
+      human: adaptive_sim
+      environment: simulator
     results:
       - method: slate-pro
         metric: f1
@@ -107,6 +116,7 @@ evaluations:
     environment: virtualhome
     datasets:
       - homer-plus
+      - rti-closed-loop
     loop: closed_scripted
     human_model: Scripted
     metrics:
@@ -123,6 +133,10 @@ evaluations:
       state_drift: "yes"
       goal_adaptation: "no"
     provenance: RTI §IV-A, Table II
+    realism:
+      robot: task_specific
+      human: scripted
+      environment: simulator
     results:
       - method: slate-pro
         metric: f1

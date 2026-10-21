@@ -1,0 +1,19 @@
+id: rti-closed-loop
+name: RTI closed-loop setup
+kind: evaluation_setup
+introduced_in: gap
+links:
+  home: https://github.com/Maithili/GAP
+sim_or_real: sim
+environment: virtualhome
+based_on:
+  - id: homer-plus
+    relation: uses
+executable: "yes"
+human_models:
+  - LLM (gpt-4o-mini)
+  - Scripted
+loops:
+  - closed_adaptive
+  - closed_scripted
+provenance: RTI §IV-A

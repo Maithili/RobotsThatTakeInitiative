@@ -24,6 +24,9 @@ export const SUBS: readonly SubproblemId[] = SUBPROBLEM_IDS;
 export const REPO = 'https://github.com/Maithili/RobotsThatTakeInitiative';
 export const RTI_URL = 'https://arxiv.org/abs/2609.28910';
 
+/** The paper the site is built on. Its protocol row is pinned and shaded (SPEC §8.4); its realism dot has a ring (§8.3). */
+export const FRAMEWORK_PAPER = 'gap';
+
 export interface EvalRow {
   paper: DbPaper;
   evaluation: NonNullable<DbPaper['evaluations']>[number];

@@ -186,6 +186,10 @@ export function buildDb(input: BuildInput): BuildResult {
         else if (env.kind !== 'simulator') errors.push(`${eat}: environment "${e.environment}" is not a simulator`);
       }
       for (const d of e.datasets ?? []) if (!datasetById.has(d)) errors.push(`${eat}: dataset "${d}" does not exist`);
+      for (const axis of ['robot', 'human', 'environment'] as const) {
+        const lv = e.realism?.[axis];
+        if (lv != null && !inSet(t.realism[axis].levels, lv)) errors.push(`${eat}: unknown realism.${axis} level "${lv}"`);
+      }
       for (const mt of e.metrics ?? []) if (!inSet(t.metrics, mt)) errors.push(`${eat}: unknown metric "${mt}"`);
       for (const b of e.baselines ?? []) {
         referenced.add(b);
@@ -235,9 +239,19 @@ export function buildDb(input: BuildInput): BuildResult {
       referenced.add(d.introduced_in);
       if (!paperById.has(d.introduced_in)) errors.push(`${at}: introduced_in "${d.introduced_in}" does not exist`);
     }
-    if (d.environment != null && !datasetById.has(d.environment)) {
-      errors.push(`${at}: environment "${d.environment}" does not exist`);
+    if (d.environment != null) {
+      const env = datasetById.get(d.environment);
+      if (!env) errors.push(`${at}: environment "${d.environment}" does not exist`);
+      else if (env.kind !== 'simulator') errors.push(`${at}: environment "${d.environment}" is not a simulator`);
     }
+    for (const b of d.based_on ?? []) {
+      if (!datasetById.has(b.id)) errors.push(`${at}: based_on "${b.id}" does not exist`);
+      else if (b.id === d.id) errors.push(`${at}: based_on names itself`);
+    }
+    if (d.kind !== 'evaluation_setup' && (d.human_models?.length || d.loops?.length)) {
+      errors.push(`${at}: human_models and loops are for evaluation setups only`);
+    }
+    for (const l of d.loops ?? []) if (!inSet(t.loop_types, l)) errors.push(`${at}: unknown loop type "${l}"`);
     for (const o of d.observations ?? []) {
       if (!inSet(t.observation_modalities, o)) errors.push(`${at}: unknown observation modality "${o}"`);
     }
@@ -248,6 +262,14 @@ export function buildDb(input: BuildInput): BuildResult {
     for (const r of lt.refs ?? []) {
       referenced.add(r);
       if (!paperById.has(r)) errors.push(`taxonomy.yaml: loop_types.${lid}.refs "${r}" does not exist`);
+    }
+  }
+  for (const axis of ['robot', 'human', 'environment'] as const) {
+    for (const [lid, lv] of Object.entries(t.realism[axis].levels)) {
+      for (const r of lv.refs ?? []) {
+        referenced.add(r);
+        if (!paperById.has(r)) errors.push(`taxonomy.yaml: realism.${axis}.levels.${lid}.refs "${r}" does not exist`);
+      }
     }
   }
   for (const [mid, mt] of Object.entries(t.metrics)) {
@@ -322,7 +344,11 @@ export function buildDb(input: BuildInput): BuildResult {
     }))
     .sort((a, b) => a.year - b.year || a.id.localeCompare(b.id));
   const dbDatasets: DbDataset[] = datasets
-    .map((d) => ({ ...d, used_by: datasetUsedBy.get(d.id) ?? [] }))
+    .map((d) => ({
+      ...d,
+      used_by: datasetUsedBy.get(d.id) ?? [],
+      basis_of: datasets.flatMap((o) => (o.based_on ?? []).filter((b) => b.id === d.id).map((b) => ({ id: o.id, relation: b.relation }))),
+    }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return {

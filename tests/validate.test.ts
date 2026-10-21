@@ -11,6 +11,7 @@ const realTaxonomy = yaml.load(readFileSync(join(__dirname, '../data/taxonomy.ya
 function bareTaxonomy() {
   const t = structuredClone(realTaxonomy);
   delete t.loop_types.closed_adaptive.refs;
+  delete t.realism.human.levels.adaptive_sim.refs;
   t.featured_comparison.methods = [];
   t.featured_comparison.columns = [];
   return t;
@@ -221,5 +222,24 @@ describe('citations', () => {
     expect(r.db!.edges[0].relations.map((x) => x.type)).toEqual(['builds', 'benchmarks', 'cites']);
     expect(r.db!.edges[0].relations[0]).toEqual({ type: 'builds', from: 'a', to: 'b' });
     expect(r.db!.citations.resolved).toBe(2);
+  });
+});
+
+describe('datasets, setups, and realism', () => {
+  const setup = { id: 'setup', name: 'Setup', kind: 'evaluation_setup', links: { home: null }, sim_or_real: 'sim', provenance: 'test' };
+  it('rejects bad based_on, setup-only fields on datasets, and non-simulator environments', () => {
+    expectError(run([], { datasets: [sim, { ...ds, based_on: [{ id: 'ghost', relation: 'extends' }] }] }), /based_on "ghost" does not exist/);
+    expectError(run([], { datasets: [sim, { ...ds, based_on: [{ id: 'sim', relation: 'copies' }] }] }), /relation/);
+    expectError(run([], { datasets: [sim, { ...ds, loops: ['offline_replay'] }] }), /evaluation setups only/);
+    expectError(run([], { datasets: [sim, ds, { ...setup, loops: ['vibes'] }] }), /unknown loop type "vibes"/);
+    expectError(run([], { datasets: [sim, ds, { ...setup, environment: 'ds' }] }), /is not a simulator/);
+  });
+  it('rejects unknown realism levels', () => {
+    expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', realism: { robot: 'telepathy' } }] })]), /realism.robot level "telepathy"/);
+  });
+  it('derives basis_of', () => {
+    const r = run([], { datasets: [sim, ds, { ...setup, environment: 'sim', based_on: [{ id: 'ds', relation: 'uses' }], human_models: ['Scripted'], loops: ['closed_scripted'] }] });
+    expect(r.errors).toEqual([]);
+    expect(r.db!.datasets.find((d) => d.id === 'ds')!.basis_of).toEqual([{ id: 'setup', relation: 'uses' }]);
   });
 });

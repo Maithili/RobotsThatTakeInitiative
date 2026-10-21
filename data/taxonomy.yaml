@@ -182,6 +182,31 @@ captures:                     # RTI Appendix I
   goal_adaptation: {label: Goal adaptation, definition: The user reallocates effort to new goals in response to the robot (Relaxation 2).}
   values: [yes, partial, no]
 
+realism:                      # drives the plot in SPEC §8.3. Levels ordered from far to close. Pending Maithili's review.
+  robot:
+    label: "Robot: closer to the target robot"
+    levels:
+      wizard:        {label: Wizard or oracle, definition: "A person or an oracle with ground truth chooses the robot's actions."}
+      task_specific: {label: Task-specific policy, definition: "A policy learned for this task chooses the robot's actions."}
+      generalist:    {label: Generalist policy, definition: "A general-purpose policy, such as an LLM planner, chooses the robot's actions."}
+  human:
+    label: "People: closer to the target users"
+    levels:
+      recorded:      {label: Recorded behavior, definition: "Replayed human behavior that does not respond to the robot."}
+      scripted:      {label: Scripted simulated user, definition: "A simulated user that follows fixed rules."}
+      adaptive_sim:  {label: Adaptive simulated user, definition: "A simulated user that adapts to the robot, such as an LLM proxy.", refs: [zhang-2023-llm-human-models]}
+      non_target:    {label: Real participants, definition: "Real people who are not the target users, such as students."}
+      target_users:  {label: Target users, definition: "The people the robot is meant to assist."}
+  environment:
+    label: "Setting: closer to the target setting"
+    levels:                   # opacity rises with realism
+      simulator:     {label: Simulator, opacity: 0.25}
+      vr:            {label: VR, opacity: 0.5}
+      lab:           {label: Lab, opacity: 0.75}
+      own_home:      {label: "Users' own homes", opacity: 1.0}
+  # TODO(Maithili): set realism.source_url once the source paper is public (SPEC §16).
+  source_url: null            # link to the paper this organization comes from, once it is public
+
 featured_comparison:          # drives the chart in §8.2
   title: Offline evaluation overstates performance
   metric: f1
