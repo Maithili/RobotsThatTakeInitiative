@@ -645,9 +645,8 @@ M2 can run alongside M3.
 Maithili can reverse any of these.
 
 1. **Citation source.** Semantic Scholar, matched by DOI, arXiv id, or exact title. OpenAlex is the fallback if coverage turns out poor.
-2. **L0 lane.** The lane exists and starts empty, since the RTI paper names no L0 works.
-3. **Subproblem dependencies** come from the Table I inputs and outputs. A2 → P2 assumes the anticipated goals g_{t:t+Δt} include the current goal g_t.
-4. **Direct vs adjacent.** A work is direct for a subproblem if Table I or §III-B lists it there, and adjacent if only Appendix II-A does.
-5. **Hosting.** GitHub Pages from this repo, with hash URLs.
-6. **Contributions.** GitHub issues and pull requests, with no backend.
-7. **Results.** Only the Table II comparison appears as a chart.
+2. **Subproblem dependencies** come from the Table I inputs and outputs. A2 → P2 assumes the anticipated goals g_{t:t+Δt} include the current goal g_t.
+3. **Direct vs adjacent.** A work is direct for a subproblem if Table I or §III-B lists it there, and adjacent if only Appendix II-A does.
+4. **Hosting.** GitHub Pages from this repo, with hash URLs.
+5. **Contributions.** GitHub issues and pull requests, with no backend.
+6. **Results.** Only the Table II comparison appears as a chart.
