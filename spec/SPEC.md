@@ -344,7 +344,7 @@ Evaluation entry:
 | `human_model` | string ≤ 60 or null | Such as "LLM (gpt-4o-mini)", "Scripted", "Real users (n=12)". |
 | `metrics` | metric id[] | |
 | `baselines` | paper id[] | Methods the paper compares against. Drives the dashed "benchmarks against" edges (§5.5). |
-| `other_baselines` | string[] | Baselines with no paper, such as "Oracle". |
+| `other_baselines` | string[] | Baselines with no paper, such as "Oracle". Ablations of the paper's own method are left out of `baselines` and `other_baselines`, and the validator rejects entries that say "ablation". |
 | `captures` | `{state_drift, goal_adaptation}`, each `yes`, `partial`, `no`, or null | |
 | `provenance` | string ≤ 140 | |
 | `results` | list of `{method, method_label?, metric, value, sd?}` | `method` is a paper id. Use `method_label` alone for a baseline with no paper. |

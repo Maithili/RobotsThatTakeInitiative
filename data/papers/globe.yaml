@@ -24,9 +24,6 @@ evaluations:
     baselines:
       - slate-pro
       - stot
-    other_baselines:
-      - n-gram Markov model (ablation)
-      - Zero-shot LLM (ablation)
     provenance: GLOBE §IV (STOT results taken from the SLaTe-PRO paper)
     realism:
       robot: task_specific

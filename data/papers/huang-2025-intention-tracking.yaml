@@ -27,7 +27,6 @@ evaluations:
     other_baselines:
       - Coexistence mode
       - Cooperation mode
-      - HIT-IT (ablation)
     provenance: HIT §V–VI (UR5e in a shared assembly workspace)
     realism:
       robot: task_specific

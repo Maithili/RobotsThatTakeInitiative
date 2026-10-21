@@ -187,6 +187,9 @@ export function buildDb(input: BuildInput): BuildResult {
         else if (env.kind !== 'simulator') errors.push(`${eat}: environment "${e.environment}" is not a simulator`);
       }
       for (const d of e.datasets ?? []) if (!datasetById.has(d)) errors.push(`${eat}: dataset "${d}" does not exist`);
+      for (const ob of e.other_baselines ?? []) {
+        if (/\bablations?\b/i.test(ob)) errors.push(`${eat}: other_baselines lists an ablation ("${ob}"); leave ablations of the paper's own method out`);
+      }
       for (const axis of ['robot', 'human', 'environment'] as const) {
         const lv = e.realism?.[axis];
         if (lv != null && !inSet(t.realism[axis].levels, lv)) errors.push(`${eat}: unknown realism.${axis} level "${lv}"`);

@@ -79,6 +79,10 @@ describe('validator', () => {
     );
   });
 
+  it('rejects ablations listed as baselines', () => {
+    expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', other_baselines: ['No-memory variant (ablation)'] }] })]), /lists an ablation/);
+  });
+
   it('rejects references to missing ids', () => {
     expectError(run([base('a', { method: { ...L2K, builds_on: ['ghost'] } })]), /builds_on "ghost" does not exist/);
     expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', baselines: ['ghost'] }] })]), /baseline "ghost"/);
