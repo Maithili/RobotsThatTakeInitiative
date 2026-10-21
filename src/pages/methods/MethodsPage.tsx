@@ -6,11 +6,15 @@ import { fixUrl, papers as allPapers, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
 import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
-import { GRAPH_LEVELS, type FamilyInfo } from './constants.ts';
+import synthLayout from '../../generated/synthetic-layout.json';
+import { GRAPH_LEVELS, TANGENTS_IN_GRAPH, type FamilyInfo } from './constants.ts';
 import { buildLanes } from './groups.ts';
 import { LiteratureGraph } from './LiteratureGraph.tsx';
 import { SYNTHETIC_FAMILIES, syntheticPapers } from './synthetic.ts';
 import { TopBand } from './TopBand.tsx';
+
+/** Build-time layout of the synthetic fixture (scripts/build-data.ts). */
+const SYNTH_XY = synthLayout as unknown as Record<string, [number, number]>;
 
 type SortKey = 'short_name' | 'year' | 'title' | 'inputs' | 'actions' | 'core' | 'subs';
 
@@ -123,11 +127,14 @@ function MethodsList({ papers, tangential }: { papers: DbPaper[]; tangential: Db
 export function MethodsPage() {
   const url = useUrl();
   const synthetic = url.get('synthetic') === '1';
-  const papers = useMemo(() => (synthetic ? syntheticPapers() : allPapers), [synthetic]);
+  const papers = useMemo(
+    () => (synthetic ? syntheticPapers().map((p) => (SYNTH_XY[p.id] ? { ...p, x: SYNTH_XY[p.id][0], y: SYNTH_XY[p.id][1] } : p)) : allPapers),
+    [synthetic],
+  );
   const families: Record<string, FamilyInfo> = synthetic ? SYNTHETIC_FAMILIES : tx.families;
   // Classified, non-tangential works fill the timeline and the graph core (SPEC §7).
   const methods = useMemo(() => papers.filter((p) => p.method && p.level && !p.tangent), [papers]);
-  const tangential = useMemo(() => papers.filter((p) => p.tangent), [papers]);
+  const tangential = useMemo(() => (TANGENTS_IN_GRAPH ? papers.filter((p) => p.tangent) : []), [papers]);
   const graphPapers = useMemo(() => [...methods, ...tangential], [methods, tangential]);
   const clusters = useMemo(
     () => Object.keys(families).filter((fam) => methods.some((p) => p.level && GRAPH_LEVELS.includes(p.level) && p.method?.family === fam)),

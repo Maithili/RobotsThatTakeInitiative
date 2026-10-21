@@ -4,11 +4,11 @@ import { select } from 'd3-selection';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ActionIcon, KnownsChips } from '../../components/Chip.tsx';
 import { tx } from '../../data.ts';
-import { EDGE_LABEL, EDGE_TYPES, edgeParam, parseEdgeTypes } from '../../lib/edges.ts';
+import { EDGE_LABEL, EDGE_TYPES, edgeParam, parseEdgeTypes, type EdgeType } from '../../lib/edges.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
 import type { DbPaper, LevelId } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
-import { BAND_LEVELS, CLUSTER_TINTS, GRAPH_LEVELS, TIMELINE_START, type FamilyInfo } from './constants.ts';
+import { BAND_LEVELS, familyHue, GRAPH_LEVELS, TANGENTS_IN_GRAPH, TIMELINE_START, type FamilyInfo } from './constants.ts';
 
 const PRE_W = 86;
 const BREAK_W = 12;
@@ -227,6 +227,22 @@ function TimelineAxis({ bands, width }: { bands: Band[]; width: number }) {
   );
 }
 
+/** Edge legend sample: a short line in the edge's style with a small arrowhead. */
+function EdgeSample({ type }: { type: EdgeType }) {
+  return (
+    <svg width="34" height="10" viewBox="0 0 34 10" aria-hidden="true" className="lgd__edge">
+      <path d="M1,5 H27" className={`litg__edge litg__edge--${type}`} />
+      <path d={type === 'cites' ? 'M27,2.6 L32,5 L27,7.4 z' : 'M26,2 L32.5,5 L26,8 z'} className={`litg__arrow litg__arrow--${type}`} />
+    </svg>
+  );
+}
+
+const EDGE_LEGEND: Record<EdgeType, string> = {
+  builds: EDGE_LABEL.builds.name,
+  benchmarks: EDGE_LABEL.benchmarks.name,
+  cites: 'Show all citation lines',
+};
+
 function Legend({ clusters, families }: { clusters: string[]; families: Record<string, FamilyInfo> }) {
   const url = useUrl();
   const shown = parseEdgeTypes(url.get('edges'));
@@ -249,27 +265,41 @@ function Legend({ clusters, families }: { clusters: string[]; families: Record<s
                     url.set({ edges: edgeParam(next) });
                   }}
                 />
-                <svg width="30" height="10" aria-hidden="true">
-                  <line x1="1" y1="5" x2="29" y2="5" className={`litg__edge litg__edge--${t}`} />
-                </svg>
-                {EDGE_LABEL[t].name}
+                <EdgeSample type={t} />
+                {EDGE_LEGEND[t]}
               </label>
             </li>
           ))}
         </ul>
       </div>
-      {clusters.length > 0 && (
-        <div className="lgd__group">
-          <h2 className="strip__title">Clusters</h2>
-          <ul className="plain lgd">
-            {clusters.map((c, i) => (
-              <li key={c}>
-                <span className={`swatch swatch--cluster-${i % CLUSTER_TINTS}`} aria-hidden="true" /> {families[c]?.name ?? c}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <div className="lgd__group">
+        <h2 className="strip__title">Papers</h2>
+        <ul className="plain lgd">
+          {clusters.map((c) => (
+            <li key={c}>
+              <span className={`lgd__dot lgd__dot--${familyHue(families, c)}`} aria-hidden="true" /> {families[c]?.name ?? c}
+            </li>
+          ))}
+          <li>
+            <span className="lgd__dot lgd__dot--none" aria-hidden="true" /> No family
+          </li>
+          <li>
+            <span className="lgd__dot lgd__dot--none lgd__dot--ring" aria-hidden="true" /> Framework paper
+          </li>
+          <li>
+            <span className="lgd__sizes" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+            Larger: more linked papers
+          </li>
+          <li>
+            <span className="lgd__ramp" aria-hidden="true" />
+            Darker: newer
+          </li>
+        </ul>
+      </div>
       <div className="lgd__group">
         <h2 className="strip__title">Levels</h2>
         <ul className="plain lgd lgd--row">
@@ -281,19 +311,21 @@ function Legend({ clusters, families }: { clusters: string[]; families: Record<s
           ))}
         </ul>
       </div>
-      <div className="lgd__group">
-        <h2 className="strip__title">Tangential works</h2>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={url.get('tangents') !== '0'}
-            data-testid="show-tangents"
-            onChange={(e) => url.set({ tangents: e.target.checked ? null : '0' })}
-          />
-          <span className="lgd__tangent" aria-hidden="true" />
-          Show tangential works
-        </label>
-      </div>
+      {TANGENTS_IN_GRAPH && (
+        <div className="lgd__group">
+          <h2 className="strip__title">Tangential works</h2>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={url.get('tangents') !== '0'}
+              data-testid="show-tangents"
+              onChange={(e) => url.set({ tangents: e.target.checked ? null : '0' })}
+            />
+            <span className="lgd__dot lgd__dot--tangent" aria-hidden="true" />
+            Show tangential works
+          </label>
+        </div>
+      )}
       <div className="lgd__group">
         <h2 className="strip__title">Actions</h2>
         <ul className="plain lgd lgd--row">
