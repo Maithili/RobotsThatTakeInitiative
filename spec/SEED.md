@@ -9,7 +9,11 @@ This file lists the initial entries for `data/`. Every tag below comes from what
 3. `links.paper` must be a landing page: DOI, publisher or proceedings page, arXiv abstract page, or OpenReview forum. Never a `.pdf` URL. If you cannot confirm the right page, leave it null and list it in the report.
 4. `short_name`: use the name the paper gives its method or system, taken from its landing page or abstract. Otherwise use "FirstAuthor Year". The names below that come from the RTI paper are final.
 5. Use the provenance given for each group.
-6. Add nothing else. No levels, modalities, metrics, lineage, or core strengths beyond what is written here. Leave the rest empty.
+6. Add nothing else. No levels, modalities, metrics, lineage, or core strengths beyond what is written here. Leave the rest empty. Rules 7 and 8 are the only exceptions.
+7. **Baselines.** For each paper with a `method` block, read its experiments section if the full text is openly available (arXiv, OpenReview, open-access proceedings). Put every compared method that is in the database into `baselines` of that paper's evaluation entry, with the section in its `provenance`. Use the entry this file gives, or create `<id>-original` with `loop: null`. If the full text is not open, list the paper in the report. List compared methods that are not in the database under "Candidate additions" in the report.
+8. **Citations.** Fill `ids.doi` and `ids.arxiv` from the landing pages, then run `npm run fetch-citations` and commit `data/citations.json`. List unresolved papers in the report.
+
+Lineage (`builds_on`) comes from Maithili. The three edges she has given appear in the tables below. Append "Lineage from MP, Oct 2026" to the provenance of those papers.
 
 Statuses: `addresses`, `assumes`, `skips`. Relations: `direct`, `adjacent`.
 
@@ -105,9 +109,9 @@ P1: {status: assumes, relation: direct, note: Assumes uniform cost across action
 
 | id | Citation as printed | Extra fields |
 |---|---|---|
-| `slate-pro` | [9] M. Patel, A. G. Prakash, S. Chernova, "Predicting Routine Object Usage for Proactive Robot Assistance," CoRL 2023. | short_name SLaTe-PRO. action_types [act]. inputs [scene_graph]. A3: addresses, direct, temporal_sequence, "Extracts habitual patterns from a history of observed actions". Evaluation `slate-pro-original`: loop offline_replay, provenance "RTI §I, §IV". |
-| `streak` | [10] E. Bartoli, F. I. Doğan, I. Leite, "Streak: Streaming network for continual learning of object relocations under household context drifts," IEEE RO-MAN 2025. | short_name STREAK. inputs [scene_graph]. themes [continual_learning]. A3 as for slate-pro. Evaluation `streak-original`: loop offline_replay, provenance "RTI §I, §IV". |
-| proposed `patel-2023-spatiotemporal` | [20] M. Patel, S. Chernova, "Proactive Robot Assistance via Spatio-Temporal Object Modeling," CoRL 2023. | action_types [act]. inputs [scene_graph]. A3 as for slate-pro. Evaluation `<id>-original`: loop offline_replay, provenance "RTI §IV". |
+| `slate-pro` | [9] M. Patel, A. G. Prakash, S. Chernova, "Predicting Routine Object Usage for Proactive Robot Assistance," CoRL 2023. | short_name SLaTe-PRO. builds_on [stot]. action_types [act]. inputs [scene_graph]. A3: addresses, direct, temporal_sequence, "Extracts habitual patterns from a history of observed actions". Evaluation `slate-pro-original`: loop offline_replay, provenance "RTI §I, §IV". |
+| `streak` | [10] E. Bartoli, F. I. Doğan, I. Leite, "Streak: Streaming network for continual learning of object relocations under household context drifts," IEEE RO-MAN 2025. | short_name STREAK. builds_on [stot]. inputs [scene_graph]. themes [continual_learning]. A3 as for slate-pro. Evaluation `streak-original`: loop offline_replay, provenance "RTI §I, §IV". |
+| `stot` | [20] M. Patel, S. Chernova, "Proactive Robot Assistance via Spatio-Temporal Object Modeling," CoRL 2023. The correct year is 2022 (CoRL 2022), per Maithili. | short_name STOT. venue CoRL. year 2022. action_types [act]. inputs [scene_graph]. A3 as for slate-pro. Evaluation `stot-original`: loop offline_replay, provenance "RTI §IV". |
 | proposed `saavedra-2026-scene-graphs` | [42] M. Saavedra-Ruiz, C. Gauthier, K. Gupta, S. Shahfar, K. Ellis, S. Parkison, L. Paull, "Predictive spatio-temporal scene graphs for semi-static scenes," arXiv:2605.00121, 2026. | A3: addresses, direct, probabilistic_filtering, "Filters over how long items persist in and return to locations". No evaluation. |
 
 ### 2.2 Goal inference family
@@ -124,7 +128,7 @@ A3: {status: skips, relation: direct, note: Does not predict future goals}
 
 | id | Citation as printed | Extra fields |
 |---|---|---|
-| `nopa` | [21] X. Puig, T. Shu, J. B. Tenenbaum, A. Torralba, "NOPA: Neurally-guided Online Probabilistic Assistance for Building Socially Intelligent Home Assistants," IEEE ICRA 2023. | short_name NOPA. action_types [act] (§IV-A, object relocation action space). G2: assumes, direct, "Assumes ground-truth action-goal association". A2: addresses, direct, symbolic, "Belief over goals with actions as likelihoods. Infers goals only for tasks already begun". |
+| `nopa` | [21] X. Puig, T. Shu, J. B. Tenenbaum, A. Torralba, "NOPA: Neurally-guided Online Probabilistic Assistance for Building Socially Intelligent Home Assistants," IEEE ICRA 2023. | short_name NOPA. builds_on [watch-and-help]. action_types [act] (§IV-A, object relocation action space). G2: assumes, direct, "Assumes ground-truth action-goal association". A2: addresses, direct, symbolic, "Belief over goals with actions as likelihoods. Infers goals only for tasks already begun". |
 | `watch-and-help` | [29] X. Puig, T. Shu, S. Li, Z. Wang, Y.-H. Liao, J. B. Tenenbaum, S. Fidler, A. Torralba, "Watch-And-Help: A Challenge for Social Perception and Human-AI Collaboration," 2021. | short_name Watch-And-Help. G2: addresses, direct, symbolic, "Predicts goals from observed actions with symbolic models" (Table I, see report item 1). A2: addresses, direct, "Online goal inference followed by goal-conditioned planning". Evaluation `watch-and-help-original`: loop offline_replay, provenance "RTI §IV" (see report item 2). |
 | `proact` | [30] X. Zhu, F. Zhu, W. Zhou, Y. Tian, Z. Hu, Y. Huang, Y. Guo, X. Wu, Z. Zhang, F. Lin, et al., "Proact: A benchmark and multimodal framework for structure-aware proactive response," arXiv 2026. | short_name ProAct. G2: assumes, direct, "Assumes ground-truth action-goal association". A2: addresses, direct, learned, "Belief over goals with actions as likelihoods. Infers goals only for tasks already begun". |
 
@@ -141,20 +145,13 @@ All have `knowns: {goal: known, human_policy: unknown}`. Provenance: RTI §II, �
 | `koppula-2015-anticipating` | [27] H. S. Koppula, A. Saxena, "Anticipating human activities using object affordances for reactive robotic response," IEEE TPAMI 2015. | | Learns the timing of actions for fluid interaction |
 | `huang-2025-intention-tracking` | [28] Z. Huang, Y.-J. Mun, F. C. Pouria, K. Driggs-Campbell, "Hierarchical intention tracking with switching trees for real-time adaptation to dynamic human intentions during collaboration," arXiv 2025. | | Adds mode switching that returns brief control to the human for failure recovery |
 
-## 4. Proactive behaviors with no level assigned
+## 4. ADAPT
 
-`method.knowns: null`. Provenance: RTI §II.
+The Methods page shows only works with a level. The RTI paper assigns no level to the §II works [14]–[19], so they get no method block. Per Maithili, [14]–[18] are out of the database. ADAPT stays for its P2 tag.
 
-| id (proposed) | Citation as printed | action_types |
+| id | Citation as printed | Fields |
 |---|---|---|
-| `garrell-2017-teaching` | [14] A. Garrell, M. Villamizar, F. Moreno-Noguer, A. Sanfeliu, "Teaching robot's proactive behavior using human assistance," IJSR 2017. | [initiate] |
-| `garrell-2013-mobile` | [15] A. Garrell, M. Villamizar, F. Moreno-Noguer, A. Sanfeliu, "Proactive behavior of an autonomous mobile robot for human-assisted learning," IEEE RO-MAN 2013. | [inform] |
-| `peng-service-robot-proactivity` | [16] Z. Peng, Y. Kwon, J. Lu, Z. Wu, X. Ma, "Design and Evaluation of Service Robot's Proactivity in Decision-Making Support Process," ACM CHI (no year printed). | [inform] |
-| `dogan-2025-disambiguation` | [17] F. I. Dogan, M. Patel, W. Liu, I. Leite, S. Chernova, "A model-agnostic approach for semantically driven disambiguation in human-robot interaction," IEEE RO-MAN 2025. | [ask] |
-| `clara` | [18] J. Park, S. Lim, J. Lee, S. Park, M. Chang, Y. Yu, S. Choi, "Clara: classifying and disambiguating user commands for reliable interactive robotic agents," IEEE RA-L 2023. | [ask] |
-| `adapt` | [19] M. Patel, X. Puig, R. Desai, R. Mottaghi, S. Chernova, J. Truong, A. Rai, "ADAPT: Actively discovering and adapting to preferences for any task," COLM 2025. | [ask] |
-
-`adapt` also gets P2: addresses, adjacent, proactive_communication, "Proactive communication" (Appendix II-A).
+| `adapt` | [19] M. Patel, X. Puig, R. Desai, R. Mottaghi, S. Chernova, J. Truong, A. Rai, "ADAPT: Actively discovering and adapting to preferences for any task," COLM 2025. | No method block. P2: addresses, adjacent, proactive_communication, "Proactive communication" (Appendix II-A). |
 
 ## 5. Subproblem works
 
@@ -165,7 +162,7 @@ These papers have no `method` block, only `subproblems`. Provenance: "RTI Table 
 | G1 | `levy-2017-hierarchies` | [46] A. Levy, G. D. Konidaris, R. W. Platt, K. Saenko, "Learning multi-level hierarchies with hindsight," ICLR 2017. | adjacent | hierarchical | Captures goals at multiple granularities |
 | G1 | `zhu-2021-skill-discovery` | [47] Y. Zhu, P. Stone, Y. Zhu, "Bottom-up skill discovery from unsegmented demonstrations for long-horizon robot manipulation," IEEE RA-L 2021. | adjacent | hierarchical | Captures goals at multiple granularities |
 | G1 | `saycan` | [3] A. Brohan, Y. Chebotar, C. Finn, K. Hausman, A. Herzog, D. Ho, J. Ibarz, A. Irpan, E. Jang, R. Julian, et al., "Do as i can, not as i say: Grounding language in robotic affordances," CoRL 2023. | adjacent | open_set_language | Open-set goals grounded in natural language |
-| G1 | `zhou-2023-language-action-survey` | [48] H. Zhou, X. Yao, O. Mees, Y. Meng, T. Xiao, Y. Bisk, J. Oh, E. Johns, M. Shridhar, D. Shah, J. Thomason, K. Huang, J. Chai, Z. Bing, A. C. Knoll, "Bridging language and action: A survey of language-conditioned robot manipulation," 2023. | adjacent | open_set_language | Open-set goals grounded in natural language. `type: survey` |
+| G1 | `zhou-2023-language-action-survey` | [48] H. Zhou, X. Yao, O. Mees, Y. Meng, T. Xiao, Y. Bisk, J. Oh, E. Johns, M. Shridhar, D. Shah, J. Thomason, K. Huang, J. Chai, Z. Bing, A. C. Knoll, "Bridging language and action: A survey of language-conditioned robot manipulation," 2023. | adjacent | open_set_language | Open-set goals grounded in natural language |
 | G2 | `watch-and-help` | see §2.2 | | | |
 | G2 | `baker-2009-inverse-planning` | [33] C. L. Baker, R. Saxe, J. Tenenbaum, "Action understanding as inverse planning," Cognition 2009. | direct | symbolic | Predicts goals from observed actions with symbolic models |
 | G2 | `nakahashi-2015-subgoal` | [31] R. Nakahashi, C. L. Baker, J. B. Tenenbaum, "Modeling human understanding of complex intentional action with a bayesian nonparametric subgoal model," arXiv 2015. | direct | learned | Predicts goals from observed actions with learned models |
@@ -174,7 +171,7 @@ These papers have no `method` block, only `subproblems`. Provenance: "RTI Table 
 | G2 | `actionable-models` | [50] Y. Chebotar, K. Hausman, Y. Lu, T. Xiao, D. Kalashnikov, J. Varley, A. Irpan, B. Eysenbach, R. C. Julian, C. Finn, S. Levine, "Actionable models: Unsupervised offline reinforcement learning of robotic skills," ICML 2021. | adjacent | hindsight_relabeling | Relabels past trajectories with goals. Not designed for open, unlabeled goal spaces |
 | A1 | `nikolaidis-2014-joint-action` | [34] S. Nikolaidis, R. Ramakrishnan, K. Gu, J. A. Shah, "Efficient model learning from joint-action demonstrations for human-robot collaborative tasks," ACM/IEEE HRI 2014. | direct | clustering_mixture | Addresses data sparsity by clustering users or fitting mixtures. Relies on explicit demonstrations |
 | A1 | `jayanthi-2022-strategy-discovery` | [35] S. Jayanthi, L. Chen, M. C. Gombolay, "Strategy discovery and mixture in lifelong learning from heterogeneous demonstration," arXiv:2202.07014, 2022. | direct | clustering_mixture | Addresses data sparsity by clustering users or fitting mixtures. Relies on explicit demonstrations |
-| A1 | `ravichandar-2020-lfd-review` | [51] H. Ravichandar, A. S. Polydoros, S. Chernova, A. Billard, "Recent advances in robot learning from demonstration," Annual Review of Control, Robotics, and Autonomous Systems 2020. | adjacent | lfd | Learning from demonstration. `type: survey` |
+| A1 | `ravichandar-2020-lfd-review` | [51] H. Ravichandar, A. S. Polydoros, S. Chernova, A. Billard, "Recent advances in robot learning from demonstration," Annual Review of Control, Robotics, and Autonomous Systems 2020. | adjacent | lfd | Learning from demonstration |
 | A1 | `xiong-2021-learning-by-watching` | [52] H. Xiong, Q. Li, Y.-C. Chen, H. Bharadhwaj, S. Sinha, A. Garg, "Learning by watching: Physical imitation of manipulation skills from human videos," IEEE/RSJ IROS 2021. | adjacent | lfo | Learns from observation alone |
 | A1 | `torabi-2018-bco` | [53] F. Torabi, G. Warnell, P. Stone, "Behavioral cloning from observation," IJCAI 2018. | adjacent | lfo | Learns from observation alone |
 | A1 | `sakr-2025-everyday-users` | [54] M. Sakr, Z. Zhang, B. Li, H. Zhang, H. F. M. V. der Loos, D. Kulić, E. A. Croft, "How can everyday users efficiently teach robots by demonstration?," ACM THRI 2025. | adjacent | guided_demonstration | Guides users toward more effective demonstrations |
@@ -200,13 +197,13 @@ These papers have no `method` block, only `subproblems`. Provenance: "RTI Table 
 | P2 | `adapt` | see §4 | | | |
 | P2 | `ju-2008-implicit-interactions` | [64] W. Ju, L. Leifer, "The Design of Implicit Interactions: Making Interactive Systems Less Obnoxious," Design Issues 2008. | adjacent | hedging | Hedging under uncertainty |
 
-Also add these A3 tags to the temporal family (§2.1): `slate-pro`, `streak`, and `patel-2023-spatiotemporal` use approach temporal_sequence. `saavedra-2026-scene-graphs` uses probabilistic_filtering.
+Also add these A3 tags to the temporal family (§2.1): `slate-pro`, `streak`, and `stot` use approach temporal_sequence. `saavedra-2026-scene-graphs` uses probabilistic_filtering.
 
 ## 6. Surveys
 
 | id (proposed) | Citation as printed | Fields |
 |---|---|---|
-| `koch-2024-proactive-hri-review` | [22] M. Koch van den Broek, T. B. Moeslund, "What is proactive human-robot interaction? a review of a progressive field and its definitions," ACM/IEEE HRI 2024. | `type: survey`, provenance "RTI §II". No other blocks. |
+| `koch-2024-proactive-hri-review` | [22] M. Koch van den Broek, T. B. Moeslund, "What is proactive human-robot interaction? a review of a progressive field and its definitions," ACM/IEEE HRI 2024. | `type: survey`, provenance "RTI §II". No other blocks. Per Maithili, this is the only survey in the database. |
 
 ## 7. Evaluation methodology
 
@@ -256,5 +253,5 @@ Start the report with these items for Maithili, then add what the builder finds.
 3. **Benchmarks.** Watch-And-Help [29] and ProAct [30] present benchmarks. Should they get dataset entries?
 4. **GAP's family.** "full_pipeline" is a new label.
 5. **Temporal family G1 and P1.** Seeded as `assumes`, from §III-B's reading that these methods use a goal space at the action level and assume uniform cost.
-6. **Reference list.** [41] prints 2024. [16] prints no year. [63] prints no venue or year. The builder adds every other difference it finds.
-7. **To fill.** `core_strength` for all L2 methods, `builds_on` edges for all methods, and HOMER+ goal annotations.
+6. **Reference list.** [20] prints CoRL 2023, and Maithili confirms CoRL 2022. [41] prints 2024. [16] prints no year. [63] prints no venue or year. The builder adds every other difference it finds.
+7. **To fill.** `core_strength` for all L2 methods, `builds_on` edges beyond the three given, and HOMER+ goal annotations.

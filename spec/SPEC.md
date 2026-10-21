@@ -22,7 +22,7 @@ Readers come to find papers. The site gives them three entry points, one per pag
 - **The formalism is the schema.** Levels, families, subproblems, net value terms, and loop types come from the RTI paper and live in one taxonomy file.
 - **Lists and visuals, not prose.** Every text field has a length cap. No page shows a paragraph longer than two lines. Each definition is one line.
 - **Links only.** The site links to paper landing pages (DOI, publisher or proceedings page, arXiv abstract, OpenReview). The repo never stores PDF files, and no link points to a PDF file.
-- **No guessed data.** A field is either filled from a stated source or left empty. Empty fields render as "—" with a link to suggest a value. The builder never infers a level, a lineage edge, a modality, or a metric from a title or abstract.
+- **No guessed data.** A field is either filled from a stated source or left empty. Empty fields render as "—" with a link to suggest a value. The builder never infers a level, a lineage edge, a modality, or a metric from a title or abstract. Graph edges come only from the three sources in §5.5.
 - **Every view has a URL.** Filters, the open paper, and the comparison set live in the URL, so any view can be shared or linked from a slide.
 
 ## 3. Scope
@@ -48,10 +48,12 @@ data/
   taxonomy.yaml          the formalism (§5.1). Only Maithili changes its definitions.
   papers/<id>.yaml       one file per paper (§5.2)
   datasets/<id>.yaml     datasets, simulators, benchmarks (§5.3)
+  citations.json         generated citation edges, committed (§5.5)
   SEED_REPORT.md         written during seeding (§14, M2)
 scripts/
   build-data.ts          validates data and writes src/generated/db.json
   new-paper.ts           `npm run new-paper -- <id>` scaffolds a paper file
+  fetch-citations.ts     `npm run fetch-citations` writes data/citations.json (§5.5)
 src/
   schema.ts              zod schemas, shared by the script and the app
   generated/db.json      build output, gitignored
@@ -282,18 +284,19 @@ featured_comparison:          # drives the chart in §8.2
 | `authors` | string[] | yes | |
 | `venue` | string | no | |
 | `year` | int | yes | |
-| `type` | `research` or `survey` | no | Default `research`. Surveys show in the surveys strip (§7.2). |
+| `type` | `research` or `survey` | no | Default `research`. Only reviews of proactivity itself get `survey`. They show in the surveys strip (§7.2). |
 | `links.paper` | URL or null | yes | Landing page. The validator rejects URLs whose path ends in `.pdf`. |
 | `links.code`, `links.project` | URL | no | |
+| `ids.doi`, `ids.arxiv` | string | no | `fetch-citations` uses these to find the paper (§5.5). Fill them whenever the landing page shows them. |
 | `bibtex` | string | no | |
 | `provenance` | string ≤ 140 | yes | Where the tags come from, such as "RTI §III-B, Table I" or "Read by MP, Oct 2026". |
 | `method` | object | no | Its presence puts the paper on the Methods page. |
-| `method.knowns` | `{goal, human_policy}`, each `known` or `unknown`, or null | no | Level is derived (§5.4). Null puts the paper in the "Not yet classified" tray. |
+| `method.knowns` | `{goal, human_policy}`, each `known` or `unknown` | yes, in a method block | Level is derived (§5.4). A paper without a level gets no method block, so the Methods page shows only classified works. |
 | `method.family` | family id | no | L2 only. |
 | `method.action_types` | action type id[] | no | Output side. |
 | `method.inputs` | modality id[] | no | Input side. |
 | `method.core_strength` | string ≤ 120 | no | One line. |
-| `method.builds_on` | paper id[] | no | Lineage edges. This paper extends those papers. Only edges stated by a paper's authors or by Maithili. |
+| `method.builds_on` | paper id[] | no | Solid "builds on" edges (§5.5). This paper extends those papers. Only Maithili adds these. |
 | `themes` | theme id[] | no | |
 | `subproblems` | map from G1…P2 to `{status, relation, approach?, note}` | no | `note` ≤ 140 says what part of the subproblem the work solves. `approach` must be one of that subproblem's approaches. |
 | `evaluations` | list of evaluation entries | no | Their presence puts the paper on the Evaluations page. |
@@ -305,10 +308,10 @@ Evaluation entry:
 | `id` | kebab-case string | Unique across all papers. |
 | `environment` | dataset id (kind `simulator`) or null | |
 | `datasets` | dataset id[] | |
-| `loop` | loop type id | Required. |
+| `loop` | loop type id or null | Null until someone reads the paper's evaluation. |
 | `human_model` | string ≤ 60 or null | Such as "LLM (gpt-4o-mini)", "Scripted", "Real users (n=12)". |
 | `metrics` | metric id[] | |
-| `baselines` | paper id[] | Also drives the optional baseline edges on the lineage graph. |
+| `baselines` | paper id[] | Methods the paper compares against. Drives the dashed "benchmarks against" edges (§5.5). |
 | `other_baselines` | string[] | Baselines with no paper, such as "Oracle". |
 | `captures` | `{state_drift, goal_adaptation}`, each `yes`, `partial`, `no`, or null | |
 | `provenance` | string ≤ 140 | |
@@ -331,7 +334,7 @@ method:
   action_types: [act]
   inputs: [scene_graph]
   core_strength: null
-  builds_on: []
+  builds_on: [stot]
 subproblems:
   A3: {status: addresses, relation: direct, approach: temporal_sequence, note: Extracts habitual patterns from a history of observed actions}
   A1: {status: skips, relation: direct, note: Skips human-policy learning}
@@ -378,14 +381,40 @@ The build prints these warnings and passes.
 - A `builds_on` target is newer than the paper. Preprints can cause this.
 - A result's metric is not in its evaluation's `metrics`.
 - A paper has no method, subproblem, or evaluation block and nothing references it.
+- `data/citations.json` lists a paper id that no longer exists, or is missing a paper. Rerun `fetch-citations`.
 
 `db.json` adds these derived fields.
 
 - `level`: L0 if both known, L1 if goal known and policy unknown, L2 if both unknown, null if `knowns` is null.
-- `built_upon_by` and `compared_in`: reverse edges of `builds_on` and `baselines`.
+- `built_upon_by`, `benchmarked_in`, and `cited_by`: reverse edges of `builds_on`, `baselines`, and citations.
+- `edges`: one entry per pair of papers, with its drawn type (by the precedence in §5.5) and the full list of relations.
 - `used_by` for each dataset and each metric.
 - Per-subproblem counts by status.
 - A lowercase search string per paper built from short name, title, authors, venue, and year.
+
+### 5.5 Graph edges
+
+The lineage graph draws three kinds of edges between papers. Each kind has one source.
+
+| Edge | Line | Source | Who fills it |
+|---|---|---|---|
+| Builds on | Solid, 2 px, arrowhead | `method.builds_on` | Maithili only |
+| Benchmarks against | Dashed, 1.5 px, arrowhead | `evaluations[].baselines` | Read from the paper's experiments section, with the section in that evaluation's `provenance` |
+| Cites | Thin dotted, 1 px, low contrast, small arrowhead | `data/citations.json` | `scripts/fetch-citations.ts` |
+
+Rules.
+
+- Every edge points from the earlier work to the later one, that is, from the paper that is built on, benchmarked, or cited to the paper that does so.
+- Only edges between two papers in the database count.
+- Each pair of papers gets one line. Builds on outranks benchmarks against, which outranks cites. The edge hover card lists every relation between the pair.
+
+`scripts/fetch-citations.ts`, run as `npm run fetch-citations`:
+
+- Finds each paper on Semantic Scholar by `ids.doi`, then `ids.arxiv`, then an exact normalized title match with the year within one. It never accepts a fuzzy match.
+- Fetches each found paper's reference list and keeps the references that are papers in the database.
+- Writes `data/citations.json` with `generated_at`, `source`, one `{s2_id, cites}` entry per paper id, and an `unresolved` list. The file is committed. The build reads it and never calls the network.
+- Reads an optional `S2_API_KEY` from the environment and stays within the public rate limit without one.
+- Prints the papers it could not find. CONTRIBUTING.md tells contributors to run it after adding papers.
 
 ## 6. Shared shell
 
@@ -407,7 +436,7 @@ Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, th
 | `paper` | global | `gap` | Open drawer |
 | `compare` | global | `gap,slate-pro` | Compare set, up to 3 |
 | `view` | per page | `list`, `matrix` | View toggle |
-| `edges` | Methods | `baselines` | Show baseline edges |
+| `edges` | Methods | `builds,benchmarks` | Edge types shown. Absent means all three. |
 | `focus` | Methods | `slate-pro` | Ancestry focus |
 | `term` | Evaluations | `dC_added` | Net value term |
 | `loop` | Evaluations | `closed_scripted,closed_adaptive` | Loop type filter |
@@ -438,7 +467,7 @@ A 420 px right-side panel, and a bottom sheet under 640 px. Sections in order, w
 4. Core strength (one line). Inputs → action types as chips.
 5. Subproblems: a strip of seven cells (G1 to P2) with status glyphs, then one row per tagged subproblem with note and relation.
 6. Evaluations: per entry, a loop-type pill, datasets, metric chips colored by net value term, and captures glyphs.
-7. Lineage: builds on, built upon by, compared against, compared in. All clickable.
+7. Lineage: builds on, built upon by, benchmarks against, benchmarked in, cites, cited by. Only papers in the database. All clickable.
 8. "Appears on": links to each page that shows this paper, focused on it.
 9. Footer: provenance line, "Suggest a correction" (§10), "Pin to compare".
 
@@ -459,18 +488,18 @@ Every list, graph, and panel has an empty state that says what is missing and li
 A compact, interactive version of the RTI Fig. 1 right panel, at the top left.
 
 - Three stacked level cards, L2 on top, then L1, then L0. Each shows name, knowns chips, one-line definition, and paper count. The L0 note shows on hover and focus.
-- Two toggles, "Goal g" and "Human policy π^h", each known or unknown. The toggle state selects a level and sets `level=`. The combination goal unknown with policy known shows "Not a level in the formalism" and selects nothing.
-- Clicking a card selects that level and moves the toggles to match. Clicking it again clears the selection.
+- Clicking a card selects that level and sets `level=`. Clicking it again clears the selection.
+- No toggle bar for g and π^h. The knowns chips on each card carry that information.
 
 ### 7.2 Lineage graph
 
-- **Lanes**, top to bottom: one L2 sub-lane per family (goal inference, temporal prediction, full pipeline, then "family not set"), then L1, then L0. Below the axis, a "Not yet classified" tray shows papers with null `knowns` as chips.
+- **Lanes**, top to bottom: one L2 sub-lane per family (goal inference, temporal prediction, full pipeline, then "family not set"), then L1, then L0. The page has no tray for unclassified works.
 - **Lane headers** show name and count. Each L2 family header also shows its `scope_line`, with strength and limitations on hover.
 - **x axis** is year, one band per year from the earliest to the latest paper shown. Nodes in the same lane and year stack vertically, and lane height grows to fit.
 - **Nodes** are pills with the short name, a left edge in the level color, and small icons for action types.
-- **Edges.** `builds_on` edges are solid curved arrows from older to newer. Baseline edges from evaluations are dashed and hidden by default, with a "Show baseline comparisons" toggle (`edges=baselines`).
+- **Edges** follow §5.5 and draw as curves. A legend shows the three line styles, each with a checkbox bound to `edges=`, all on by default. Hovering an edge lists every relation between its two papers.
 - **Hover or focus** on a node shows a card with short name and year, title (one line, truncated), core strength, inputs → action types, and knowns chips.
-- **Click** on a node highlights all its ancestors and descendants through `builds_on`, dims the rest, sets `focus=`, and opens the drawer. Clicking empty canvas or pressing Esc clears the focus.
+- **Click** on a node highlights all its ancestors and descendants through the edge types currently shown, dims the rest, sets `focus=`, and opens the drawer. Clicking empty canvas or pressing Esc clears the focus.
 - **Time brush** on the year axis sets `years=`.
 - **Filter bar**: family, action type, input modality, theme, years.
 - **View toggle**, Graph or List. The list groups by level then family, with sortable columns for short name, year, title, inputs, action types, core strength, and count of subproblems addressed. List is the default under 640 px.
@@ -564,20 +593,21 @@ Filter chips for the four themes, bound to the global `theme=`.
 
 **npm scripts**: `dev`, `build` (runs `build-data` first), `validate`, `test`, `e2e`, `new-paper`, `preview`.
 
-**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal.
+**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
 
 **End-to-end tests (Playwright)** on the seed data:
 
 1. Each page loads with no console errors.
 2. Setting L2 on Methods and switching to Subproblems keeps the filter. Back restores the previous view.
 3. `?paper=gap` opens the drawer, and Esc closes it.
-4. Setting both toggles to unknown highlights the L2 lanes.
+4. Clicking the L2 card highlights the L2 lanes.
 5. Clicking ΔC↑ leaves net actions saved, perturbed actions, and F1 in the metrics list.
 6. The featured chart shows 2 bars, then 6 after the toggle.
 7. Selecting A2 lists NOPA, highlights G1, G2, and A1 upstream, and highlights P2 downstream.
 8. In matrix view, clicking a cell opens the drawer.
 9. Pinning two papers puts both ids in `compare=`.
 10. At 375 px wide, no page scrolls horizontally.
+11. On Methods, the STOT to SLaTe-PRO edge is solid, and unchecking "Cites" removes every dotted edge.
 
 **CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes: `npm ci`, validate, typecheck, unit tests, build, end-to-end tests.
 
@@ -590,9 +620,9 @@ Work on `main`. Commit at the end of each milestone and push to `origin main` ri
 | | Milestone | Done when |
 |---|---|---|
 | M1 | Data foundation: taxonomy, schemas, validator, `build-data`, `new-paper` | `npm run validate` passes on an empty `papers/` folder, and each §5.4 rule has a failing fixture |
-| M2 | Seed data from `spec/SEED.md` | Every SEED entry has a file. Links come only from confirmed landing pages. `data/SEED_REPORT.md` lists missing links and every difference between the RTI reference list and the landing page. Validate passes. |
+| M2 | Seed data from `spec/SEED.md` | Every SEED entry has a file. Links come only from confirmed landing pages. `data/SEED_REPORT.md` lists missing links and every difference between the RTI reference list and the landing page. Baselines are recorded per SEED rule 7. `data/citations.json` exists. Validate passes. |
 | M3 | Shell: routing, header, URL state, search, drawer, compare tray, theme toggle | E2E tests 3 and 9 pass |
-| M4 | Methods page | E2E tests 2 and 4 pass. Graph readable with seed data and with a 150-node synthetic fixture. |
+| M4 | Methods page | E2E tests 2, 4, and 11 pass. Graph readable with seed data and with a 150-node synthetic fixture. |
 | M5 | Evaluations page | E2E tests 5 and 6 pass |
 | M6 | Subproblems page | E2E tests 7 and 8 pass |
 | M7 | Contribution flow, CI, deploy, README | CI green on `main`. README links the live site and CONTRIBUTING.md. |
@@ -604,12 +634,11 @@ M2 can run alongside M3.
 
 Maithili can reverse any of these.
 
-1. **Lineage edges.** Solid edges show only "extends" (`builds_on`). Baseline comparisons come from evaluations and show as dashed edges behind a toggle. Seed data has no `builds_on` edges, since the RTI paper does not state lineage. Maithili adds them.
+1. **Citation source.** Semantic Scholar, matched by DOI, arXiv id, or exact title. OpenAlex is the fallback if coverage turns out poor.
 2. **L0 lane.** The lane exists and starts empty, since the RTI paper names no L0 works.
-3. **Unleveled works.** Works the RTI paper discusses without assigning a level (§II refs 14–19) go in the "Not yet classified" tray.
-4. **GAP's family.** "Full pipeline" is a new family label. The RTI paper names two families only.
-5. **Subproblem dependencies** come from the Table I inputs and outputs. A2 → P2 assumes the anticipated goals g_{t:t+Δt} include the current goal g_t.
-6. **Direct vs adjacent.** A work is direct for a subproblem if Table I or §III-B lists it there, and adjacent if only Appendix II-A does.
-7. **Hosting.** GitHub Pages from this repo, with hash URLs.
-8. **Contributions.** GitHub issues and pull requests, with no backend.
-9. **Results.** Only the Table II comparison appears as a chart.
+3. **GAP's family.** "Full pipeline" is a new family label. The RTI paper names two families only.
+4. **Subproblem dependencies** come from the Table I inputs and outputs. A2 → P2 assumes the anticipated goals g_{t:t+Δt} include the current goal g_t.
+5. **Direct vs adjacent.** A work is direct for a subproblem if Table I or §III-B lists it there, and adjacent if only Appendix II-A does.
+6. **Hosting.** GitHub Pages from this repo, with hash URLs.
+7. **Contributions.** GitHub issues and pull requests, with no backend.
+8. **Results.** Only the Table II comparison appears as a chart.
