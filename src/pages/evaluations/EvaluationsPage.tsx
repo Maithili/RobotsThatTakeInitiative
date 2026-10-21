@@ -577,7 +577,7 @@ export function EvaluationsPage() {
       </div>
       <RealismPlot rows={paperRows} matches={matches} />
       <FilterBar
-        controls={['level', 'family', 'theme']}
+        controls={['family', 'theme']}
         extra={
           <span className="filterbar__extra chips">
             <label className="colfilter">

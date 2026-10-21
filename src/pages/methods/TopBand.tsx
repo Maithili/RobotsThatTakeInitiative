@@ -60,19 +60,23 @@ function useWidth<T extends HTMLElement>() {
   return [ref, w] as const;
 }
 
+/** `level=` names the selected card. It highlights that card's timeline row only (SPEC §6.2). */
+function useSelectedLevel(): LevelId | null {
+  const v = useUrl().get('level');
+  return (BAND_LEVELS as readonly string[]).includes(v ?? '') ? (v as LevelId) : null;
+}
+
 function LevelCard({ level, count }: { level: LevelId; count: number }) {
   const url = useUrl();
   const L = tx.levels[level];
-  const levels = url.filters.level;
-  const on = levels.includes(level);
-  const selected = levels.length === 1 ? levels[0] : null;
+  const on = useSelectedLevel() === level;
   return (
     <button
       type="button"
       className={`levelcard levelcard--${level}${on ? ' is-on' : ''}`}
       aria-pressed={on}
       data-testid={`levelcard-${level}`}
-      onClick={() => url.set({ level: selected === level ? null : level })}
+      onClick={() => url.set({ level: on ? null : level })}
     >
       <span className="levelcard__top">
         <span className={`level-chip level-chip--${level}`}>{level}</span>
@@ -104,6 +108,7 @@ function TimelineRow({
 }) {
   const url = useUrl();
   const f = url.filters;
+  const selected = useSelectedLevel() === level;
   const placed = useMemo(() => {
     const byBand = new Map<number, DbPaper[]>();
     for (const p of papers) {
@@ -121,7 +126,14 @@ function TimelineRow({
   const inGraph = GRAPH_LEVELS.includes(level);
 
   return (
-    <div className={`tl__row tl__row--${level}`} style={{ minHeight: height }} data-testid={`timeline-${level}`} role="list" aria-label={`${tx.levels[level].name} papers by year`}>
+    <div
+      className={`tl__row tl__row--${level}${selected ? ' is-on' : ''}`}
+      style={{ minHeight: height }}
+      data-testid={`timeline-${level}`}
+      data-selected={selected ? 'true' : 'false'}
+      role="list"
+      aria-label={`${tx.levels[level].name} papers by year${selected ? ', selected' : ''}`}
+    >
       {width > 0 &&
         bands.map((b) => <span key={b.key} className={`tl__band${b.pre ? ' tl__band--pre' : ''}`} style={{ left: b.x0, width: b.x1 - b.x0 }} aria-hidden="true" />)}
       {width > 0 &&

@@ -1,11 +1,11 @@
 // Global filter state (SPEC §6.2) and matching. Pure, so tests can use it without the db.
+// `level` is not a filter: it selects a Methods level card and highlights that card's timeline row only.
 import type { DbPaper } from '../schema.ts';
 
-export const GLOBAL_LIST_KEYS = ['level', 'family', 'action', 'input', 'theme'] as const;
+export const GLOBAL_LIST_KEYS = ['family', 'action', 'input', 'theme'] as const;
 export type GlobalListKey = (typeof GLOBAL_LIST_KEYS)[number];
 
 export interface GlobalFilters {
-  level: string[];
   family: string[];
   action: string[];
   input: string[];
@@ -28,7 +28,6 @@ export function parseYears(v: string | null | undefined): [number, number] | nul
 
 export function readGlobalFilters(sp: URLSearchParams): GlobalFilters {
   return {
-    level: parseList(sp.get('level')),
     family: parseList(sp.get('family')),
     action: parseList(sp.get('action')),
     input: parseList(sp.get('input')),
@@ -61,7 +60,6 @@ export function matchesQuery(search: string, q: string): boolean {
 
 export function matchesGlobal(p: DbPaper, f: GlobalFilters): boolean {
   const m = p.method;
-  if (f.level.length && (!m || !p.level || !f.level.includes(p.level))) return false;
   if (f.family.length && (!m || !m.family || !f.family.includes(m.family))) return false;
   if (f.action.length && (!m || !(m.action_types ?? []).some((a) => f.action.includes(a)))) return false;
   if (f.input.length && (!m || !(m.inputs ?? []).some((a) => f.input.includes(a)))) return false;

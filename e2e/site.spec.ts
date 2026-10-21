@@ -26,18 +26,19 @@ test('1. each page loads with no console errors', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('2. a level filter set on Methods survives switching to Subproblems, and Back restores it', async ({ page }) => {
-  await page.goto('/#/methods');
-  await page.getByTestId('levelcard-L2').click();
-  await expect.poll(() => params(page).get('level')).toBe('L2');
+test('2. a family filter set on Methods survives switching to Subproblems, and Back restores it', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  await page.getByRole('button', { name: /^Filters/ }).click();
+  await page.getByRole('group', { name: 'Family' }).getByRole('button', { name: 'Goal Inference' }).click();
+  await expect.poll(() => params(page).get('family')).toBe('goal_inference');
   await page.getByRole('link', { name: 'Subproblems' }).click();
   await expect(page).toHaveURL(/#\/subproblems/);
-  expect(params(page).get('level')).toBe('L2');
-  await expect(page.getByRole('button', { name: /Remove filter Level/ })).toBeVisible();
+  expect(params(page).get('family')).toBe('goal_inference');
+  await expect(page.getByRole('button', { name: 'Remove filter Family: Goal Inference' })).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/#\/methods/);
-  expect(params(page).get('level')).toBe('L2');
-  await expect(page.getByTestId('levelcard-L2')).toHaveAttribute('aria-pressed', 'true');
+  expect(params(page).get('family')).toBe('goal_inference');
+  await expect(page.getByRole('button', { name: 'Remove filter Family: Goal Inference' })).toBeVisible();
 });
 
 test('3. ?paper=gap opens the drawer and Esc closes it', async ({ page }) => {
@@ -194,11 +195,22 @@ test('11. the STOT to SLaTe-PRO edge is solid, and unchecking Cites removes ever
   await expect.poll(() => params(page).get('edges')).toBeNull();
 });
 
-test('selecting L1 dims every graph node and explains why', async ({ page }) => {
+test('selecting a level card highlights its timeline row only', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
+  const nodes = page.locator('[data-testid^="node-"]');
+  const count = await nodes.count();
   await page.getByTestId('levelcard-L1').click();
-  await expect(page.getByText('The graph shows unprompted (L2) methods.')).toBeVisible();
-  for (const n of await page.locator('[data-testid^="node-"]').all()) await expect(n).toHaveClass(/is-dim/);
+  await expect.poll(() => params(page).get('level')).toBe('L1');
+  await expect(page.getByTestId('levelcard-L1')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('timeline-L1')).toHaveAttribute('data-selected', 'true');
+  await expect(page.getByTestId('timeline-L2')).toHaveAttribute('data-selected', 'false');
+  // The graph and the filter bar ignore it.
+  await expect(nodes).toHaveCount(count);
+  await expect(page.locator('[data-testid^="node-"].is-dim')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Remove filter Level/ })).toHaveCount(0);
+  await page.getByTestId('levelcard-L1').click();
+  await expect.poll(() => params(page).get('level')).toBeNull();
+  await expect(page.getByTestId('timeline-L1')).toHaveAttribute('data-selected', 'false');
 });
 
 test('no subproblem codes appear as visible text', async ({ page }) => {

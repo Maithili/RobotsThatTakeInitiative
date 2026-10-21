@@ -2003,6 +2003,11 @@ tr.clickable:hover td {
   background: var(--surface-2);
   overflow: hidden;
 }
+/* The selected level card highlights its timeline row only (SPEC §6.2). */
+.tl__row.is-on {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
 .tl__band {
   position: absolute;
   top: 0;

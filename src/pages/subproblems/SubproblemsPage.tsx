@@ -232,7 +232,7 @@ export function SubproblemsPage() {
         ))}
       </div>
       <FilterBar
-        controls={['level', 'family', 'action', 'input']}
+        controls={['family', 'action', 'input']}
         extra={
           <span className="filterbar__extra">
             <span className="seg seg--sm" role="group" aria-label="View">

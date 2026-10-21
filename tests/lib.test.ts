@@ -21,8 +21,8 @@ describe('URL state', () => {
     });
     expect(qs).toContain('level=L1,L2');
     const f = readGlobalFilters(new URLSearchParams(qs));
+    // `level` selects a Methods level card; it is not a global filter (SPEC §6.2).
     expect(f).toEqual({
-      level: ['L1', 'L2'],
       family: ['temporal_imitation'],
       action: ['act', 'ask'],
       input: [],
@@ -96,11 +96,14 @@ describe('filters', () => {
   const s = P('s', 'S', { subproblems: { G1: { status: 'addresses', relation: 'direct', note: '' } } });
   const f = (q: string) => readGlobalFilters(new URLSearchParams(q));
   it('fails method filters for papers without a method block', () => {
-    expect(matchesGlobal(m, f('level=L2'))).toBe(true);
-    expect(matchesGlobal(s, f('level=L2'))).toBe(false);
+    expect(matchesGlobal(s, f('family=temporal_imitation'))).toBe(false);
     expect(matchesGlobal(s, f('action=act'))).toBe(false);
     expect(matchesGlobal(m, f('action=ask'))).toBe(false);
     expect(matchesGlobal(m, f('family=temporal_imitation&input=scene_graph'))).toBe(true);
+  });
+  it('ignores level=, which only highlights a Methods timeline row', () => {
+    expect(matchesGlobal(m, f('level=L1'))).toBe(true);
+    expect(matchesGlobal(s, f('level=L2'))).toBe(true);
   });
   it('applies years and text', () => {
     expect(matchesGlobal(m, f('years=2021-2026'))).toBe(false);

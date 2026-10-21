@@ -177,7 +177,6 @@ export function LiteratureGraph({
     const w = wrap.current?.clientWidth ?? 600;
     setTip({ x: Math.max(4, Math.min(p.x - 140, w - 300)), y: p.y + 10, body });
   };
-  const graphLevelSelected = !f.level.length || f.level.some((l) => (GRAPH_LEVELS as string[]).includes(l));
   const ordered = [...layout.nodes.values()].sort((a, b) => {
     const ca = a.cluster ? clusterOrder.indexOf(a.cluster) : clusterOrder.length;
     const cb = b.cluster ? clusterOrder.indexOf(b.cluster) : clusterOrder.length;
@@ -188,11 +187,6 @@ export function LiteratureGraph({
 
   return (
     <div className="litg" ref={wrap} data-testid="literature-graph" onMouseLeave={() => setTip(null)}>
-      {!graphLevelSelected && (
-        <p className="litg__note small" role="status">
-          The graph shows unprompted (L2) methods.
-        </p>
-      )}
       <svg
         ref={svgRef}
         className="litg__svg"
