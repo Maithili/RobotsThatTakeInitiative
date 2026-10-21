@@ -19,7 +19,7 @@ method:
   knowns:
     goal: unknown
     human_policy: unknown
-  family: temporal_prediction
+  family: temporal_imitation
   core_strength: null
   builds_on: []
 subproblems:

@@ -10,16 +10,17 @@ venue: IEEE RO-MAN
 year: 2025
 links:
   paper: https://doi.org/10.1109/RO-MAN63969.2025.11217699
-provenance: RTI §II, §III-A3, §III-B, Table I, §IV
+provenance: RTI §II, §III-A3, §III-B, Table I, §IV. Lineage from MP, Oct 2026
 method:
   knowns:
     goal: unknown
     human_policy: unknown
-  family: temporal_prediction
+  family: temporal_imitation
   inputs:
     - scene_graph
   core_strength: null
-  builds_on: []
+  builds_on:
+    - stot
 themes:
   - continual_learning
 subproblems:

@@ -156,7 +156,7 @@ describe('validator', () => {
 
   it('derives levels, reverse edges, used_by, counts, and search', () => {
     const r = run([
-      base('a', { method: { knowns: { goal: 'unknown', human_policy: 'unknown' }, family: 'temporal_prediction' }, subproblems: { A3: { status: 'addresses', relation: 'direct', note: 'x' } } }),
+      base('a', { method: { knowns: { goal: 'unknown', human_policy: 'unknown' }, family: 'temporal_imitation' }, subproblems: { A3: { status: 'addresses', relation: 'direct', note: 'x' } } }),
       base('b', {
         year: 2022,
         authors: ['Jane Doe'],

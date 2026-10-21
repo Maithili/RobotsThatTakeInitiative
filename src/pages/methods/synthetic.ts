@@ -9,7 +9,7 @@ function rng(seed: number) {
   };
 }
 
-const FAMILIES = ['goal_inference', 'temporal_prediction', 'full_pipeline', null];
+const FAMILIES = ['goal_inference', 'temporal_imitation', 'full_pipeline', null];
 const ACTIONS = ['act', 'timing', 'initiate', 'inform', 'ask'];
 const INPUTS = ['object_relocations', 'scene_graph', 'video', 'language'];
 

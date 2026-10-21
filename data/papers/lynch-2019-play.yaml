@@ -1,5 +1,5 @@
 # Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
-id: lynch-2020-play
+id: lynch-2019-play
 short_name: Play-LMP
 title: Learning Latent Plans from Play
 authors:
@@ -11,7 +11,7 @@ authors:
   - Sergey Levine
   - Pierre Sermanet
 venue: CoRL
-year: 2020
+year: 2019
 links:
   paper: https://proceedings.mlr.press/v100/lynch20a.html
   project: https://learning-from-play.github.io

@@ -9,7 +9,7 @@ describe('URL state', () => {
   it('round-trips global filters', () => {
     const qs = applyParams('', {
       level: ['L1', 'L2'],
-      family: 'temporal_prediction',
+      family: 'temporal_imitation',
       action: ['act', 'ask'],
       input: [],
       theme: 'continual_learning',
@@ -22,7 +22,7 @@ describe('URL state', () => {
     const f = readGlobalFilters(new URLSearchParams(qs));
     expect(f).toEqual({
       level: ['L1', 'L2'],
-      family: ['temporal_prediction'],
+      family: ['temporal_imitation'],
       action: ['act', 'ask'],
       input: [],
       theme: ['continual_learning'],
@@ -88,7 +88,7 @@ describe('search scoring', () => {
 });
 
 describe('filters', () => {
-  const m = P('m', 'M', { level: 'L2', method: { knowns: { goal: 'unknown', human_policy: 'unknown' }, family: 'temporal_prediction', action_types: ['act'], inputs: ['scene_graph'] }, search: 'm predicting routine 2023' });
+  const m = P('m', 'M', { level: 'L2', method: { knowns: { goal: 'unknown', human_policy: 'unknown' }, family: 'temporal_imitation', action_types: ['act'], inputs: ['scene_graph'] }, search: 'm predicting routine 2023' });
   const s = P('s', 'S', { subproblems: { G1: { status: 'addresses', relation: 'direct', note: '' } } });
   const f = (q: string) => readGlobalFilters(new URLSearchParams(q));
   it('fails method filters for papers without a method block', () => {
@@ -96,7 +96,7 @@ describe('filters', () => {
     expect(matchesGlobal(s, f('level=L2'))).toBe(false);
     expect(matchesGlobal(s, f('action=act'))).toBe(false);
     expect(matchesGlobal(m, f('action=ask'))).toBe(false);
-    expect(matchesGlobal(m, f('family=temporal_prediction&input=scene_graph'))).toBe(true);
+    expect(matchesGlobal(m, f('family=temporal_imitation&input=scene_graph'))).toBe(true);
   });
   it('applies years and text', () => {
     expect(matchesGlobal(m, f('years=2021-2026'))).toBe(false);

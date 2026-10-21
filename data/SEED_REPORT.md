@@ -28,7 +28,7 @@ Maithili approved these on Oct 21, 2026.
   | `zhu-2021-skill-discovery` | `zhu-2022-skill-discovery` | RA-L 2022 |
   | `zhou-2023-language-action-survey` | `yao-2023-language-action-survey` | Xiangtong Yao is now first author |
   | `nikolaidis-2014-joint-action` | `nikolaidis-2015-joint-action` | HRI 2015 |
-  | `lynch-2019-play` | `lynch-2020-play` | PMLR 100 is dated 2020 |
+  | `lynch-2019-play` | `lynch-2019-play` | PMLR 100 is dated 2020 |
   | `pereira-2019-landmark` | `pereira-2020-landmark` | AIJ vol. 279, 2020 |
   | `zhao-contribution-preferences` | `zhao-2023-contribution-preferences` | CoRL 2023 |
 
@@ -73,9 +73,9 @@ Capitalization-only differences are not listed.
 - **[47] `zhu-2022-skill-discovery`.** Printed RA-L 2021. RA-L vol. 7, no. 2, **2022** (arXiv posted Sept 2021).
 - **[34] `nikolaidis-2015-joint-action`.** Printed HRI 2014. Published at HRI **2015**; 2014 is the arXiv preprint 1405.6341. Printed "J. A. Shah"; landing "Julie Shah".
 - **[56] `pereira-2020-landmark`.** Printed 2019. Artificial Intelligence vol. 279, February **2020** (arXiv 2019). First author is Ramon Fraga Pereira.
-- **[37] `lynch-2020-play`.** Printed CoRL 2019. The conference is CoRL 2019; the PMLR 100 page is dated **2020**.
-- **[20] `patel-2023-spatiotemporal`.** Printed CoRL 2023. This is the 6th CoRL (held Dec 2022), PMLR 205, published 2023.
-- **[55] `schrum-2023-mind-meld`.** Printed CoRL 2023. CoRL 2022 conference, PMLR 205, published 2023.
+- **[37] `lynch-2019-play`.** Printed CoRL 2019. The conference is CoRL 2019; the PMLR 100 page is dated **2020**.
+- **[20] `stot`.** Printed CoRL 2023. This is the 6th CoRL (held Dec 2022), PMLR 205, published 2023.
+- **[55] `schrum-2022-mind-meld`.** Printed CoRL 2023. CoRL 2022 conference, PMLR 205, published 2023.
 - **[24] `smith-2020-dynamic-cost`.** Printed "Journal of Mechanical Engineering Science". Full name: Proceedings of the Institution of Mechanical Engineers, Part C: Journal of Mechanical Engineering Science. Online 2019, print issue 2020.
 - **[31] `nakahashi-2015-subgoal`.** Printed arXiv 2015. Also published at AAAI 2016 (DOI 10.1609/aaai.v30i1.9889). Seeded with the arXiv page as printed.
 - **[32] `zhi-xuan-2020-goal-inference`.** Printed arXiv 2020. Also published at NeurIPS 2020 as "Online Bayesian Goal Inference for Boundedly Rational Planning Agents". Seeded with the arXiv page as printed.

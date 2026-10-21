@@ -1,5 +1,5 @@
 # Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
-id: schrum-2023-mind-meld
+id: schrum-2022-mind-meld
 short_name: Reciprocal MIND MELD
 title: "Reciprocal MIND MELD: Improving Learning From Demonstration via Personalized, Reciprocal Teaching"
 authors:
@@ -7,7 +7,7 @@ authors:
   - Erin Hedlund-Botti
   - Matthew Gombolay
 venue: CoRL
-year: 2023
+year: 2022
 links:
   paper: https://proceedings.mlr.press/v205/schrum23a.html
 provenance: RTI App. II-A

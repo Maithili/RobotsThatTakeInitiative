@@ -39,6 +39,7 @@ const levelDef = z.object({
 });
 const subproblemDef = z.object({
   name: z.string(),
+  short: z.string(),
   stage: z.string(),
   input: z.string(),
   output: z.string(),

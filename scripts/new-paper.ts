@@ -28,7 +28,7 @@ links:
 provenance: ""            # where the tags come from (≤ 140 chars)
 method:
   knowns: {goal: unknown, human_policy: unknown}   # known | unknown, or null if not classified
-  family: null            # L2 only: goal_inference | temporal_prediction | full_pipeline
+  family: null            # L2 only: goal_inference | temporal_imitation | full_pipeline
   action_types: []        # act | timing | initiate | inform | ask
   inputs: []              # object_relocations | scene_graph | video | language
   core_strength: null     # one line (≤ 120 chars)

@@ -11,7 +11,7 @@ venue: IEEE ICRA
 year: 2023
 links:
   paper: https://doi.org/10.1109/ICRA48891.2023.10161352
-provenance: RTI §III-B, Table I, App. II-A
+provenance: RTI §III-B, Table I, App. II-A. Lineage from MP, Oct 2026
 method:
   knowns:
     goal: unknown
@@ -20,7 +20,8 @@ method:
   action_types:
     - act
   core_strength: null
-  builds_on: []
+  builds_on:
+    - watch-and-help
 subproblems:
   G1:
     status: assumes

@@ -15,17 +15,17 @@ levels:                       # ordered by increasing unknowns
 
 families:                     # L2 only, from RTI §III-B
   goal_inference:
-    name: Goal inference and planning
+    name: Goal Inference
     definition: Online goal inference followed by goal-conditioned planning.
-    scope_line: Addresses A2. Assumes G1, G2, A1 given. Skips A3.
+    scope_line: Infers the current goal. Assumes the goal space, action-goal association, and human policy are given. Does not anticipate future goals.
     limitations:
       - Needs the full set of goals with ground-truth goal annotations for past actions.
       - Assists only with the current task, once the belief concentrates.
       - Ignores habits and preferred variants.
-  temporal_prediction:
-    name: Temporal user action prediction
-    definition: Learns what the user tends to do next from temporal patterns and executes the predicted action.
-    scope_line: Addresses A3. Skips A1 and A2. Assumes uniform cost across actions.
+  temporal_imitation:
+    name: Temporal Imitation
+    definition: Learns what the user tends to do next from temporal patterns and imitates the predicted action.
+    scope_line: Anticipates future goals at the action level. Skips goal inference and human policy learning. Assumes uniform cost across actions.
     strength: Predicts minutes to hours ahead, with no need for close collaboration.
     limitations:
       - Discards the intentional structure of behavior that a goal-level model can exploit.
@@ -55,6 +55,7 @@ stages:
 subproblems:                  # RTI Table I and §III-A. input/output are TeX.
   G1:
     name: Goal-space representation
+    short: Goal space
     stage: grounding
     input: '\xi_{0:t}'
     output: '\mathcal{G}'
@@ -63,6 +64,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {hierarchical: Hierarchical representations, open_set_language: Open-set representations grounded in language}
   G2:
     name: Action-goal association
+    short: Action-goal association
     stage: grounding
     input: '\xi_{0:t},\ \mathcal{G}'
     output: 'g_{0:t}'
@@ -71,6 +73,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {symbolic: Symbolic models, learned: Learned models, hindsight_relabeling: Hindsight relabeling}
   A1:
     name: Human policy learning
+    short: Human policy
     stage: anticipation
     input: '\xi_{0:t},\ \mathcal{G},\ g_{0:t}'
     output: '\pi^h'
@@ -79,6 +82,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {lfd: Learning from demonstration, lfo: Learning from observation, clustering_mixture: User clustering and mixture models, guided_demonstration: Guiding users toward effective demonstrations}
   A2:
     name: Goal inference
+    short: Goal inference
     stage: anticipation
     input: '\xi_{t-\Delta t:t},\ \mathcal{G},\ \pi^h'
     output: 'g_t'
@@ -87,6 +91,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {symbolic: Symbolic, learned: Learned, hybrid: Hybrid}
   A3:
     name: Goal anticipation
+    short: Goal anticipation
     stage: anticipation
     input: '\xi_{0:t},\ \mathcal{G},\ g_{0:t}'
     output: 'g_{t:t+\Delta t}\ \text{or}\ \phi'
@@ -95,6 +100,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {language_model: Language models, temporal_sequence: Temporal sequence prediction, probabilistic_filtering: Probabilistic filtering of object movement}
   P1:
     name: Cost modeling
+    short: Cost model
     stage: planning
     input: 's_t,\ a^r_t,\ a^h_t'
     output: 'c_h(a^h_t)'
@@ -103,6 +109,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {task_complexity: Task complexity, fatigue: Effort and fatigue, preference_feedback: Preferences from user feedback, interruptibility: Interruptibility}
   P2:
     name: Coordinated action selection
+    short: Action selection
     stage: planning
     input: '\xi_{0:t},\ c_h(\cdot),\ \pi^h,\ g_{t:t+\Delta t}'
     output: 'a^r_t'

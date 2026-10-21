@@ -10,18 +10,19 @@ venue: CoRL
 year: 2023
 links:
   paper: https://proceedings.mlr.press/v229/patel23a.html
-provenance: RTI §II, §III-A3, §III-B, Table I, §IV
+provenance: RTI §II, §III-A3, §III-B, Table I, §IV. Lineage from MP, Oct 2026
 method:
   knowns:
     goal: unknown
     human_policy: unknown
-  family: temporal_prediction
+  family: temporal_imitation
   action_types:
     - act
   inputs:
     - scene_graph
   core_strength: null
-  builds_on: []
+  builds_on:
+    - stot
 subproblems:
   G1:
     status: assumes
