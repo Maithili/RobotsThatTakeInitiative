@@ -13,7 +13,12 @@ links:
   code: https://github.com/PaInt-Lab/GLOBE
 ids:
   arxiv: "2606.08458"
-provenance: GLOBE §I, §III–IV. Added per Maithili, Oct 2026
+provenance: GLOBE §I, §III–IV; Librarian Oct 2026, B-4. Temporal Imitation per Maithili, Oct 21 2026
+method:
+  knowns:
+    goal: unknown
+    human_policy: unknown
+  family: temporal_imitation
 evaluations:
   - id: globe-original
     datasets:
@@ -21,10 +26,16 @@ evaluations:
       - homer-noise
     loop: offline_replay
     human_model: Recorded HOMER+ and HOMER-Noise behavior
+    metrics:
+      - activity_f1
+      - object_f1
+      - joint_mean_f1
+      - training_time
+      - inference_time
     baselines:
       - slate-pro
       - stot
-    provenance: GLOBE §IV (STOT results taken from the SLaTe-PRO paper)
+    provenance: "GLOBE §IV (STOT results taken from the SLaTe-PRO paper); Librarian Oct 2026, B-4 G1–G3"
     realism:
       robot: task_specific
       human: recorded

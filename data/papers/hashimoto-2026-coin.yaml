@@ -1,4 +1,6 @@
 # Added from Maithili's list (spec/SEED.md §8.1); read from the arXiv full text.
+# COIN appears only as a tangential dataset (SPEC §16), so it has no method block and no tangent type.
+# Its evaluation entry stays for the drawer. With no level, it shows on no page (SPEC §6.2).
 id: hashimoto-2026-coin
 short_name: COIN
 title: "Whose Is This?: Context-Aware Object Ownership Inference with Uncertainty-Guided Questioning"
