@@ -174,8 +174,8 @@ function DrawerBody({ p }: { p: DbPaper }) {
         <Section title="Subproblems">
           <div className="sub-strip" role="list">
             {SUBS.map((s) => (
-              <span key={s} className="sub-strip__cell" role="listitem" title={`${s} ${tx.subproblems[s].name}`}>
-                <span className="sub-strip__id">{s}</span>
+              <span key={s} className="sub-strip__cell" role="listitem" title={tx.subproblems[s].name}>
+                <span className="sub-strip__id">{tx.subproblems[s].short}</span>
                 <StatusGlyph status={p.subproblems?.[s]?.status} />
               </span>
             ))}
@@ -187,7 +187,7 @@ function DrawerBody({ p }: { p: DbPaper }) {
                 <li key={s}>
                   <StatusGlyph status={t.status} />
                   <Link to={{ pathname: '/subproblems', search: applyParams(url.search, { sub: s }) }} className="sub-rows__id" title={tx.subproblems[s].name}>
-                    {s}
+                    {tx.subproblems[s].short}
                   </Link>
                   <span className="sub-rows__note">{t.note}</span>
                   <span className={`rel rel--${t.relation}`}>{tx.relations[t.relation].label}</span>

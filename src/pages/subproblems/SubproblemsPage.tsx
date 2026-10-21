@@ -3,47 +3,39 @@ import { Chip, LevelChip } from '../../components/Chip.tsx';
 import { EmptyState } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
 import { Math as TeX } from '../../components/Math.tsx';
-import { StatusGlyph, StatusLegend } from '../../components/StatusGlyph.tsx';
-import { papers, SUBS, tx } from '../../data.ts';
+import { StatusGlyph } from '../../components/StatusGlyph.tsx';
+import { addressesAny, papers, SUBS, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
 import { SUBPROBLEM_IDS, type DbPaper, type SubproblemId, type SubproblemTag } from '../../schema.ts';
 import { toggleInList, useUrl } from '../../state/url.ts';
 import { buildLanes } from '../methods/LineageGraph.tsx';
 import { SubproblemNavigator } from './SubproblemNavigator.tsx';
 
-type Status = SubproblemTag['status'];
-const STATUSES = Object.keys(tx.statuses) as Status[];
 const RELATIONS = Object.keys(tx.relations) as SubproblemTag['relation'][];
 
 function isSub(s: string | null): s is SubproblemId {
   return !!s && (SUBPROBLEM_IDS as readonly string[]).includes(s);
 }
 
+/** This page lists only works that address a subproblem (SPEC §9). */
+const addresses = (p: DbPaper, s: SubproblemId) => p.subproblems?.[s]?.status === 'addresses';
+
 function Overview({ visible, onSelect }: { visible: DbPaper[]; onSelect: (s: SubproblemId) => void }) {
   return (
     <div className="overview">
       <ul className="plain overview__list">
         {SUBS.map((s) => {
-          const c = { addresses: 0, assumes: 0, skips: 0 };
-          for (const p of visible) {
-            const t = p.subproblems?.[s];
-            if (t) c[t.status]++;
-          }
+          const n = visible.filter((p) => addresses(p, s)).length;
           const S = tx.subproblems[s];
           return (
             <li key={s}>
               <button type="button" className="overview__row" onClick={() => onSelect(s)}>
-                <span className="overview__id">{s}</span>
                 <span className="overview__name">
                   <strong>{S.name}</strong>
                   <span className="small muted">{S.challenge}</span>
                 </span>
                 <span className="overview__counts small">
-                  {STATUSES.map((st) => (
-                    <span key={st} title={tx.statuses[st].label}>
-                      <StatusGlyph status={st} /> {c[st]}
-                    </span>
-                  ))}
+                  {n} {n === 1 ? 'work' : 'works'}
                 </span>
               </button>
             </li>
@@ -57,24 +49,21 @@ function Overview({ visible, onSelect }: { visible: DbPaper[]; onSelect: (s: Sub
 function Detail({ sub, visible }: { sub: SubproblemId; visible: DbPaper[] }) {
   const url = useUrl();
   const S = tx.subproblems[sub];
-  const statuses = url.list('status');
   const relations = url.list('relation');
   const tagged = visible
     .map((p) => ({ p, t: p.subproblems?.[sub] }))
-    .filter((x): x is { p: DbPaper; t: SubproblemTag } => !!x.t)
-    .filter((x) => (!statuses.length || statuses.includes(x.t.status)) && (!relations.length || relations.includes(x.t.relation)));
+    .filter((x): x is { p: DbPaper; t: SubproblemTag } => x.t?.status === 'addresses')
+    .filter((x) => !relations.length || relations.includes(x.t.relation));
   const groups = [
     ...Object.entries(S.approaches).map(([id, label]) => ({ id, label, rows: tagged.filter((x) => x.t.approach === id) })),
     { id: 'other', label: 'Other', rows: tagged.filter((x) => !x.t.approach || !S.approaches[x.t.approach]) },
   ].filter((g) => g.rows.length);
-  const statusOrder = (s: Status) => STATUSES.indexOf(s);
-  const anyDirect = visible.some((p) => p.subproblems?.[sub]?.status === 'addresses' && p.subproblems[sub]?.relation === 'direct');
+  const anyDirect = visible.some((p) => addresses(p, sub) && p.subproblems?.[sub]?.relation === 'direct');
 
   return (
     <div className="detail" data-testid="sub-detail">
       <header className="detail__head">
         <div className="detail__title">
-          <span className="detail__id">{sub}</span>
           <h2>{S.name}</h2>
           <span className="small muted">{tx.stages[S.stage]?.name}</span>
         </div>
@@ -86,13 +75,6 @@ function Detail({ sub, visible }: { sub: SubproblemId; visible: DbPaper[] }) {
         </p>
       </header>
       <div className="detail__filters">
-        <span className="chips" role="group" aria-label="Status">
-          {STATUSES.map((s) => (
-            <Chip key={s} pressed={statuses.includes(s)} onClick={() => url.set({ status: toggleInList(statuses, s) })}>
-              <StatusGlyph status={s} /> {tx.statuses[s].label}
-            </Chip>
-          ))}
-        </span>
         <span className="chips" role="group" aria-label="Relation">
           {RELATIONS.map((r) => (
             <Chip key={r} pressed={relations.includes(r)} onClick={() => url.set({ relation: toggleInList(relations, r) })} title={tx.relations[r].definition}>
@@ -101,9 +83,9 @@ function Detail({ sub, visible }: { sub: SubproblemId; visible: DbPaper[] }) {
           ))}
         </span>
       </div>
-      {!anyDirect && <EmptyState compact>No work in the database addresses {sub} directly.</EmptyState>}
+      {!anyDirect && <EmptyState compact>No work in the database addresses {S.name.toLowerCase()} directly.</EmptyState>}
       {groups.length === 0 ? (
-        <EmptyState>No tagged work matches these filters.</EmptyState>
+        <EmptyState>No work that addresses it matches these filters.</EmptyState>
       ) : (
         groups.map((g) => (
           <section key={g.id} className="approach">
@@ -112,11 +94,10 @@ function Detail({ sub, visible }: { sub: SubproblemId; visible: DbPaper[] }) {
             </h3>
             <ul className="plain work-list">
               {[...g.rows]
-                .sort((a, b) => statusOrder(a.t.status) - statusOrder(b.t.status) || b.p.year - a.p.year)
+                .sort((a, b) => b.p.year - a.p.year || a.p.short_name.localeCompare(b.p.short_name))
                 .map(({ p, t }) => (
                   <li key={p.id}>
                     <button type="button" className="work-row" data-locate={p.id} data-testid={`work-${p.id}`} onClick={() => url.openPaper(p.id)}>
-                      <StatusGlyph status={t.status} />
                       <span className="work-row__name">
                         <strong>{p.short_name}</strong> <span className="muted">{p.year}</span>
                       </span>
@@ -136,22 +117,25 @@ function Detail({ sub, visible }: { sub: SubproblemId; visible: DbPaper[] }) {
 function Matrix({ visible }: { visible: DbPaper[] }) {
   const url = useUrl();
   const gaps = url.get('gaps') === '1';
-  const tagged = visible.filter((p) => p.subproblems && Object.keys(p.subproblems).length);
+  const tagged = visible.filter(addressesAny);
   const groups = useMemo(() => {
-    const methodPapers = tagged.filter((p) => p.method);
+    const methodPapers = tagged.filter((p) => p.method && p.level);
     const out: { id: string; title: string; level: DbPaper['level']; method: boolean; rows: DbPaper[] }[] = buildLanes(methodPapers)
       .filter((l) => l.papers.length)
       .map((l) => ({ id: l.id, title: l.family ? `${l.level} · ${l.title}` : l.title, level: l.level, method: true, rows: l.papers }));
-    const others = tagged.filter((p) => !p.method);
+    const others = tagged.filter((p) => !(p.method && p.level));
     if (others.length) out.push({ id: 'works', title: 'Subproblem works', level: null, method: false, rows: others });
     return out;
   }, [tagged]);
   const stages = Object.keys(tx.stages).map((st) => ({ id: st, subs: SUBS.filter((s) => tx.subproblems[s].stage === st) }));
-  const addressed = (s: SubproblemId) => tagged.filter((p) => p.subproblems?.[s]?.status === 'addresses').length;
+  const count = (s: SubproblemId) => tagged.filter((p) => addresses(p, s)).length;
 
-  if (!tagged.length) return <EmptyState>No tagged work matches these filters.</EmptyState>;
+  if (!tagged.length) return <EmptyState>No work that addresses a subproblem matches these filters.</EmptyState>;
   return (
     <div className="matrix-wrap" data-testid="matrix">
+      <p className="small muted matrix__legend">
+        <StatusGlyph status="addresses" /> Addresses the subproblem. Blank otherwise.
+      </p>
       <table className={`matrix${gaps ? ' is-gaps' : ''}`}>
         <thead>
           <tr>
@@ -168,9 +152,9 @@ function Matrix({ visible }: { visible: DbPaper[] }) {
             {SUBS.map((s) => (
               <th key={s} scope="col" className="matrix__col" title={tx.subproblems[s].name}>
                 <button type="button" className="th-sort" onClick={() => url.set({ sub: s, view: null })}>
-                  {s}
+                  {tx.subproblems[s].short}
                 </button>
-                <span className="matrix__count">{addressed(s)}</span>
+                <span className="matrix__count">{count(s)}</span>
               </th>
             ))}
           </tr>
@@ -193,19 +177,24 @@ function Matrix({ visible }: { visible: DbPaper[] }) {
                     <span className="muted small">{p.year}</span>
                   </th>
                   {SUBS.map((s) => {
-                    const t = p.subproblems?.[s];
+                    const t = addresses(p, s) ? p.subproblems![s]! : null;
+                    const name = tx.subproblems[s].short;
                     return (
                       <td key={s} className={`matrix__cell${t ? ' is-filled' : ' is-empty'}${g.method ? ' is-method' : ''}`}>
-                        <button
-                          type="button"
-                          className="matrix__btn"
-                          data-testid={`cell-${p.id}-${s}`}
-                          aria-label={`${p.short_name}, ${s}: ${t ? tx.statuses[t.status].label : 'not tagged'}`}
-                          title={t ? `${s}: ${t.note}` : `${s}: not tagged`}
-                          onClick={() => url.openPaper(p.id)}
-                        >
-                          <StatusGlyph status={t?.status} />
-                        </button>
+                        {t ? (
+                          <button
+                            type="button"
+                            className="matrix__btn"
+                            data-testid={`cell-${p.id}-${s}`}
+                            aria-label={`${p.short_name} addresses ${name.toLowerCase()}`}
+                            title={`${name}: ${t.note}`}
+                            onClick={() => url.openPaper(p.id)}
+                          >
+                            <StatusGlyph status="addresses" />
+                          </button>
+                        ) : (
+                          <span className="matrix__blank" data-testid={`cell-${p.id}-${s}`} aria-label={`${p.short_name}: does not address ${name.toLowerCase()}`} />
+                        )}
                       </td>
                     );
                   })}
@@ -225,7 +214,7 @@ export function SubproblemsPage() {
   const view = url.get('view') === 'matrix' ? 'matrix' : 'detail';
   const themes = url.filters.theme;
   const visible = papers.filter((p) => matchesGlobal(p, url.filters));
-  const counts = Object.fromEntries(SUBS.map((s) => [s, visible.filter((p) => p.subproblems?.[s]?.status === 'addresses').length]));
+  const counts = Object.fromEntries(SUBS.map((s) => [s, visible.filter((p) => addresses(p, s)).length]));
 
   return (
     <div className="page">
@@ -263,7 +252,6 @@ export function SubproblemsPage() {
           </span>
         }
       />
-      <StatusLegend />
       {view === 'matrix' ? (
         <Matrix visible={visible} />
       ) : sub ? (

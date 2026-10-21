@@ -35,12 +35,17 @@ export function paperLabel(id: string) {
   return paperById.get(id)?.short_name ?? id;
 }
 
+/** The Subproblems page lists only works that address a subproblem (SPEC §9). */
+export function addressesAny(p: DbPaper) {
+  return Object.values(p.subproblems ?? {}).some((t) => t?.status === 'addresses');
+}
+
 /** Pages that show a paper (SPEC §6.4 item 8). */
 export function pagesFor(p: DbPaper): ('methods' | 'evaluations' | 'subproblems')[] {
   const out: ('methods' | 'evaluations' | 'subproblems')[] = [];
-  if (p.method || p.type === 'survey') out.push('methods');
+  if ((p.method && p.level) || p.type === 'survey') out.push('methods');
   if (p.evaluations?.length) out.push('evaluations');
-  if (p.subproblems && Object.keys(p.subproblems).length) out.push('subproblems');
+  if (addressesAny(p)) out.push('subproblems');
   return out;
 }
 

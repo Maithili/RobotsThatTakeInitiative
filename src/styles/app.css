@@ -917,9 +917,14 @@ tr.clickable:hover td {
   min-height: 42px;
 }
 .sub-strip__id {
-  font-size: 11px;
+  font-size: 9.5px;
+  line-height: 1.15;
   font-weight: 600;
   color: var(--text-2);
+  text-align: center;
+  padding: 0 2px;
+  hyphens: auto;
+  overflow-wrap: anywhere;
 }
 .sub-rows {
   list-style: none;
@@ -1960,7 +1965,7 @@ tr.clickable:hover td {
 }
 .subnav__name {
   grid-column: 1 / 3;
-  grid-row: 2;
+  grid-row: 1 / 3;
   font-size: 12px;
   line-height: 1.25;
   color: var(--text-2);
@@ -2004,7 +2009,7 @@ tr.clickable:hover td {
 .overview__row {
   width: 100%;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   text-align: left;
@@ -2145,7 +2150,10 @@ tr.clickable:hover td {
   background: var(--stage-planning) !important;
 }
 .matrix__col {
-  min-width: 56px;
+  min-width: 72px;
+  max-width: 96px;
+  font-size: 11.5px;
+  line-height: 1.2;
   padding: 4px 0 !important;
 }
 .matrix__col .th-sort {
@@ -2232,9 +2240,20 @@ tr.clickable:hover td {
     grid-column: 2 / -1;
   }
   .overview__row {
-    grid-template-columns: 30px 1fr;
+    grid-template-columns: 1fr auto;
   }
-  .overview__counts {
-    grid-column: 2;
-  }
+}
+
+/* Subproblems matrix: blank cells for works that do not address a subproblem (SPEC §9.4). */
+.matrix__blank {
+  display: block;
+  min-height: 28px;
+}
+.matrix.is-gaps .matrix__cell.is-empty.is-method .matrix__blank {
+  outline: 2px dashed var(--downstream);
+  outline-offset: -5px;
+  border-radius: 6px;
+}
+.matrix__legend {
+  margin: 0 0 6px;
 }

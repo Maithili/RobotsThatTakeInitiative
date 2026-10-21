@@ -90,11 +90,21 @@ test('7. selecting A2 lists NOPA, highlights G1, G2, A1 upstream and P2 downstre
   for (const s of ['A3', 'P1']) await expect(page.getByTestId(`subnode-${s}`)).toHaveAttribute('data-flow', 'dim');
 });
 
-test('8. in matrix view, clicking a cell opens the drawer', async ({ page }) => {
+test('8. in matrix view, clicking a filled cell opens the drawer; goal inference does not list SLaTe-PRO', async ({ page }) => {
   await page.goto('/#/subproblems?view=matrix');
+  await expect(page.getByTestId('cell-nopa-A2').getByRole('img', { name: 'Addresses' })).toBeVisible();
+  // SLaTe-PRO skips goal inference: blank cell, not a button.
+  await expect(page.getByTestId('cell-slate-pro-A2')).not.toHaveRole('button');
   await page.getByTestId('cell-nopa-A2').click();
   await expect(page.getByTestId('drawer')).toContainText('NOPA');
   expect(params(page).get('paper')).toBe('nopa');
+
+  await page.goto('/#/subproblems?sub=A2');
+  const detail = page.getByTestId('sub-detail');
+  await expect(detail).toContainText('NOPA');
+  await expect(detail).not.toContainText('SLaTe-PRO');
+  await expect(page.getByTestId('work-slate-pro')).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Status' })).toHaveCount(0);
 });
 
 test('9. pinning two papers puts both ids in compare=', async ({ page }) => {
@@ -140,4 +150,32 @@ test('the lineage graph lays out a 150-node synthetic fixture', async ({ page })
     return n;
   });
   expect(overlaps).toBe(0);
+});
+
+test('no subproblem codes appear as visible text', async ({ page }) => {
+  // Codes (G1 to P2) stay in data files and URLs only (SPEC §11). RTI section references such as
+  // "§III-A3" in provenance lines are section numbers, not subproblem codes, so they are skipped.
+  const CODE = /\b[GAP][1-3]\b/;
+  const views = [
+    'methods',
+    'methods?view=list',
+    'evaluations',
+    'subproblems',
+    'subproblems?sub=A2',
+    'subproblems?sub=P1',
+    'subproblems?view=matrix',
+    'methods?paper=gap',
+    'methods?paper=slate-pro&compare=gap,slate-pro',
+  ];
+  for (const v of views) {
+    await page.goto(`/#/${v}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    if (v.includes('compare=')) {
+      await page.getByTestId('compare-tray').getByRole('button', { name: /^Compare/ }).click();
+      await expect(page.getByRole('dialog', { name: 'Compare papers' })).toBeVisible();
+    }
+    const text = (await page.evaluate(() => document.body.innerText)).replace(/https?:\/\/\S+/g, '').replace(/§[\w.\-]+/g, '');
+    const hit = text.match(new RegExp(`.{0,30}${CODE.source}.{0,30}`));
+    expect(hit?.[0] ?? null, `subproblem code visible on ${v}`).toBeNull();
+  }
 });

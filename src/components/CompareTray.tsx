@@ -37,7 +37,7 @@ const ROWS: Row[] = [
   },
   { label: 'Core strength', key: (p) => p.method?.core_strength ?? '', render: (p) => p.method?.core_strength ?? dash },
   ...SUBS.map<Row>((s) => ({
-    label: `${s} ${tx.subproblems[s].name}`,
+    label: tx.subproblems[s].short,
     key: (p) => p.subproblems?.[s]?.status ?? '',
     render: (p) => <StatusGlyph status={p.subproblems?.[s]?.status} />,
   })),

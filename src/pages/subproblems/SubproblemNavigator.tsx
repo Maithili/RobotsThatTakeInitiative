@@ -177,9 +177,8 @@ export function SubproblemNavigator({ selected, onSelect, counts }: { selected: 
               data-flow={role(s).replace('is-', '') || 'none'}
               onClick={() => onSelect(selected === s ? null : s)}
             >
-              <span className="subnav__id">{s}</span>
               <span className="subnav__name">{S.name}</span>
-              <span className="subnav__badge" aria-label={`${counts[s] ?? 0} works address ${s}`}>
+              <span className="subnav__badge" aria-label={`${counts[s] ?? 0} works address ${S.name.toLowerCase()}`}>
                 {counts[s] ?? 0}
               </span>
             </button>
