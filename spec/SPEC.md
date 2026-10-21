@@ -266,6 +266,30 @@ captures:                     # RTI Appendix I
   goal_adaptation: {label: Goal adaptation, definition: The user reallocates effort to new goals in response to the robot (Relaxation 2).}
   values: [yes, partial, no]
 
+realism:                      # drives the plot in §8.3. Levels ordered from far to close. Pending Maithili's review.
+  robot:
+    label: "Robot: closer to the target robot"
+    levels:
+      wizard:            {label: Wizard or oracle, definition: A person or an oracle with ground truth chooses the robot's actions.}
+      task_specific:     {label: Task-specific policy, definition: A policy learned for this task chooses the robot's actions.}
+      generalist:        {label: Generalist policy, definition: A general-purpose policy, such as an LLM planner, chooses the robot's actions.}
+  human:
+    label: "People: closer to the target users"
+    levels:
+      recorded:          {label: Recorded behavior, definition: Replayed human behavior that does not respond to the robot.}
+      scripted:          {label: Scripted simulated user, definition: A simulated user that follows fixed rules.}
+      adaptive_sim:      {label: Adaptive simulated user, definition: A simulated user that adapts to the robot, such as an LLM proxy., refs: [zhang-2023-llm-human-models]}
+      non_target:        {label: Real participants, definition: Real people who are not the target users, such as students.}
+      target_users:      {label: Target users, definition: The people the robot is meant to assist.}
+  environment:
+    label: "Setting: closer to the target setting"
+    levels:              # opacity rises with realism
+      simulator:         {label: Simulator, opacity: 0.25}
+      vr:                {label: VR, opacity: 0.5}
+      lab:               {label: Lab, opacity: 0.75}
+      own_home:          {label: Users' own homes, opacity: 1.0}
+  source_url: null       # link to the paper this organization comes from, once it is public
+
 featured_comparison:          # drives the chart in §8.2
   title: Offline evaluation overstates performance
   metric: f1
@@ -319,6 +343,7 @@ Evaluation entry:
 | `captures` | `{state_drift, goal_adaptation}`, each `yes`, `partial`, `no`, or null | |
 | `provenance` | string ≤ 140 | |
 | `results` | list of `{method, method_label?, metric, value, sd?}` | `method` is a paper id. Use `method_label` alone for a baseline with no paper. |
+| `realism` | `{robot, human, environment}`, each a level id from `realism` or null | Filled only from what the paper states about its evaluation. Drives the plot in §8.3. |
 
 Example:
 
@@ -532,9 +557,19 @@ Sections from top to bottom.
 
 A grouped bar chart built from `featured_comparison`. It starts with the Offline bars only. An "Add closed loop" toggle brings in the two closed-loop bars per method in 300 ms (instant under `prefers-reduced-motion`). Bars carry value labels. The caption names the source ("RTI paper, Table II"). Clicking a bar opens that method's drawer.
 
-### 8.3 Loop-type scale
+### 8.3 Evaluation realism plot
 
-A horizontal strip of the five loop types in order. Each step shows its label, its one-line definition, and a count of papers with at least one evaluation of that type. `refs` show as small links on their step. Clicking steps toggles them in `loop=`. A legend for the two `captures` fields sits under the strip.
+This plot shows how close each paper's evaluation is to the real target, on three axes from `realism` in the taxonomy. Maithili's own figure inspired the idea.
+
+- **x axis**: robot realism. **y axis**: human realism. Each axis has one band per level, in taxonomy order, labeled with the level names.
+- **Environment realism** sets each dot's opacity, from faint (simulator) to solid (users' own homes). Every dot keeps a thin solid outline so faint dots stay visible. A legend shows the four opacity steps with their labels.
+- A dashed "target" circle with a star sits past the top-right corner, beyond the last band on both axes.
+- **One dot per paper.** A paper with several evaluation entries takes the closest level on each axis across its entries. Papers with no realism levels do not appear.
+- Dots that share a cell pack into a small grid inside it, ordered by year, so they never overlap. GAP's dot has a ring in the framework-paper color.
+- **Hover or focus** on a dot shows a card with short name, year, title, Paper ↗ and Code ↗ links, the three realism levels in words, loop types, and datasets. The card stays open while the pointer moves into it, so its links can be clicked. Clicking a dot opens the drawer.
+- Filters dim dots. Dots are keyboard-focusable in year order.
+- **Credit line.** When `realism.source_url` is set, the caption reads "Organization adapted from" with a link to that paper. It stays null until the paper is public.
+- The loop-type filter moves to the filter bar as a dropdown bound to `loop=`.
 
 ### 8.4 Evaluation protocols table
 
@@ -626,6 +661,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 10. At 375 px wide, no page scrolls horizontally.
 11. On Methods, the STOT to SLaTe-PRO edge is solid, and unchecking "Cites" removes every dotted edge.
 12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table has exactly one GAP row, shaded and first, showing three loop-type pills, and it stays first after sorting by year.
+13. The realism plot shows GAP's dot at task-specific policy and adaptive simulated user, at simulator opacity. Hovering it shows a card with a working Paper link.
 
 **CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes: `npm ci`, validate, typecheck, unit tests, build, end-to-end tests.
 
@@ -641,7 +677,7 @@ Work on `main`. Commit at the end of each milestone and push to `origin main` ri
 | M2 | Seed data from `spec/SEED.md` | Every SEED entry has a file. Links come only from confirmed landing pages. `data/SEED_REPORT.md` lists missing links and every difference between the RTI reference list and the landing page. Baselines are recorded per SEED rule 7. `data/citations.json` exists. Validate passes. |
 | M3 | Shell: routing, header, URL state, search, drawer, compare tray, theme toggle | E2E tests 3 and 9 pass |
 | M4 | Methods page | E2E tests 2, 4, and 11 pass. Graph readable with seed data and with the 60-paper, 4-cluster synthetic fixture. |
-| M5 | Evaluations page | E2E tests 5, 6, and 12 pass |
+| M5 | Evaluations page | E2E tests 5, 6, 12, and 13 pass |
 | M6 | Subproblems page | E2E tests 7 and 8 pass |
 | M7 | Contribution flow, CI, deploy, README | CI green on `main`. README links the live site and CONTRIBUTING.md. |
 | M8 | Polish: keyboard and ARIA pass, responsive pass, empty states | All E2E tests pass, including test 10 |
@@ -658,3 +694,8 @@ Maithili can reverse any of these.
 4. **Hosting.** GitHub Pages from this repo, with hash URLs.
 5. **Contributions.** GitHub issues and pull requests, with no backend.
 6. **Results.** Only the Table II comparison appears as a chart.
+
+## 16. Open items for Maithili
+
+1. **Realism levels** in `realism` (§5.1) adapt the levels from Maithili's figure to proactive assistance. Maithili reviews them.
+2. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.

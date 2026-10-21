@@ -58,6 +58,7 @@ evaluations:
     baselines: [slate-pro, streak]
     captures: {state_drift: no, goal_adaptation: no}
     provenance: RTI Table II
+    realism: {robot: task_specific, human: recorded, environment: simulator}
     results:
       - {method: slate-pro, metric: f1, value: 0.634}
       - {method: streak, metric: f1, value: 0.677}
@@ -70,6 +71,7 @@ evaluations:
     baselines: [slate-pro, streak]
     other_baselines: [Plain LLM, Oracle]
     captures: {state_drift: yes, goal_adaptation: partial}
+    realism: {robot: task_specific, human: adaptive_sim, environment: simulator}
     provenance: RTI §IV-A, Table II, App. I-C
     results:
       - {method: slate-pro, metric: f1, value: 0.216}
@@ -83,6 +85,7 @@ evaluations:
     baselines: [slate-pro, streak]
     other_baselines: [Plain LLM, Oracle]
     captures: {state_drift: yes, goal_adaptation: no}
+    realism: {robot: task_specific, human: scripted, environment: simulator}
     provenance: RTI §IV-A, Table II
     results:
       - {method: slate-pro, metric: f1, value: 0.264}
@@ -287,6 +290,10 @@ Find each paper's landing page and fill bibliographic fields from it. Read each 
 - Use dataset names, sizes, spans, and observation types as each paper states them. Provenance names the section.
 - Add an evaluation entry for each paper from what its experiments section states: datasets, loop type, human model, baselines in the database, and metrics already in the taxonomy. List any other metric in the report with its definition and the net value terms it would measure. Do not add it to the taxonomy.
 - Do not add a `method` block yet. In the report, propose one per paper (knowns, family, inputs, action types, subproblem tags with notes), each item citing the section it comes from, for Maithili to confirm.
+
+### 8.2 Realism levels for other papers
+
+For every paper with an evaluation entry, fill `realism` from what its experiments section states: who or what chose the robot's actions, who the human side was, and where the evaluation ran. Cite the section in provenance. Leave a level null when the paper does not say. For the offline evaluations of SLaTe-PRO, STREAK, and STOT, `human: recorded` follows from RTI §I and §IV.
 
 ## 9. Items for `data/SEED_REPORT.md`
 
