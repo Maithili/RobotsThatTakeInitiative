@@ -1,0 +1,32 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: yao-2023-language-action-survey
+short_name: Yao 2023
+title: "Bridging Language and Action: A Survey of Language-Conditioned Robot Manipulation"
+authors:
+  - Xiangtong Yao
+  - Hongkuan Zhou
+  - Oier Mees
+  - Yuan Meng
+  - Ted Xiao
+  - Yonatan Bisk
+  - Jean Oh
+  - Edward Johns
+  - Mohit Shridhar
+  - Dhruv Shah
+  - Jesse Thomason
+  - Kai Huang
+  - Joyce Chai
+  - Zhenshan Bing
+  - Alois Knoll
+venue: arXiv
+year: 2023
+links:
+  paper: https://arxiv.org/abs/2312.10807
+type: survey
+provenance: RTI App. II-A
+subproblems:
+  G1:
+    status: addresses
+    relation: adjacent
+    approach: open_set_language
+    note: Open-set goals grounded in natural language

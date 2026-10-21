@@ -1,0 +1,18 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: ju-2008-implicit-interactions
+short_name: Ju 2008
+title: "The Design of Implicit Interactions: Making Interactive Systems Less Obnoxious"
+authors:
+  - Wendy Ju
+  - Larry Leifer
+venue: Design Issues
+year: 2008
+links:
+  paper: https://doi.org/10.1162/desi.2008.24.3.72
+provenance: RTI App. II-A
+subproblems:
+  P2:
+    status: addresses
+    relation: adjacent
+    approach: hedging
+    note: Hedging under uncertainty

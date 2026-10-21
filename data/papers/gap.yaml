@@ -1,0 +1,131 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: gap
+short_name: GAP
+title: "Robots That Take Initiative: A Framework for Building and Evaluating Proactive Robots"
+authors:
+  - Maithili Patel
+  - Sonia Chernova
+venue: arXiv
+year: 2026
+links:
+  paper: https://arxiv.org/abs/2609.28910
+  code: https://github.com/Maithili/GAP
+provenance: RTI paper §V–VI
+method:
+  knowns:
+    goal: unknown
+    human_policy: unknown
+  family: full_pipeline
+  action_types:
+    - act
+  inputs:
+    - object_relocations
+  core_strength: null
+  builds_on: []
+themes:
+  - continual_learning
+subproblems:
+  G1:
+    status: addresses
+    relation: direct
+    note: An LLM curates an open-vocabulary goal set from raw activity logs
+  G2:
+    status: addresses
+    relation: direct
+    note: An LLM tags each day's observed actions with goals from the vocabulary
+  A1:
+    status: addresses
+    relation: direct
+    note: Learns a directed task graph per goal
+  A2:
+    status: addresses
+    relation: direct
+    note: A particle filter over task graphs infers current goals online
+  A3:
+    status: addresses
+    relation: direct
+    note: A causal transformer predicts the next goal and its start time
+  P1:
+    status: addresses
+    relation: direct
+    note: Heuristic utility over preconditions, timing, and learned user acceptance. Assumes uniform action cost.
+  P2:
+    status: addresses
+    relation: direct
+    note: A planner proposes and selects candidate object placements
+evaluations:
+  - id: rti-offline
+    datasets:
+      - homer-plus
+    loop: offline_replay
+    human_model: Recorded HOMER+ behavior
+    metrics:
+      - f1
+    baselines:
+      - slate-pro
+      - streak
+    captures:
+      state_drift: "no"
+      goal_adaptation: "no"
+    provenance: RTI Table II
+    results:
+      - method: slate-pro
+        metric: f1
+        value: 0.634
+      - method: streak
+        metric: f1
+        value: 0.677
+  - id: rti-closed-llm
+    environment: virtualhome
+    datasets:
+      - homer-plus
+    loop: closed_adaptive
+    human_model: LLM (gpt-4o-mini)
+    metrics:
+      - net_actions_saved
+      - perturbed_actions
+      - f1
+    baselines:
+      - slate-pro
+      - streak
+    other_baselines:
+      - Plain LLM
+      - Oracle
+    captures:
+      state_drift: "yes"
+      goal_adaptation: partial
+    provenance: RTI §IV-A, Table II, App. I-C
+    results:
+      - method: slate-pro
+        metric: f1
+        value: 0.216
+      - method: streak
+        metric: f1
+        value: 0.002
+  - id: rti-closed-scripted
+    environment: virtualhome
+    datasets:
+      - homer-plus
+    loop: closed_scripted
+    human_model: Scripted
+    metrics:
+      - net_actions_saved
+      - perturbed_actions
+      - f1
+    baselines:
+      - slate-pro
+      - streak
+    other_baselines:
+      - Plain LLM
+      - Oracle
+    captures:
+      state_drift: "yes"
+      goal_adaptation: "no"
+    provenance: RTI §IV-A, Table II
+    results:
+      - method: slate-pro
+        metric: f1
+        value: 0.264
+      - method: streak
+        metric: f1
+        value: 0.296

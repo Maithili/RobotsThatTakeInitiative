@@ -1,0 +1,20 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: huang-2025-intention-tracking
+short_name: HIT
+title: Hierarchical Intention Tracking with Switching Trees for Real-Time Adaptation to Dynamic Human Intentions during Collaboration
+authors:
+  - Zhe Huang
+  - Ye-Ji Mun
+  - Fatemeh Cheraghi Pouria
+  - Katherine Driggs-Campbell
+venue: arXiv
+year: 2025
+links:
+  paper: https://arxiv.org/abs/2506.07004
+provenance: RTI §II, §II-B
+method:
+  knowns:
+    goal: known
+    human_policy: unknown
+  core_strength: Adds mode switching that returns brief control to the human for failure recovery
+  builds_on: []

@@ -1,0 +1,19 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: zhao-2023-contribution-preferences
+short_name: Zhao 2023
+title: Learning Human Contribution Preferences in Collaborative Human-Robot Tasks
+authors:
+  - Michelle D Zhao
+  - Reid Simmons
+  - Henny Admoni
+venue: CoRL
+year: 2023
+links:
+  paper: https://proceedings.mlr.press/v229/zhao23b.html
+provenance: RTI App. II-A
+subproblems:
+  P2:
+    status: addresses
+    relation: adjacent
+    approach: cirl
+    note: Optimizes a collaborative policy against a learned human

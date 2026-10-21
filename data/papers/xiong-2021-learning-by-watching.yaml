@@ -1,0 +1,22 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: xiong-2021-learning-by-watching
+short_name: LbW
+title: "Learning by Watching: Physical Imitation of Manipulation Skills from Human Videos"
+authors:
+  - Haoyu Xiong
+  - Quanzhou Li
+  - Yun-Chun Chen
+  - Homanga Bharadhwaj
+  - Samarth Sinha
+  - Animesh Garg
+venue: IEEE/RSJ IROS
+year: 2021
+links:
+  paper: https://doi.org/10.1109/IROS51168.2021.9636080
+provenance: RTI App. II-A
+subproblems:
+  A1:
+    status: addresses
+    relation: adjacent
+    approach: lfo
+    note: Learns from observation alone

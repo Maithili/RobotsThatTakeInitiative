@@ -1,0 +1,20 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: nikolaidis-2015-joint-action
+short_name: Nikolaidis 2015
+title: Efficient Model Learning from Joint-Action Demonstrations for Human-Robot Collaborative Tasks
+authors:
+  - Stefanos Nikolaidis
+  - Ramya Ramakrishnan
+  - Keren Gu
+  - Julie Shah
+venue: ACM/IEEE HRI
+year: 2015
+links:
+  paper: https://doi.org/10.1145/2696454.2696455
+provenance: RTI Table I, App. II-A
+subproblems:
+  A1:
+    status: addresses
+    relation: direct
+    approach: clustering_mixture
+    note: Addresses data sparsity by clustering users or fitting mixtures. Relies on explicit demonstrations

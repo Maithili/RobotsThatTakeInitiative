@@ -1,0 +1,26 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: hindsight-experience-replay
+short_name: HER
+title: Hindsight Experience Replay
+authors:
+  - Marcin Andrychowicz
+  - Filip Wolski
+  - Alex Ray
+  - Jonas Schneider
+  - Rachel Fong
+  - Peter Welinder
+  - Bob McGrew
+  - Josh Tobin
+  - Pieter Abbeel
+  - Wojciech Zaremba
+venue: NeurIPS
+year: 2017
+links:
+  paper: https://papers.nips.cc/paper_files/paper/2017/hash/453fadbd8a1a3af50a9df4df899537b5-Abstract.html
+provenance: RTI App. II-A
+subproblems:
+  G2:
+    status: addresses
+    relation: adjacent
+    approach: hindsight_relabeling
+    note: Relabels past trajectories with goals. Not designed for open, unlabeled goal spaces

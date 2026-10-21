@@ -1,0 +1,18 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: koppula-2016-anticipating
+short_name: Koppula 2016
+title: Anticipating Human Activities Using Object Affordances for Reactive Robotic Response
+authors:
+  - Hema S. Koppula
+  - Ashutosh Saxena
+venue: IEEE TPAMI
+year: 2016
+links:
+  paper: https://doi.org/10.1109/TPAMI.2015.2430335
+provenance: RTI §II, §II-B
+method:
+  knowns:
+    goal: known
+    human_policy: unknown
+  core_strength: Learns the timing of actions for fluid interaction
+  builds_on: []

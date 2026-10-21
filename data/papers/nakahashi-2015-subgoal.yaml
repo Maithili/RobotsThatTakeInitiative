@@ -1,0 +1,19 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: nakahashi-2015-subgoal
+short_name: Nakahashi 2015
+title: Modeling Human Understanding of Complex Intentional Action with a Bayesian Nonparametric Subgoal Model
+authors:
+  - Ryo Nakahashi
+  - Chris L. Baker
+  - Joshua B. Tenenbaum
+venue: arXiv
+year: 2015
+links:
+  paper: https://arxiv.org/abs/1512.00964
+provenance: RTI Table I, App. II-A
+subproblems:
+  G2:
+    status: addresses
+    relation: direct
+    approach: learned
+    note: Predicts goals from observed actions with learned models

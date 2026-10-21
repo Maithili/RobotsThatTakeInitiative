@@ -1,0 +1,22 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: zhi-xuan-2020-goal-inference
+short_name: SIPS
+title: Online Bayesian Goal Inference for Boundedly-Rational Planning Agents
+authors:
+  - Tan Zhi-Xuan
+  - Jordyn L. Mann
+  - Tom Silver
+  - Joshua B. Tenenbaum
+  - Vikash K. Mansinghka
+venue: arXiv
+year: 2020
+links:
+  paper: https://arxiv.org/abs/2006.07532
+  code: https://github.com/ztangent/Plinf.jl
+provenance: RTI Table I, App. II-A
+subproblems:
+  G2:
+    status: addresses
+    relation: direct
+    approach: learned
+    note: Predicts goals from observed actions with learned models

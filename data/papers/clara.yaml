@@ -1,0 +1,21 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: clara
+short_name: CLARA
+title: "CLARA: Classifying and Disambiguating User Commands for Reliable Interactive Robotic Agents"
+authors:
+  - Jeongeun Park
+  - Seungwon Lim
+  - Joonhyung Lee
+  - Sangbeom Park
+  - Minsuk Chang
+  - Youngjae Yu
+  - Sungjoon Choi
+venue: IEEE RA-L
+year: 2024
+links:
+  paper: https://doi.org/10.1109/LRA.2023.3338514
+provenance: RTI §II
+method:
+  knowns: null
+  action_types:
+    - ask

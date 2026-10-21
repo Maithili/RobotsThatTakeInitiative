@@ -1,0 +1,18 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: ramirez-2010-plan-recognition
+short_name: Ramírez 2010
+title: Probabilistic Plan Recognition Using Off-the-Shelf Classical Planners
+authors:
+  - Miquel Ramírez
+  - Hector Geffner
+venue: AAAI
+year: 2010
+links:
+  paper: https://doi.org/10.1609/aaai.v24i1.7745
+provenance: RTI Table I, App. II-A
+subproblems:
+  A2:
+    status: addresses
+    relation: direct
+    approach: symbolic
+    note: Belief over goals with actions as likelihoods. Infers goals only for tasks already begun

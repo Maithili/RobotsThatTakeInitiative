@@ -1,0 +1,50 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: slate-pro
+short_name: SLaTe-PRO
+title: Predicting Routine Object Usage for Proactive Robot Assistance
+authors:
+  - Maithili Patel
+  - Aswin Gururaj Prakash
+  - Sonia Chernova
+venue: CoRL
+year: 2023
+links:
+  paper: https://proceedings.mlr.press/v229/patel23a.html
+provenance: RTI §II, §III-A3, §III-B, Table I, §IV
+method:
+  knowns:
+    goal: unknown
+    human_policy: unknown
+  family: temporal_prediction
+  action_types:
+    - act
+  inputs:
+    - scene_graph
+  core_strength: null
+  builds_on: []
+subproblems:
+  G1:
+    status: assumes
+    relation: direct
+    note: Goal space coincides with the action space
+  A1:
+    status: skips
+    relation: direct
+    note: Skips human-policy learning
+  A2:
+    status: skips
+    relation: direct
+    note: Skips explicit goal inference
+  A3:
+    status: addresses
+    relation: direct
+    approach: temporal_sequence
+    note: Extracts habitual patterns from a history of observed actions
+  P1:
+    status: assumes
+    relation: direct
+    note: Assumes uniform cost across actions
+evaluations:
+  - id: slate-pro-original
+    loop: offline_replay
+    provenance: RTI §I, §IV

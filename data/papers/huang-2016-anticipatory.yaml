@@ -1,0 +1,20 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: huang-2016-anticipatory
+short_name: Huang 2016
+title: Anticipatory robot control for efficient human-robot collaboration
+authors:
+  - Chien-Ming Huang
+  - Bilge Mutlu
+venue: ACM/IEEE HRI
+year: 2016
+links:
+  paper: https://doi.org/10.1109/HRI.2016.7451737
+provenance: RTI §II, §II-B
+method:
+  knowns:
+    goal: known
+    human_policy: unknown
+  action_types:
+    - timing
+  core_strength: Learns preferred strategies from passive observation
+  builds_on: []

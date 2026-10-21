@@ -1,0 +1,8 @@
+id: virtualhome
+name: VirtualHome
+kind: simulator
+introduced_in: null
+links:
+  home: https://openaccess.thecvf.com/content_cvpr_2018/html/Puig_VirtualHome_Simulating_Household_CVPR_2018_paper.html
+sim_or_real: sim
+provenance: RTI §IV-A1

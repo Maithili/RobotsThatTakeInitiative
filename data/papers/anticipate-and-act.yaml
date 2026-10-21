@@ -1,0 +1,25 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: anticipate-and-act
+short_name: Anticipate & Act
+title: "Anticipate & Act: Integrating LLMs and Classical Planning for Efficient Task Execution in Household Environments"
+authors:
+  - Raghav Arora
+  - Shivam Singh
+  - Karthik Swaminathan
+  - Ahana Datta
+  - Snehasis Banerjee
+  - Brojeshwar Bhowmick
+  - Krishna Murthy Jatavallabhula
+  - Mohan Sridharan
+  - Madhava Krishna
+venue: IEEE ICRA
+year: 2024
+links:
+  paper: https://doi.org/10.1109/ICRA57147.2024.10611164
+provenance: RTI App. II-A
+subproblems:
+  A3:
+    status: addresses
+    relation: adjacent
+    approach: language_model
+    note: Predicts future subgoals with language models. Limited to subgoals of tasks already begun

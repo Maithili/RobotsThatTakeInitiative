@@ -1,0 +1,21 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: ravichandar-2020-lfd-review
+short_name: Ravichandar 2020
+title: Recent Advances in Robot Learning from Demonstration
+authors:
+  - Harish Ravichandar
+  - Athanasios S. Polydoros
+  - Sonia Chernova
+  - Aude Billard
+venue: Annual Review of Control, Robotics, and Autonomous Systems
+year: 2020
+links:
+  paper: https://doi.org/10.1146/annurev-control-100819-063206
+type: survey
+provenance: RTI App. II-A
+subproblems:
+  A1:
+    status: addresses
+    relation: adjacent
+    approach: lfd
+    note: Learning from demonstration

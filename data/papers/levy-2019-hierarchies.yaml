@@ -1,0 +1,20 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: levy-2019-hierarchies
+short_name: HAC
+title: Learning Multi-Level Hierarchies with Hindsight
+authors:
+  - Andrew Levy
+  - George Konidaris
+  - Robert Platt
+  - Kate Saenko
+venue: ICLR
+year: 2019
+links:
+  paper: https://arxiv.org/abs/1712.00948
+provenance: RTI App. II-A
+subproblems:
+  G1:
+    status: addresses
+    relation: adjacent
+    approach: hierarchical
+    note: Captures goals at multiple granularities

@@ -1,0 +1,19 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: jayanthi-2022-strategy-discovery
+short_name: DMSRD
+title: Strategy Discovery and Mixture in Lifelong Learning from Heterogeneous Demonstration
+authors:
+  - Sravan Jayanthi
+  - Letian Chen
+  - Matthew Gombolay
+venue: arXiv
+year: 2022
+links:
+  paper: https://arxiv.org/abs/2202.07014
+provenance: RTI Table I, App. II-A
+subproblems:
+  A1:
+    status: addresses
+    relation: direct
+    approach: clustering_mixture
+    note: Addresses data sparsity by clustering users or fitting mixtures. Relies on explicit demonstrations

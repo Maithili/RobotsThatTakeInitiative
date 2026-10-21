@@ -1,0 +1,52 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: watch-and-help
+short_name: Watch-And-Help
+title: "Watch-And-Help: A Challenge for Social Perception and Human-AI Collaboration"
+authors:
+  - Xavier Puig
+  - Tianmin Shu
+  - Shuang Li
+  - Zilin Wang
+  - Yuan-Hong Liao
+  - Joshua B. Tenenbaum
+  - Sanja Fidler
+  - Antonio Torralba
+venue: ICLR
+year: 2021
+links:
+  paper: https://openreview.net/forum?id=w_7JMpGZRh0
+  code: https://github.com/xavierpuigf/watch_and_help
+provenance: RTI §III-B, Table I, App. II-A
+method:
+  knowns:
+    goal: unknown
+    human_policy: unknown
+  family: goal_inference
+  core_strength: null
+  builds_on: []
+subproblems:
+  G1:
+    status: assumes
+    relation: direct
+    note: Assumes the goal space is given
+  G2:
+    status: addresses
+    relation: direct
+    approach: symbolic
+    note: Predicts goals from observed actions with symbolic models
+  A1:
+    status: assumes
+    relation: direct
+    note: Assumes the human policy is given
+  A2:
+    status: addresses
+    relation: direct
+    note: Online goal inference followed by goal-conditioned planning
+  A3:
+    status: skips
+    relation: direct
+    note: Does not predict future goals
+evaluations:
+  - id: watch-and-help-original
+    loop: offline_replay
+    provenance: RTI §IV

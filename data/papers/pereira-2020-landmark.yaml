@@ -1,0 +1,19 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: pereira-2020-landmark
+short_name: Pereira 2020
+title: Landmark-based approaches for goal recognition as planning
+authors:
+  - Ramon Fraga Pereira
+  - Nir Oren
+  - Felipe Meneguzzi
+venue: Artificial Intelligence
+year: 2020
+links:
+  paper: https://doi.org/10.1016/j.artint.2019.103217
+provenance: RTI App. II-A
+subproblems:
+  A2:
+    status: addresses
+    relation: adjacent
+    approach: symbolic
+    note: Belief over goals with actions as likelihoods. Infers goals only for tasks already begun

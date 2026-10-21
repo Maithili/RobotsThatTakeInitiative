@@ -1,0 +1,23 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: nemlekar-2023-transfer
+short_name: Nemlekar 2023
+title: Transfer Learning of Human Preferences for Proactive Robot Assistance in Assembly Tasks
+authors:
+  - Heramb Nemlekar
+  - Neel Dhanaraj
+  - Angelos Guan
+  - Satyandra K. Gupta
+  - Stefanos Nikolaidis
+venue: ACM/IEEE HRI
+year: 2023
+links:
+  paper: https://doi.org/10.1145/3568162.3576965
+provenance: RTI §II, §II-B
+method:
+  knowns:
+    goal: known
+    human_policy: unknown
+  action_types:
+    - timing
+  core_strength: Learns preferred strategies from passive observation
+  builds_on: []

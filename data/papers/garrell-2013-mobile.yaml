@@ -1,0 +1,18 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: garrell-2013-mobile
+short_name: Garrell 2013
+title: Proactive behavior of an autonomous mobile robot for human-assisted learning
+authors:
+  - A. Garrell
+  - M. Villamizar
+  - F. Moreno-Noguer
+  - A. Sanfeliu
+venue: IEEE RO-MAN
+year: 2013
+links:
+  paper: https://doi.org/10.1109/ROMAN.2013.6628463
+provenance: RTI §II
+method:
+  knowns: null
+  action_types:
+    - inform

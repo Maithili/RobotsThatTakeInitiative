@@ -1,0 +1,20 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: cirl
+short_name: CIRL
+title: Cooperative Inverse Reinforcement Learning
+authors:
+  - Dylan Hadfield-Menell
+  - Anca Dragan
+  - Pieter Abbeel
+  - Stuart J. Russell
+venue: NeurIPS
+year: 2016
+links:
+  paper: https://papers.nips.cc/paper_files/paper/2016/hash/c3395dd46c34fa7fd8d729d8cf88b7a8-Abstract.html
+provenance: RTI Table I, App. II-A
+subproblems:
+  P2:
+    status: addresses
+    relation: direct
+    approach: cirl
+    note: Optimizes a collaborative policy against a learned human. Confined to simulated domains with known rewards

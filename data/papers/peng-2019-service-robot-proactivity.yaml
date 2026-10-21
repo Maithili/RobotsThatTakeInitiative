@@ -1,0 +1,19 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: peng-2019-service-robot-proactivity
+short_name: Peng 2019
+title: Design and Evaluation of Service Robot's Proactivity in Decision-Making Support Process
+authors:
+  - Zhenhui Peng
+  - Yunhwan Kwon
+  - Jiaan Lu
+  - Ziming Wu
+  - Xiaojuan Ma
+venue: ACM CHI
+year: 2019
+links:
+  paper: https://doi.org/10.1145/3290605.3300328
+provenance: RTI §II
+method:
+  knowns: null
+  action_types:
+    - inform

@@ -1,0 +1,22 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: amado-2018-lstm
+short_name: Amado 2018a
+title: LSTM-Based Goal Recognition in Latent Space
+authors:
+  - Leonardo Amado
+  - João Paulo Aires
+  - Ramon Fraga Pereira
+  - Maurício C. Magnaguagno
+  - Roger Granada
+  - Felipe Meneguzzi
+venue: arXiv
+year: 2018
+links:
+  paper: https://arxiv.org/abs/1808.05249
+provenance: RTI App. II-A
+subproblems:
+  A2:
+    status: addresses
+    relation: adjacent
+    approach: learned
+    note: Belief over goals with actions as likelihoods. Infers goals only for tasks already begun

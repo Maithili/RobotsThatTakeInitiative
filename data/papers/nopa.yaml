@@ -1,0 +1,45 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: nopa
+short_name: NOPA
+title: "NOPA: Neurally-guided Online Probabilistic Assistance for Building Socially Intelligent Home Assistants"
+authors:
+  - Xavier Puig
+  - Tianmin Shu
+  - Joshua B. Tenenbaum
+  - Antonio Torralba
+venue: IEEE ICRA
+year: 2023
+links:
+  paper: https://doi.org/10.1109/ICRA48891.2023.10161352
+provenance: RTI §III-B, Table I, App. II-A
+method:
+  knowns:
+    goal: unknown
+    human_policy: unknown
+  family: goal_inference
+  action_types:
+    - act
+  core_strength: null
+  builds_on: []
+subproblems:
+  G1:
+    status: assumes
+    relation: direct
+    note: Assumes the goal space is given
+  G2:
+    status: assumes
+    relation: direct
+    note: Assumes ground-truth action-goal association
+  A1:
+    status: assumes
+    relation: direct
+    note: Assumes the human policy is given
+  A2:
+    status: addresses
+    relation: direct
+    approach: symbolic
+    note: Belief over goals with actions as likelihoods. Infers goals only for tasks already begun
+  A3:
+    status: skips
+    relation: direct
+    note: Does not predict future goals

@@ -1,0 +1,24 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: fogarty-2005-interruptibility
+short_name: Fogarty 2005
+title: Predicting human interruptibility with sensors
+authors:
+  - James Fogarty
+  - Scott E. Hudson
+  - Christopher G. Atkeson
+  - Daniel Avrahami
+  - Jodi Forlizzi
+  - Sara Kiesler
+  - Johnny C. Lee
+  - Jie Yang
+venue: ACM TOCHI
+year: 2005
+links:
+  paper: https://doi.org/10.1145/1057237.1057243
+provenance: RTI App. II-A
+subproblems:
+  P1:
+    status: addresses
+    relation: adjacent
+    approach: interruptibility
+    note: Estimates interruptibility

@@ -1,0 +1,27 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: adapt
+short_name: ADAPT
+title: "ADAPT: Actively Discovering and Adapting to Preferences for any Task"
+authors:
+  - Maithili Patel
+  - Xavier Puig
+  - Ruta Desai
+  - Roozbeh Mottaghi
+  - Sonia Chernova
+  - Joanne Truong
+  - Akshara Rai
+venue: arXiv
+year: 2025
+links:
+  paper: https://arxiv.org/abs/2504.04040
+provenance: RTI §II, App. II-A
+method:
+  knowns: null
+  action_types:
+    - ask
+subproblems:
+  P2:
+    status: addresses
+    relation: adjacent
+    approach: proactive_communication
+    note: Proactive communication

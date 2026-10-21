@@ -1,0 +1,16 @@
+id: homer-plus
+name: HOMER+
+kind: dataset
+introduced_in: slate-pro
+links:
+  home: null
+sim_or_real: sim
+span: Several weeks
+households_or_users: 3
+observations:
+  - object_relocations
+goal_annotations: null
+executable: "yes"
+environment: virtualhome
+notes: Routine behavior sampled from crowdsourced patterns, executable in VirtualHome
+provenance: RTI §IV-A1

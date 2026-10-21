@@ -1,0 +1,19 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: torabi-2018-bco
+short_name: BCO
+title: Behavioral Cloning from Observation
+authors:
+  - Faraz Torabi
+  - Garrett Warnell
+  - Peter Stone
+venue: IJCAI
+year: 2018
+links:
+  paper: https://doi.org/10.24963/ijcai.2018/687
+provenance: RTI App. II-A
+subproblems:
+  A1:
+    status: addresses
+    relation: adjacent
+    approach: lfo
+    note: Learns from observation alone

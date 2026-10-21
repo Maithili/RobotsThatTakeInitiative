@@ -1,0 +1,19 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: baker-2009-inverse-planning
+short_name: Baker 2009
+title: Action understanding as inverse planning
+authors:
+  - Chris L. Baker
+  - Rebecca Saxe
+  - Joshua B. Tenenbaum
+venue: Cognition
+year: 2009
+links:
+  paper: https://doi.org/10.1016/j.cognition.2009.07.005
+provenance: RTI Table I, App. II-A
+subproblems:
+  G2:
+    status: addresses
+    relation: direct
+    approach: symbolic
+    note: Predicts goals from observed actions with symbolic models

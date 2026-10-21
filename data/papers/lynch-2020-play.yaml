@@ -1,0 +1,24 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: lynch-2020-play
+short_name: Play-LMP
+title: Learning Latent Plans from Play
+authors:
+  - Corey Lynch
+  - Mohi Khansari
+  - Ted Xiao
+  - Vikash Kumar
+  - Jonathan Tompson
+  - Sergey Levine
+  - Pierre Sermanet
+venue: CoRL
+year: 2020
+links:
+  paper: https://proceedings.mlr.press/v100/lynch20a.html
+  project: https://learning-from-play.github.io
+provenance: RTI Table I, App. II-A
+subproblems:
+  A2:
+    status: addresses
+    relation: direct
+    approach: hybrid
+    note: Belief over goals with actions as likelihoods. Infers goals only for tasks already begun

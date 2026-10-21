@@ -1,0 +1,46 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: saavedra-2026-scene-graphs
+short_name: PredictiveGraphs
+title: Predictive Spatio-Temporal Scene Graphs for Semi-Static Scenes
+authors:
+  - Miguel Saavedra-Ruiz
+  - Charlie Gauthier
+  - Kumaraditya Gupta
+  - Shima Shahfar
+  - Kirsty Ellis
+  - Steven Parkison
+  - Liam Paull
+venue: arXiv
+year: 2026
+links:
+  paper: https://arxiv.org/abs/2605.00121
+provenance: RTI §II, §III-A3, §III-B, Table I, §IV
+method:
+  knowns:
+    goal: unknown
+    human_policy: unknown
+  family: temporal_prediction
+  core_strength: null
+  builds_on: []
+subproblems:
+  G1:
+    status: assumes
+    relation: direct
+    note: Goal space coincides with the action space
+  A1:
+    status: skips
+    relation: direct
+    note: Skips human-policy learning
+  A2:
+    status: skips
+    relation: direct
+    note: Skips explicit goal inference
+  A3:
+    status: addresses
+    relation: direct
+    approach: probabilistic_filtering
+    note: Filters over how long items persist in and return to locations
+  P1:
+    status: assumes
+    relation: direct
+    note: Assumes uniform cost across actions

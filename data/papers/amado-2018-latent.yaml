@@ -1,0 +1,22 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: amado-2018-latent
+short_name: Amado 2018b
+title: Goal Recognition in Latent Space
+authors:
+  - Leonardo Amado
+  - Ramon Fraga Pereira
+  - Joao Aires
+  - Mauricio Magnaguagno
+  - Roger Granada
+  - Felipe Meneguzzi
+venue: IJCNN
+year: 2018
+links:
+  paper: https://doi.org/10.1109/IJCNN.2018.8489653
+provenance: RTI App. II-A
+subproblems:
+  A2:
+    status: addresses
+    relation: adjacent
+    approach: hybrid
+    note: Belief over goals with actions as likelihoods. Infers goals only for tasks already begun

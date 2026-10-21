@@ -1,0 +1,23 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: sakr-2025-everyday-users
+short_name: Sakr 2025
+title: How Can Everyday Users Efficiently Teach Robots by Demonstration?
+authors:
+  - Maram Sakr
+  - Zhikai Zhang
+  - Benjamin Li
+  - Haomiao Zhang
+  - H. F. Machiel Van der Loos
+  - Dana Kulić
+  - Elizabeth Croft
+venue: ACM THRI
+year: 2025
+links:
+  paper: https://doi.org/10.1145/3737892
+provenance: RTI App. II-A
+subproblems:
+  A1:
+    status: addresses
+    relation: adjacent
+    approach: guided_demonstration
+    note: Guides users toward more effective demonstrations

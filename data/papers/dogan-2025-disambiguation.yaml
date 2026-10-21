@@ -1,0 +1,19 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: dogan-2025-disambiguation
+short_name: Dogan 2025
+title: A Model-Agnostic Approach for Semantically Driven Disambiguation in Human-Robot Interaction
+authors:
+  - Fethiye Irmak Dogan
+  - Maithili Patel
+  - Weiyu Liu
+  - Iolanda Leite
+  - Sonia Chernova
+venue: IEEE RO-MAN
+year: 2025
+links:
+  paper: https://doi.org/10.1109/RO-MAN63969.2025.11217614
+provenance: RTI §II
+method:
+  knowns: null
+  action_types:
+    - ask

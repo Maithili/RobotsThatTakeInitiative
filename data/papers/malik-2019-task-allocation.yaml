@@ -1,0 +1,18 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: malik-2019-task-allocation
+short_name: Malik 2019
+title: Complexity-based task allocation in human-robot collaborative assembly
+authors:
+  - Ali Ahmad Malik
+  - Arne Bilberg
+venue: Industrial Robot
+year: 2019
+links:
+  paper: https://doi.org/10.1108/IR-11-2018-0231
+provenance: RTI App. II-A
+subproblems:
+  P1:
+    status: addresses
+    relation: adjacent
+    approach: task_complexity
+    note: Models action cost through task complexity for allocation

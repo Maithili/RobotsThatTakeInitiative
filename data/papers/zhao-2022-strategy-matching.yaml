@@ -1,0 +1,19 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: zhao-2022-strategy-matching
+short_name: Zhao 2022
+title: Coordination With Humans Via Strategy Matching
+authors:
+  - Michelle Zhao
+  - Reid Simmons
+  - Henny Admoni
+venue: IEEE/RSJ IROS
+year: 2022
+links:
+  paper: https://doi.org/10.1109/IROS47612.2022.9982277
+provenance: RTI §II, §II-B
+method:
+  knowns:
+    goal: known
+    human_policy: unknown
+  core_strength: Learns preferred strategies from collaborative data
+  builds_on: []

@@ -1,0 +1,12 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: zhang-2023-llm-human-models
+short_name: Zhang 2023
+title: Large Language Models as Zero-Shot Human Models for Human-Robot Interaction
+authors:
+  - Bowen Zhang
+  - Harold Soh
+venue: IEEE/RSJ IROS
+year: 2023
+links:
+  paper: https://doi.org/10.1109/IROS55552.2023.10341488
+provenance: RTI §VII

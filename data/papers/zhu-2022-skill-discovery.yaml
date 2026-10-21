@@ -1,0 +1,19 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: zhu-2022-skill-discovery
+short_name: Zhu 2022
+title: Bottom-Up Skill Discovery From Unsegmented Demonstrations for Long-Horizon Robot Manipulation
+authors:
+  - Yifeng Zhu
+  - Peter Stone
+  - Yuke Zhu
+venue: IEEE RA-L
+year: 2022
+links:
+  paper: https://doi.org/10.1109/LRA.2022.3146589
+provenance: RTI App. II-A
+subproblems:
+  G1:
+    status: addresses
+    relation: adjacent
+    approach: hierarchical
+    note: Captures goals at multiple granularities

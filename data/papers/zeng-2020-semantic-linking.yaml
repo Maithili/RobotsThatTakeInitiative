@@ -1,0 +1,19 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: zeng-2020-semantic-linking
+short_name: SLiM
+title: Semantic Linking Maps for Active Visual Object Search
+authors:
+  - Zhen Zeng
+  - Adrian Röfer
+  - Odest Chadwicke Jenkins
+venue: IEEE ICRA
+year: 2020
+links:
+  paper: https://doi.org/10.1109/ICRA40945.2020.9196830
+provenance: RTI App. II-A
+subproblems:
+  A3:
+    status: addresses
+    relation: adjacent
+    approach: probabilistic_filtering
+    note: Filters over how long items persist in and return to locations

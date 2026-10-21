@@ -1,0 +1,27 @@
+# Seeded from spec/SEED.md; citation checked against the landing page (see data/SEED_REPORT.md).
+id: actionable-models
+short_name: Actionable Models
+title: "Actionable Models: Unsupervised Offline Reinforcement Learning of Robotic Skills"
+authors:
+  - Yevgen Chebotar
+  - Karol Hausman
+  - Yao Lu
+  - Ted Xiao
+  - Dmitry Kalashnikov
+  - Jacob Varley
+  - Alex Irpan
+  - Benjamin Eysenbach
+  - Ryan C Julian
+  - Chelsea Finn
+  - Sergey Levine
+venue: ICML
+year: 2021
+links:
+  paper: https://proceedings.mlr.press/v139/chebotar21a.html
+provenance: RTI App. II-A
+subproblems:
+  G2:
+    status: addresses
+    relation: adjacent
+    approach: hindsight_relabeling
+    note: Relabels past trajectories with goals. Not designed for open, unlabeled goal spaces
