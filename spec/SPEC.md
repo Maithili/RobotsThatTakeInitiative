@@ -35,7 +35,7 @@ Readers come to find papers. The site gives them three entry points, one per pag
 
 - Vite, React 18, TypeScript in strict mode, npm.
 - `react-router-dom` with `HashRouter`, since GitHub Pages has no server-side routing.
-- `d3-scale`, `d3-shape`, and `d3-brush` (individual modules) for the lineage graph and the chart. No chart library.
+- `d3-scale`, `d3-shape`, `d3-brush`, `d3-force`, and `d3-polygon` (individual modules) for the timeline, the literature graph and its cluster hulls, and the chart. No chart library.
 - KaTeX for math.
 - `js-yaml` 4 and `zod` for loading and validating data. js-yaml 4 loads `yes` and `no` as strings, which the schemas expect. `tsx` runs the scripts.
 - Plain CSS with custom-property tokens. No CSS framework.
@@ -113,10 +113,6 @@ families:                     # L2 only, from RTI §III-B
     strength: Predicts minutes to hours ahead, with no need for close collaboration.
     limitations:
       - Discards the intentional structure of behavior that a goal-level model can exploit.
-  full_pipeline:
-    name: Grounding, anticipation, and planning pipeline
-    definition: Instantiates the grounding, anticipation, and planning subproblems in one pipeline.
-    note: Not a family named in the RTI paper. Added for GAP. Pending Maithili's confirmation.
 
 action_types:                 # RTI §II
   act:      {label: Acts, definition: Executes actions that serve anticipated needs.}
@@ -489,28 +485,33 @@ Every list, graph, and panel has an empty state that says what is missing and li
 
 ## 7. Methods page
 
-### 7.1 Level navigator
+The page has two parts. A top band holds the level cards, a condensed timeline, and the legend. Below it, the main graphic is an interconnected literature graph.
 
-A compact, interactive version of the RTI Fig. 1 right panel, at the top left.
+### 7.1 Top band
 
-- Three stacked level cards, L2 on top, then L1, then L0. Each shows name, knowns chips, one-line definition, and paper count. The L0 note shows on hover and focus.
-- Clicking a card selects that level and sets `level=`. Clicking it again clears the selection.
-- No toggle bar for g and π^h. The knowns chips on each card carry that information.
+Left to right: level cards, condensed timeline, legend. Under 900 px the legend moves below the timeline.
 
-### 7.2 Lineage graph
+- **Level cards.** Two stacked cards, L2 on top and L1 below. The page does not show L0. Each card shows name, knowns chips, one-line definition, and paper count. Clicking a card selects that level and sets `level=`. Clicking it again clears the selection. No toggle bar for g and π^h.
+- **Condensed timeline.** One row beside each card, holding that level's papers with no breakdown by family. The two rows share one year axis. From 2021 on, each year gets one equal-width band. All earlier papers share one narrow band at the left labeled "Before 2021", in year order, with each paper's year in small text and an axis break mark before 2021. One constant holds the cutoff (`TIMELINE_START = 2021`). Papers show as compact chips with the short name, stacked when they share a year.
+  - Hovering a chip highlights the same paper in the graph, and hovering a graph node highlights its chip.
+  - Clicking a chip opens the drawer and, if the paper is in the graph, focuses its node.
+  - A time brush on the shared axis sets `years=`.
+- **Legend**, in the space right of the timeline: the three edge styles with their checkboxes (bound to `edges=`, all on by default), the cluster tints, the level colors, and the action type icons.
 
-- **Lanes**, top to bottom: one L2 sub-lane per family (Goal Inference, Temporal Imitation, full pipeline, then "family not set"), then L1, then L0. The page has no tray for unclassified works.
-- **Lane headers** show name and count. Each L2 family header also shows its `scope_line`, with strength and limitations on hover.
-- **x axis** starts at 2021, with one equal-width band per year from 2021 to the latest paper shown. All earlier papers share one narrow band at the far left labeled "Before 2021", stacked in year order with each node's year in small text. An axis break mark separates that band from 2021. One constant holds the cutoff (`TIMELINE_START = 2021`). Nodes in the same lane and year stack vertically, and lane height grows to fit. The time brush works across both parts.
-- **Nodes** are pills with the short name, a left edge in the level color, and small icons for action types.
-- **Edges** follow §5.5 and draw as curves. A legend shows the three line styles, each with a checkbox bound to `edges=`, all on by default. Hovering an edge lists every relation between its two papers.
+### 7.2 Literature graph
+
+- **Scope.** The graph shows every L2 paper with a method block. One constant holds the levels it shows (`GRAPH_LEVELS = ['L2']`). L1 papers appear in the timeline and the list view.
+- **Clusters.** One cluster per L2 family, so Goal Inference and Temporal Imitation to start. Each cluster draws as a soft tinted hull behind its nodes, labeled with the family name, with the scope line, strength, and limitations on hover. Papers with no family sit outside the hulls, in the space between the clusters. GAP is one of these.
+- **Layout.** `d3-force`, run for a fixed number of ticks from seeded positions, so the layout is identical on every load. Cluster centers sit evenly spaced on a circle, which puts two clusters left and right. Each node pulls toward its cluster center, and nodes with no family pull toward the center point between clusters. Links pull connected nodes together weakly, and a collision force keeps pills apart. The layout depends only on the data. Filters dim nodes and never move them.
+- **Growth.** Adding papers or a new family needs no layout code change. A new family gets its own cluster and hull. The graph stays readable with a synthetic fixture of 60 L2 papers in 4 clusters.
+- **Nodes** are pills with the short name and year, a left edge in the level color, and small icons for action types.
+- **Edges** follow §5.5 and draw as curves under the nodes. Hovering an edge lists every relation between its two papers.
 - **Hover or focus** on a node shows a card with short name and year, title (one line, truncated), core strength, inputs → action types, and knowns chips.
 - **Click** on a node highlights all its ancestors and descendants through the edge types currently shown, dims the rest, sets `focus=`, and opens the drawer. Clicking empty canvas or pressing Esc clears the focus.
-- **Time brush** on the year axis sets `years=`.
-- **Filter bar**: family, action type, input modality, theme, years.
-- **View toggle**, Graph or List. The list groups by level then family, with sortable columns for short name, year, title, inputs, action types, core strength, and count of subproblems addressed. List is the default under 640 px.
+- **Filter bar**: family, action type, input modality, theme, years. Selecting L1 dims every graph node and shows the note "The graph shows unprompted (L2) methods."
+- **View toggle**, Graph or List. The list covers all methods at every level, grouped by level then family, with sortable columns for short name, year, title, inputs, action types, core strength, and count of subproblems addressed. List is the default under 640 px.
 - **Surveys strip** above the graph shows papers with `type: survey` as chips.
-- The graph stays readable at 150 nodes. It scrolls horizontally inside its container when needed. The page itself never scrolls horizontally.
+- The graph fits its container width and scales down on narrow screens. The page itself never scrolls horizontally.
 
 ## 8. Evaluations page
 
@@ -592,7 +593,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 
 ## 12. Accessibility, responsiveness, performance
 
-- Every interactive element is reachable by keyboard. Graph nodes take focus in lane order, then year order. Enter opens the drawer and Esc closes it.
+- Every interactive element is reachable by keyboard. Graph nodes take focus in cluster order, then year order. Enter opens the drawer and Esc closes it.
 - Glyphs and icons carry ARIA labels ("Addresses", "Acts").
 - Text and UI contrast meets WCAG AA in both themes.
 - The site works from 360 px to 1920 px wide. The page never scrolls horizontally. The graph and matrix scroll inside their own containers.
@@ -609,7 +610,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 1. Each page loads with no console errors.
 2. Setting L2 on Methods and switching to Subproblems keeps the filter. Back restores the previous view.
 3. `?paper=gap` opens the drawer, and Esc closes it.
-4. Clicking the L2 card highlights the L2 lanes.
+4. Hovering a timeline chip highlights the same node in the graph. GAP's node sits outside both cluster hulls.
 5. Clicking ΔC↑ leaves net actions saved, perturbed actions, and F1 in the metrics list.
 6. The featured chart shows 2 bars, then 6 after the toggle.
 7. Selecting A2 lists NOPA, highlights G1, G2, and A1 upstream, and highlights P2 downstream.
@@ -631,7 +632,7 @@ Work on `main`. Commit at the end of each milestone and push to `origin main` ri
 | M1 | Data foundation: taxonomy, schemas, validator, `build-data`, `new-paper` | `npm run validate` passes on an empty `papers/` folder, and each §5.4 rule has a failing fixture |
 | M2 | Seed data from `spec/SEED.md` | Every SEED entry has a file. Links come only from confirmed landing pages. `data/SEED_REPORT.md` lists missing links and every difference between the RTI reference list and the landing page. Baselines are recorded per SEED rule 7. `data/citations.json` exists. Validate passes. |
 | M3 | Shell: routing, header, URL state, search, drawer, compare tray, theme toggle | E2E tests 3 and 9 pass |
-| M4 | Methods page | E2E tests 2, 4, and 11 pass. Graph readable with seed data and with a 150-node synthetic fixture. |
+| M4 | Methods page | E2E tests 2, 4, and 11 pass. Graph readable with seed data and with the 60-paper, 4-cluster synthetic fixture. |
 | M5 | Evaluations page | E2E tests 5 and 6 pass |
 | M6 | Subproblems page | E2E tests 7 and 8 pass |
 | M7 | Contribution flow, CI, deploy, README | CI green on `main`. README links the live site and CONTRIBUTING.md. |
@@ -645,9 +646,8 @@ Maithili can reverse any of these.
 
 1. **Citation source.** Semantic Scholar, matched by DOI, arXiv id, or exact title. OpenAlex is the fallback if coverage turns out poor.
 2. **L0 lane.** The lane exists and starts empty, since the RTI paper names no L0 works.
-3. **GAP's family.** "Full pipeline" is a new family label. The RTI paper names two families only.
-4. **Subproblem dependencies** come from the Table I inputs and outputs. A2 → P2 assumes the anticipated goals g_{t:t+Δt} include the current goal g_t.
-5. **Direct vs adjacent.** A work is direct for a subproblem if Table I or §III-B lists it there, and adjacent if only Appendix II-A does.
-6. **Hosting.** GitHub Pages from this repo, with hash URLs.
-7. **Contributions.** GitHub issues and pull requests, with no backend.
-8. **Results.** Only the Table II comparison appears as a chart.
+3. **Subproblem dependencies** come from the Table I inputs and outputs. A2 → P2 assumes the anticipated goals g_{t:t+Δt} include the current goal g_t.
+4. **Direct vs adjacent.** A work is direct for a subproblem if Table I or §III-B lists it there, and adjacent if only Appendix II-A does.
+5. **Hosting.** GitHub Pages from this repo, with hash URLs.
+6. **Contributions.** GitHub issues and pull requests, with no backend.
+7. **Results.** Only the Table II comparison appears as a chart.

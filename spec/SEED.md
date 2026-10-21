@@ -36,7 +36,6 @@ links:
 provenance: RTI paper §V–VI
 method:
   knowns: {goal: unknown, human_policy: unknown}
-  family: full_pipeline
   action_types: [act]
   inputs: [object_relocations]
   core_strength: null
@@ -251,7 +250,7 @@ Start the report with these items for Maithili, then add what the builder finds.
 1. **Watch-And-Help [29] and G2.** §III-B says the goal inference family assumes action-goal association is given. Table I and Appendix II-A list [29] under G2. Seeded as G2 addresses, per Table I.
 2. **Loop type for [29] and [20].** §IV says prior work relied on static datasets and cites [29] and [20]. Seeded as offline_replay.
 3. **Benchmarks.** Watch-And-Help [29] and ProAct [30] present benchmarks. Should they get dataset entries?
-4. **GAP's family.** "full_pipeline" is a new label.
+4. **GAP's family.** Resolved. GAP has no family and sits between the two clusters in the literature graph, per Maithili.
 5. **Temporal family G1 and P1.** Seeded as `assumes`, from §III-B's reading that these methods use a goal space at the action level and assume uniform cost.
 6. **Reference list.** [20] prints CoRL 2023, and Maithili confirms CoRL 2022. [41] prints 2024. [16] prints no year. [63] prints no venue or year. The builder adds every other difference it finds.
 7. **To fill.** `core_strength` for all L2 methods, `builds_on` edges beyond the three given, and HOMER+ goal annotations.
