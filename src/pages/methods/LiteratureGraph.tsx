@@ -27,7 +27,7 @@ import {
 } from '../../lib/literatureLayout.ts';
 import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
-import { familyHue, GRAPH_LEVELS, TANGENTS_IN_GRAPH, type FamilyInfo } from './constants.ts';
+import { familyHue, FOCUS_LEVELS, TANGENTS_IN_GRAPH, type FamilyInfo } from './constants.ts';
 
 /** Screen margin kept around the content when fitting. */
 const FIT_MARGIN = 20;
@@ -214,7 +214,7 @@ export function LiteratureGraph({
   const nodes = useMemo(() => {
     const out = new Map<string, GNode>();
     for (const p of papers) {
-      if (!inLiteratureGraph(p, GRAPH_LEVELS, TANGENTS_IN_GRAPH) || p.x === undefined || p.y === undefined) continue;
+      if (!inLiteratureGraph(p, FOCUS_LEVELS, TANGENTS_IN_GRAPH) || p.x === undefined || p.y === undefined) continue;
       const tangent = !!p.tangent;
       const fam = !tangent && p.method?.family && families[p.method.family] ? p.method.family : null;
       const r = dotRadius(linkedPapers(p).size, tangent);

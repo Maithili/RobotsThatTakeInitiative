@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { join, relative } from 'node:path';
 import yaml from 'js-yaml';
 import { inLiteratureGraph, layoutPapers } from '../src/lib/literatureLayout.ts';
-import { GRAPH_LEVELS, TANGENTS_IN_GRAPH } from '../src/pages/methods/constants.ts';
+import { FOCUS_LEVELS, TANGENTS_IN_GRAPH } from '../src/pages/methods/constants.ts';
 import { SYNTHETIC_FAMILIES, syntheticPapers } from '../src/pages/methods/synthetic.ts';
 import { buildDb, type SourceFile } from '../src/validate.ts';
 
@@ -64,7 +64,7 @@ if (checkOnly) {
 } else {
   // Literature graph layout (SPEC §7.2): computed once here, stored as x, y per paper.
   const t0 = performance.now();
-  const inGraph = (p: Parameters<typeof inLiteratureGraph>[0]) => inLiteratureGraph(p, GRAPH_LEVELS, TANGENTS_IN_GRAPH);
+  const inGraph = (p: Parameters<typeof inLiteratureGraph>[0]) => inLiteratureGraph(p, FOCUS_LEVELS, TANGENTS_IN_GRAPH);
   const pos = layoutPapers(db.papers.filter(inGraph), Object.keys(db.taxonomy.families));
   for (const p of db.papers) Object.assign(p, pos.get(p.id) ?? {});
   // The synthetic fixture (?synthetic=1) gets its layout the same way, in its own file.

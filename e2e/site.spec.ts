@@ -26,18 +26,45 @@ test('1. each page loads with no console errors', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('2. a level filter set on Methods survives switching to Subproblems, and Back restores it', async ({ page }) => {
-  await page.goto('/#/methods');
-  await page.getByTestId('levelcard-L2').click();
-  await expect.poll(() => params(page).get('level')).toBe('L2');
+test('2. a family filter set on Methods survives switching to Subproblems, Back restores it, and no L1 paper shows outside the top band', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  await page.getByRole('button', { name: /^Filters/ }).click();
+  await page.getByRole('group', { name: 'Family' }).getByRole('button', { name: 'Goal Inference' }).click();
+  await expect.poll(() => params(page).get('family')).toBe('goal_inference');
   await page.getByRole('link', { name: 'Subproblems' }).click();
   await expect(page).toHaveURL(/#\/subproblems/);
-  expect(params(page).get('level')).toBe('L2');
-  await expect(page.getByRole('button', { name: /Remove filter Level/ })).toBeVisible();
+  expect(params(page).get('family')).toBe('goal_inference');
+  await expect(page.getByRole('button', { name: 'Remove filter Family: Goal Inference' })).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/#\/methods/);
-  expect(params(page).get('level')).toBe('L2');
-  await expect(page.getByTestId('levelcard-L2')).toHaveAttribute('aria-pressed', 'true');
+  expect(params(page).get('family')).toBe('goal_inference');
+  await expect(page.getByRole('button', { name: 'Remove filter Family: Goal Inference' })).toBeVisible();
+
+  // L1 papers sit in the Methods top band only (SPEC §6.2 Level scope).
+  await page.goto('/#/methods?view=graph');
+  const l1 = await page.getByTestId('timeline-L1').locator('[data-testid^="tchip-"]').evaluateAll((els) => els.map((e) => e.getAttribute('data-testid')!.slice('tchip-'.length)));
+  expect(l1.length).toBeGreaterThan(0);
+  const none = async (selector: (id: string) => string, where: string) => {
+    for (const id of l1) await expect(page.locator(selector(id)), `${id} on ${where}`).toHaveCount(0);
+  };
+  await expect(page.getByTestId('node-gap')).toBeVisible();
+  await none((id) => `[data-testid="node-${id}"]`, 'the graph');
+  await page.goto('/#/methods?view=list');
+  await expect(page.getByTestId('methods-list')).toBeVisible();
+  await none((id) => `[data-testid="methods-list"] [data-locate="${id}"]`, 'the list');
+  await page.goto('/#/evaluations');
+  await expect(page.getByTestId('protocol-gap')).toBeVisible();
+  await none((id) => `[data-testid="protocol-${id}"]`, 'the protocols table');
+  await expect(page.getByTestId('realism-dot-gap')).toBeVisible();
+  await none((id) => `[data-testid="realism-dot-${id}"]`, 'the realism plot');
+  await page.goto('/#/subproblems?view=matrix');
+  await expect(page.getByTestId('matrix')).toBeVisible();
+  await none((id) => `[data-testid="matrix"] [data-locate="${id}"]`, 'the matrix');
+  for (const sub of ['G1', 'G2', 'A1', 'A2', 'A3', 'P1', 'P2']) {
+    await page.goto(`/#/subproblems?sub=${sub}`);
+    await expect(page.getByTestId('sub-detail')).toBeVisible();
+    await none((id) => `[data-testid="work-${id}"]`, `the ${sub} detail`);
+  }
 });
 
 test('3. ?paper=gap opens the drawer and Esc closes it', async ({ page }) => {
@@ -54,7 +81,6 @@ test('3. ?paper=gap opens the drawer and Esc closes it', async ({ page }) => {
 test('4. hovering a timeline chip highlights the graph node; GAP sits outside both cluster hulls', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
   await expect(page.locator('.levelnav__toggles')).toHaveCount(0);
-  await expect(page.getByTestId('levelcard-L0')).toHaveCount(0);
   await page.getByTestId('tchip-slate-pro').hover();
   await expect(page.getByTestId('node-slate-pro')).toHaveAttribute('data-hover', 'true');
   await page.getByTestId('node-nopa').hover();
@@ -293,10 +319,33 @@ test('11. the STOT to SLaTe-PRO edge is solid; cites show only on hover until "S
   await expect.poll(() => page.locator('[data-type="cites"]').count()).toBeGreaterThan(50);
 });
 
-test('selecting L1 dims every graph node', async ({ page }) => {
+test('selecting a level card highlights its timeline row only; L0 is a baseline card', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
+  const nodes = page.locator('[data-testid^="node-"]');
+  const count = await nodes.count();
   await page.getByTestId('levelcard-L1').click();
-  for (const n of await page.locator('[data-testid^="node-"]').all()) await expect(n).toHaveClass(/is-dim/);
+  await expect.poll(() => params(page).get('level')).toBe('L1');
+  await expect(page.getByTestId('levelcard-L1')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('timeline-L1')).toHaveAttribute('data-selected', 'true');
+  await expect(page.getByTestId('timeline-L2')).toHaveAttribute('data-selected', 'false');
+  // The graph and the filter bar ignore it.
+  await expect(nodes).toHaveCount(count);
+  await expect(page.locator('[data-testid^="node-"].is-dim')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Remove filter Level/ })).toHaveCount(0);
+  await page.getByTestId('levelcard-L1').click();
+  await expect.poll(() => params(page).get('level')).toBeNull();
+  await expect(page.getByTestId('timeline-L1')).toHaveAttribute('data-selected', 'false');
+
+  // L0: name, knowns, definition, and note, with no count, no timeline row, and no click action.
+  const l0 = page.getByTestId('levelcard-L0');
+  await expect(l0).toBeVisible();
+  await expect(l0).toContainText('Reactive assistance');
+  await expect(l0).toContainText('industrial manufacturing');
+  await expect(l0).not.toHaveRole('button');
+  await expect(l0.locator('.levelcard__count')).toHaveCount(0);
+  await expect(page.getByTestId('timeline-L0')).toHaveCount(0);
+  await expect(page.getByTestId('levelcard-L2').locator('.levelcard__count')).toBeVisible();
+  await expect(page.getByTestId('levelcard-L1').locator('.levelcard__count')).toBeVisible();
 });
 
 test('no subproblem codes appear as visible text', async ({ page }) => {

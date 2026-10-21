@@ -4,8 +4,9 @@ import { EmptyState } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
 import { Math as TeX } from '../../components/Math.tsx';
 import { CaptureGlyph } from '../../components/StatusGlyph.tsx';
-import { datasetById, db, FRAMEWORK_PAPER, paperLabel, papers, RTI_URL, tx } from '../../data.ts';
+import { datasetById, db, FRAMEWORK_PAPER, paperById, paperLabel, papers, RTI_URL, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
+import { inEvaluations } from '../../lib/scope.ts';
 import { useUrl } from '../../state/url.ts';
 import { FeaturedChart } from './FeaturedChart.tsx';
 import { furthestLoop, mergePaper, rowMatches, type PaperEvalRow } from './merge.ts';
@@ -14,6 +15,12 @@ import { RealismPlot } from './RealismPlot.tsx';
 const TERMS = Object.keys(tx.net_value.terms);
 const LOOPS = Object.keys(tx.loop_types);
 const METRICS = Object.keys(tx.metrics);
+
+/** Level scope (SPEC §6.2): this page counts and shows only papers at a focus level. */
+const inScope = (r: { paper: string }) => {
+  const p = paperById.get(r.paper);
+  return !!p && inEvaluations(p);
+};
 
 function metricsForTerm(term: string) {
   return METRICS.filter((m) => tx.metrics[m].terms.includes(term));
@@ -356,7 +363,7 @@ function DatasetTable() {
           </thead>
           <tbody>
             {rows.map((d) => {
-              const users = [...new Set(d.used_by.map((u) => u.paper))];
+              const users = [...new Set(d.used_by.filter(inScope).map((u) => u.paper))];
               const active = url.get('dataset') === d.id;
               return (
                 <Fragment key={d.id}>
@@ -531,7 +538,7 @@ function MetricsList({ onHoverMetric }: { onHoverMetric: (m: string | null) => v
                   <span className={`kind kind--${M.kind}`} title={tx.metric_kinds[M.kind]}>
                     {M.kind}
                   </span>
-                  <span className="metric-row__used small muted">used in {db.metric_used_by[m]?.length ?? 0}</span>
+                  <span className="metric-row__used small muted">used in {(db.metric_used_by[m] ?? []).filter(inScope).length}</span>
                 </button>
               </li>
             );
@@ -549,7 +556,7 @@ const REALISM_ORDER = {
   human: Object.keys(tx.realism.human.levels),
   environment: Object.keys(tx.realism.environment.levels),
 };
-const paperRows: PaperEvalRow[] = papers.filter((p) => (p.evaluations ?? []).length).map((p) => mergePaper(p, LOOPS, REALISM_ORDER));
+const paperRows: PaperEvalRow[] = papers.filter((p) => inEvaluations(p) && (p.evaluations ?? []).length).map((p) => mergePaper(p, LOOPS, REALISM_ORDER));
 
 export function EvaluationsPage() {
   const url = useUrl();
@@ -577,7 +584,7 @@ export function EvaluationsPage() {
       </div>
       <RealismPlot rows={paperRows} matches={matches} />
       <FilterBar
-        controls={['level', 'family', 'theme']}
+        controls={['family', 'theme']}
         extra={
           <span className="filterbar__extra chips">
             <label className="colfilter">

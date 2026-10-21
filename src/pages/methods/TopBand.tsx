@@ -1,4 +1,4 @@
-// Methods top band (SPEC §7.1): level cards, a condensed timeline with one row per level, and the legend.
+// Methods top band (SPEC §7.1): level cards, a condensed timeline with one row per L2 and L1 card, and the legend.
 import { brushX, type BrushBehavior } from 'd3-brush';
 import { select } from 'd3-selection';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -8,7 +8,7 @@ import { EDGE_LABEL, EDGE_TYPES, edgeParam, parseEdgeTypes, type EdgeType } from
 import { matchesGlobal } from '../../lib/filters.ts';
 import type { DbPaper, LevelId } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
-import { BAND_LEVELS, familyHue, GRAPH_LEVELS, TANGENTS_IN_GRAPH, TIMELINE_START, type FamilyInfo } from './constants.ts';
+import { BAND_LEVELS, familyHue, FOCUS_LEVELS, TANGENTS_IN_GRAPH, TIMELINE_START, type FamilyInfo } from './constants.ts';
 
 const PRE_W = 86;
 const BREAK_W = 12;
@@ -60,19 +60,23 @@ function useWidth<T extends HTMLElement>() {
   return [ref, w] as const;
 }
 
+/** `level=` names the selected card. It highlights that card's timeline row only (SPEC §6.2). */
+function useSelectedLevel(): LevelId | null {
+  const v = useUrl().get('level');
+  return (BAND_LEVELS as readonly string[]).includes(v ?? '') ? (v as LevelId) : null;
+}
+
 function LevelCard({ level, count }: { level: LevelId; count: number }) {
   const url = useUrl();
   const L = tx.levels[level];
-  const levels = url.filters.level;
-  const on = levels.includes(level);
-  const selected = levels.length === 1 ? levels[0] : null;
+  const on = useSelectedLevel() === level;
   return (
     <button
       type="button"
       className={`levelcard levelcard--${level}${on ? ' is-on' : ''}`}
       aria-pressed={on}
       data-testid={`levelcard-${level}`}
-      onClick={() => url.set({ level: selected === level ? null : level })}
+      onClick={() => url.set({ level: on ? null : level })}
     >
       <span className="levelcard__top">
         <span className={`level-chip level-chip--${level}`}>{level}</span>
@@ -84,6 +88,22 @@ function LevelCard({ level, count }: { level: LevelId; count: number }) {
       <KnownsChips knowns={L.knowns} />
       <span className="levelcard__def">{L.definition}</span>
     </button>
+  );
+}
+
+/** L0 is a baseline description: no paper count, no timeline row, no click action (SPEC §7.1). */
+function BaselineCard({ level }: { level: LevelId }) {
+  const L = tx.levels[level];
+  return (
+    <div className={`levelcard levelcard--${level} levelcard--baseline`} data-testid={`levelcard-${level}`}>
+      <span className="levelcard__top">
+        <span className={`level-chip level-chip--${level}`}>{level}</span>
+        <strong>{L.name}</strong>
+      </span>
+      <KnownsChips knowns={L.knowns} />
+      <span className="levelcard__def">{L.definition}</span>
+      {L.note && <span className="levelcard__note">{L.note}</span>}
+    </div>
   );
 }
 
@@ -104,6 +124,7 @@ function TimelineRow({
 }) {
   const url = useUrl();
   const f = url.filters;
+  const selected = useSelectedLevel() === level;
   const placed = useMemo(() => {
     const byBand = new Map<number, DbPaper[]>();
     for (const p of papers) {
@@ -118,10 +139,17 @@ function TimelineRow({
   }, [papers, bands]);
   const maxSlot = Math.max(0, ...placed.map((x) => x.slot + 1));
   const height = Math.max(44, ROW_PAD * 2 + maxSlot * (CHIP_H + CHIP_GAP) - CHIP_GAP);
-  const inGraph = GRAPH_LEVELS.includes(level);
+  const inGraph = FOCUS_LEVELS.includes(level);
 
   return (
-    <div className={`tl__row tl__row--${level}`} style={{ minHeight: height }} data-testid={`timeline-${level}`} role="list" aria-label={`${tx.levels[level].name} papers by year`}>
+    <div
+      className={`tl__row tl__row--${level}${selected ? ' is-on' : ''}`}
+      style={{ minHeight: height }}
+      data-testid={`timeline-${level}`}
+      data-selected={selected ? 'true' : 'false'}
+      role="list"
+      aria-label={`${tx.levels[level].name} papers by year${selected ? ', selected' : ''}`}
+    >
       {width > 0 &&
         bands.map((b) => <span key={b.key} className={`tl__band${b.pre ? ' tl__band--pre' : ''}`} style={{ left: b.x0, width: b.x1 - b.x0 }} aria-hidden="true" />)}
       {width > 0 &&
@@ -373,6 +401,9 @@ export function TopBand({
           </div>
         </div>
       ))}
+      <div className="mtop__card mtop__card--L0">
+        <BaselineCard level="L0" />
+      </div>
       <div className="mtop__axis" ref={ref}>
         <TimelineAxis bands={bands} width={width} />
       </div>

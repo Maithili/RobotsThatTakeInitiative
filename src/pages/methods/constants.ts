@@ -1,17 +1,12 @@
-import type { LevelId } from '../../schema.ts';
-
 /** First year with its own band on the Methods timeline. Earlier papers share one "Before" band (SPEC §7.1). */
 export const TIMELINE_START = 2021;
 
-/** Levels the literature graph shows (SPEC §7.2). L1 papers appear in the timeline and the list view. */
-export const GRAPH_LEVELS: readonly LevelId[] = ['L2'];
+/** Level scope lives in one shared place (SPEC §6.2). */
+export { BAND_LEVELS, FOCUS_LEVELS } from '../../lib/scope.ts';
 
 /** Whether tangential works appear in the literature graph and the list view at all (SPEC §7.2).
  *  When true, readers can still hide them with "Show tangential works" (`tangents=0`). */
 export const TANGENTS_IN_GRAPH = true;
-
-/** Levels with a card and a timeline row, top to bottom. The Methods page does not show L0. */
-export const BAND_LEVELS: readonly LevelId[] = ['L2', 'L1'];
 
 /** Family hues in taxonomy order: teal (Goal Inference), coral (Temporal Imitation), then hues for new families. */
 export const FAMILY_HUES = 4;

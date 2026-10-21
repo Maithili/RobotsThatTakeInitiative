@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { datasetById, fixUrl, pagesFor, paperById, paperLabel, SUBS, tx } from '../data.ts';
+import { inMethodsGraph } from '../lib/scope.ts';
 import type { DbPaper } from '../schema.ts';
 import { applyParams, useUrl } from '../state/url.ts';
 import { ActionChip, InputChip, KnownsChips, LevelChip, LoopPill, MetricChip } from './Chip.tsx';
@@ -267,7 +268,7 @@ function DrawerBody({ p }: { p: DbPaper }) {
                 key={pg}
                 to={{
                   pathname: `/${pg}`,
-                  search: applyParams(url.search, pg === 'methods' && p.method ? { focus: p.id } : {}),
+                  search: applyParams(url.search, pg === 'methods' && inMethodsGraph(p) ? { focus: p.id } : {}),
                 }}
               >
                 {PAGE_LABEL[pg]}
