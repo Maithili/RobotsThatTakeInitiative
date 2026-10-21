@@ -462,7 +462,7 @@ Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, th
 
 | Param | Scope | Example | Meaning |
 |---|---|---|---|
-| `level` | global | `L1,L2` | Level filter |
+| `level` | Methods | `L1` | Selected level card. It highlights that card's timeline row only. |
 | `family` | global | `temporal_imitation` | Family filter |
 | `action` | global | `act,ask` | Action type filter |
 | `input` | global | `scene_graph` | Input modality filter |
@@ -483,7 +483,8 @@ Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, th
 
 Rules.
 
-- Global filters apply on every page. A paper with no method block fails any `level`, `family`, `action`, or `input` filter.
+- **Level scope.** Outside the Methods top band (§7.1), the site shows only L2 papers, plus papers with no level: subproblem works, tangential works, and dataset-only papers. L1 papers appear only in the L1 timeline row, and in the drawer when opened from there or from search. One constant holds this (`FOCUS_LEVELS = ['L2']`). The literature graph, the list view, the Evaluations page (protocols table, realism plot, dataset "used by" counts), and the Subproblems page (lists, counts, matrix) all apply it.
+- Global filters apply on every page. A paper with no method block fails any `family`, `action`, or `input` filter.
 - Page params stay in the URL when the reader switches pages, so coming back restores the view. Each page ignores params that are not its own.
 - Filter changes use `replaceState`. Opening a paper or switching pages uses `pushState`, so Back closes the drawer.
 - Every page has a filter bar that shows active global filters as removable chips, with "Clear all".
@@ -534,7 +535,7 @@ Left to right: level cards, condensed timeline, legend. Under 900 px the legend 
 
 ### 7.2 Literature graph
 
-- **Scope.** The core of the graph is algorithmic: every L2 paper with a method block and no `tangent`. One constant holds the levels it shows (`GRAPH_LEVELS = ['L2']`). L1 papers appear in the timeline and the list view.
+- **Scope.** The core of the graph is algorithmic: every paper at a level in `FOCUS_LEVELS` (L2) with a method block and no `tangent`. L1 papers appear only in the top band (§6.2 Level scope).
 - **Tangential works.** Papers with a `tangent` also show in the graph, at half opacity, along with the edges that touch them. Hover or focus brings a tangential node and its edges to full opacity, and its hover card names its tangent type. They sit outside the cluster hulls (§7.2 Layout). They do not appear in the timeline.
 - **Clusters.** One cluster per L2 family, so Goal Inference and Temporal Imitation to start. Each cluster draws as a soft tinted hull behind its nodes, labeled with the family name, with the scope line, strength, and limitations on hover. Papers with no family sit outside the hulls, in the space between the clusters. GAP is one of these.
 - **Layout.** `d3-force`, run for a fixed number of ticks from seeded positions, so the layout is identical on every load. Cluster centers sit evenly spaced on a circle, which puts two clusters left and right. Each node pulls toward its cluster center, and nodes with no family pull toward the center point between clusters. Tangential works take no cluster pull. A weak radial force places them on a ring outside the clusters, and their links pull them toward the papers they connect to. Links pull connected nodes together weakly, and a collision force keeps pills apart. The layout depends only on the data. Filters dim nodes and never move them.
@@ -543,8 +544,8 @@ Left to right: level cards, condensed timeline, legend. Under 900 px the legend 
 - **Edges** follow §5.5 and draw as curves under the nodes. Hovering an edge lists every relation between its two papers.
 - **Hover or focus** on a node shows a card with short name and year, title (one line, truncated), core strength, inputs → action types, and knowns chips.
 - **Click** on a node highlights all its ancestors and descendants through the edge types currently shown, dims the rest, sets `focus=`, and opens the drawer. Clicking empty canvas or pressing Esc clears the focus.
-- **Filter bar**: family, action type, input modality, theme, years. Selecting L1 dims every graph node and shows the note "The graph shows unprompted (L2) methods."
-- **View toggle**, Graph or List. The list covers all methods at every level, grouped by level then family, then tangential works grouped by tangent type, with sortable columns for short name, year, title, inputs, action types, core strength, and count of subproblems addressed. List is the default under 640 px.
+- **Filter bar**: family, action type, input modality, theme, years. Selecting a level card affects only the top band.
+- **View toggle**, Graph or List. The list covers the same papers as the graph: L2 methods grouped by family, then tangential works grouped by tangent type, with sortable columns for short name, year, title, inputs, action types, core strength, and count of subproblems addressed. List is the default under 640 px.
 - The graph fits its container width and scales down on narrow screens. The page itself never scrolls horizontally.
 
 ## 8. Evaluations page
@@ -656,7 +657,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 **End-to-end tests (Playwright)** on the seed data:
 
 1. Each page loads with no console errors.
-2. Setting L2 on Methods and switching to Subproblems keeps the filter. Back restores the previous view.
+2. Setting the Goal Inference family filter on Methods and switching to Subproblems keeps the filter. Back restores the previous view. No L1 paper appears in the graph, the list view, the protocols table, the realism plot, or the Subproblems page.
 3. `?paper=gap` opens the drawer, and Esc closes it.
 4. Hovering a timeline chip highlights the same node in the graph. GAP's node sits outside both cluster hulls.
 5. Clicking ΔC↑ leaves net actions saved, perturbed actions, and F1 in the metrics list.
