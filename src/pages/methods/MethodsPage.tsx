@@ -1,0 +1,240 @@
+import { useMemo, useState } from 'react';
+import { ActionChip, InputChip, LevelChip } from '../../components/Chip.tsx';
+import { EmptyState, Missing } from '../../components/EmptyState.tsx';
+import { FilterBar } from '../../components/FilterBar.tsx';
+import { fixUrl, papers as allPapers, tx } from '../../data.ts';
+import { matchesGlobal } from '../../lib/filters.ts';
+import type { DbPaper, LevelId } from '../../schema.ts';
+import { useUrl } from '../../state/url.ts';
+import { LevelNavigator } from './LevelNavigator.tsx';
+import { buildLanes, LineageGraph } from './LineageGraph.tsx';
+import { syntheticPapers } from './synthetic.ts';
+
+type SortKey = 'short_name' | 'year' | 'title' | 'inputs' | 'actions' | 'core' | 'subs';
+
+const COLS: { key: SortKey; label: string }[] = [
+  { key: 'short_name', label: 'Name' },
+  { key: 'year', label: 'Year' },
+  { key: 'title', label: 'Title' },
+  { key: 'inputs', label: 'Inputs' },
+  { key: 'actions', label: 'Action types' },
+  { key: 'core', label: 'Core strength' },
+  { key: 'subs', label: 'Addressed' },
+];
+
+const addressed = (p: DbPaper) => Object.values(p.subproblems ?? {}).filter((t) => t?.status === 'addresses').length;
+
+function sortVal(p: DbPaper, k: SortKey): string | number {
+  switch (k) {
+    case 'short_name':
+      return p.short_name.toLowerCase();
+    case 'year':
+      return p.year;
+    case 'title':
+      return p.title.toLowerCase();
+    case 'inputs':
+      return (p.method?.inputs ?? []).join();
+    case 'actions':
+      return (p.method?.action_types ?? []).join();
+    case 'core':
+      return p.method?.core_strength ?? '';
+    case 'subs':
+      return addressed(p);
+  }
+}
+
+function MethodsList({ papers }: { papers: DbPaper[] }) {
+  const url = useUrl();
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'year', dir: 1 });
+  const visible = papers.filter((p) => matchesGlobal(p, url.filters));
+  const groups = buildLanes(visible).filter((l) => l.papers.length);
+  const unclassified = visible.filter((p) => p.method && !p.level);
+  if (unclassified.length) groups.push({ id: 'none', level: 'L0', family: null, title: 'Not yet classified', papers: unclassified });
+
+  if (!visible.length) return <EmptyState>No methods match these filters.</EmptyState>;
+
+  const sorted = (ps: DbPaper[]) =>
+    [...ps].sort((a, b) => {
+      const va = sortVal(a, sort.key);
+      const vb = sortVal(b, sort.key);
+      return (va < vb ? -1 : va > vb ? 1 : 0) * sort.dir || a.short_name.localeCompare(b.short_name);
+    });
+
+  return (
+    <div className="scroll-x">
+      <table className="table methods-table" data-testid="methods-list">
+        <thead>
+          <tr>
+            {COLS.map((c) => (
+              <th key={c.key} scope="col" aria-sort={sort.key === c.key ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
+                <button type="button" className="th-sort" onClick={() => setSort((s) => ({ key: c.key, dir: s.key === c.key ? ((-s.dir) as 1 | -1) : 1 }))}>
+                  {c.label}
+                  <span aria-hidden="true">{sort.key === c.key ? (sort.dir === 1 ? ' ▲' : ' ▼') : ''}</span>
+                </button>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        {groups.map((g) => (
+          <tbody key={g.id}>
+            <tr className="group-row">
+              <th colSpan={COLS.length} scope="colgroup">
+                {g.id === 'none' ? <LevelChip level={null} /> : <LevelChip level={g.level} />} {g.title} <span className="muted">· {g.papers.length}</span>
+              </th>
+            </tr>
+            {sorted(g.papers).map((p) => (
+              <tr key={p.id} className="clickable" data-locate={p.id} onClick={() => url.openPaper(p.id)}>
+                <td>
+                  <button type="button" className="linkish strong" onClick={(e) => {
+                    e.stopPropagation();
+                    url.openPaper(p.id);
+                  }}>
+                    {p.short_name}
+                  </button>
+                </td>
+                <td className="num">{p.year}</td>
+                <td className="title-cell">{p.title}</td>
+                <td>{(p.method?.inputs ?? []).map((i) => <InputChip key={i} id={i} />)}</td>
+                <td>{(p.method?.action_types ?? []).map((a) => <ActionChip key={a} type={a} />)}</td>
+                <td className="core-cell">{p.method?.core_strength ?? <Missing href={fixUrl(p, 'method.core_strength')} />}</td>
+                <td className="num">{addressed(p)}</td>
+              </tr>
+            ))}
+          </tbody>
+        ))}
+      </table>
+    </div>
+  );
+}
+
+export function MethodsPage() {
+  const url = useUrl();
+  const synthetic = Number(url.get('synthetic')) || 0;
+  const papers = useMemo(() => (synthetic ? syntheticPapers(synthetic) : allPapers), [synthetic]);
+  const methods = useMemo(() => papers.filter((p) => p.method), [papers]);
+  const classified = methods.filter((p) => p.level);
+  const unclassified = methods.filter((p) => !p.level);
+  const surveys = papers.filter((p) => p.type === 'survey');
+  const counts = useMemo(() => {
+    const c: Record<LevelId, number> = { L0: 0, L1: 0, L2: 0 };
+    for (const p of classified) c[p.level!]++;
+    return c;
+  }, [classified]);
+  const narrow = typeof window !== 'undefined' && window.innerWidth < 640;
+  const view = url.get('view') === 'list' || (url.get('view') !== 'graph' && narrow) ? 'list' : 'graph';
+  const yearSpan = useMemo<[number, number]>(() => {
+    const ys = methods.map((p) => p.year);
+    return [Math.min(...ys), Math.max(...ys)];
+  }, [methods]);
+  const f = url.filters;
+
+  return (
+    <div className="page page--wide">
+      <div className="page__intro">
+        <h1>Methods</h1>
+        <p className="lede">Proactive methods by level of proactivity: what the robot knows about the goal g and the human policy π<sup>h</sup>.</p>
+      </div>
+
+      <div className="methods-top">
+        <LevelNavigator counts={counts} />
+        <div className="methods-side">
+          {surveys.length > 0 && (
+            <section className="strip" aria-label="Surveys">
+              <h2 className="strip__title">Surveys</h2>
+              <div className="chips">
+                {surveys.map((p) => (
+                  <button key={p.id} type="button" className="chip chip--paper" data-locate={p.id} onClick={() => url.openPaper(p.id)}>
+                    {p.short_name} <span className="muted">{p.year}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+          <section className="strip" aria-label="Not yet classified">
+            <h2 className="strip__title">
+              Not yet classified <span className="muted">· {unclassified.length}</span>
+            </h2>
+            <p className="small muted">Proactive behaviors with no level assigned.</p>
+            {unclassified.length ? (
+              <div className="chips">
+                {unclassified.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`chip chip--paper${matchesGlobal(p, f) ? '' : ' is-dim'}`}
+                    data-locate={p.id}
+                    onClick={() => url.openPaper(p.id)}
+                  >
+                    {p.short_name} <span className="muted">{p.year}</span>
+                    {(p.method?.action_types ?? []).map((a) => (
+                      <span key={a} className="small muted">
+                        · {tx.action_types[a]?.label}
+                      </span>
+                    ))}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <EmptyState compact>Every method has a level.</EmptyState>
+            )}
+          </section>
+          <section className="strip legend-strip" aria-label="Legend">
+            <h2 className="strip__title">Legend</h2>
+            <ul className="legend">
+              {Object.entries(tx.action_types).map(([id, a]) => (
+                <li key={id}>
+                  <ActionChip type={id} />
+                  <span className="sr-only">{a.definition}</span>
+                </li>
+              ))}
+            </ul>
+            <ul className="legend small">
+              <li>
+                <svg width="28" height="8" aria-hidden="true">
+                  <line x1="0" y1="4" x2="28" y2="4" className="lg__edge lg__edge--builds" />
+                </svg>
+                Builds on
+              </li>
+              <li>
+                <svg width="28" height="8" aria-hidden="true">
+                  <line x1="0" y1="4" x2="28" y2="4" className="lg__edge lg__edge--baseline" />
+                </svg>
+                Compared against
+              </li>
+            </ul>
+          </section>
+        </div>
+      </div>
+
+      <FilterBar
+        controls={['family', 'action', 'input', 'theme']}
+        years={yearSpan}
+        extra={
+          <span className="filterbar__extra">
+            <span className="seg seg--sm" role="group" aria-label="View">
+              <button type="button" className={view === 'graph' ? 'seg__btn is-on' : 'seg__btn'} aria-pressed={view === 'graph'} onClick={() => url.set({ view: 'graph' })}>
+                Graph
+              </button>
+              <button type="button" className={view === 'list' ? 'seg__btn is-on' : 'seg__btn'} aria-pressed={view === 'list'} onClick={() => url.set({ view: 'list' })}>
+                List
+              </button>
+            </span>
+            {view === 'graph' && (
+              <label className="check">
+                <input type="checkbox" checked={url.get('edges') === 'baselines'} onChange={(e) => url.set({ edges: e.target.checked ? 'baselines' : null })} />
+                Show baseline comparisons
+              </label>
+            )}
+          </span>
+        }
+      />
+
+      {synthetic > 0 && <p className="notice small">Showing {synthetic} synthetic papers (layout test fixture), not real data.</p>}
+      {classified.every((p) => !(p.method?.builds_on ?? []).length) && view === 'graph' && (
+        <p className="small muted">No lineage edges yet: the RTI paper does not state which methods extend which. Turn on baseline comparisons to see evaluation links.</p>
+      )}
+
+      {view === 'graph' ? <LineageGraph papers={classified} /> : <MethodsList papers={methods} />}
+    </div>
+  );
+}

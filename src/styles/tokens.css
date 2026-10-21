@@ -1,0 +1,139 @@
+/* Color, type and spacing tokens (SPEC §11). Light by default; dark under prefers-color-scheme
+   unless the reader picked a theme, which sets [data-theme] on <html>. */
+:root {
+  color-scheme: light;
+  --bg: #fbfbfa;
+  --surface: #ffffff;
+  --surface-2: #f3f3f1;
+  --surface-3: #e9e9e6;
+  --border: #dcdcd7;
+  --border-strong: #b9b9b2;
+  --text: #1c1d21;
+  --text-2: #4a4c55;
+  --text-3: #6b6d76;
+  --accent: #3a4fc4;
+  --accent-soft: #e8ebfb;
+  --focus: #2f6fed;
+  --danger: #b4232c;
+
+  /* Levels: one sequential indigo ramp, lightest L0 to darkest L2. */
+  --level-L0: #a5b4ec;
+  --level-L1: #5c71d6;
+  --level-L2: #23307a;
+  --level-L0-ink: #1c2660;
+  --level-L1-ink: #ffffff;
+  --level-L2-ink: #ffffff;
+  --level-none: #9a9ca5;
+
+  /* Net value terms: four categorical colors, always paired with their symbols. */
+  --term-dV: #1b8a5a;
+  --term-dC_saved: #2a6fdb;
+  --term-dC_added: #c4471d;
+  --term-Cr: #7d5aa6;
+
+  /* Featured chart series: offline (neutral) vs the two closed-loop runs. */
+  --series-0: #9ea3b0;
+  --series-1: #d0792e;
+  --series-2: #8a3d10;
+
+  /* Subproblem flow highlights. */
+  --upstream: #2a6fdb;
+  --upstream-soft: #e3edfc;
+  --downstream: #c4471d;
+  --downstream-soft: #fbe9e2;
+
+  --stage-grounding: #edf5ef;
+  --stage-anticipation: #eef0fb;
+  --stage-planning: #fbf1e7;
+
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 8px 40px rgb(0 0 0 / 0.18);
+  --radius: 8px;
+  --radius-sm: 5px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --content: 1280px;
+  --header-h: 56px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #131418;
+    --surface: #1b1d22;
+    --surface-2: #23252c;
+    --surface-3: #2d3038;
+    --border: #353842;
+    --border-strong: #4b4f5c;
+    --text: #ecedf0;
+    --text-2: #b9bcc6;
+    --text-3: #959aa6;
+    --accent: #8d9cf5;
+    --accent-soft: #262c4d;
+    --focus: #7aa5ff;
+    --danger: #ff8d8d;
+    --level-L0: #3a467e;
+    --level-L1: #6577dc;
+    --level-L2: #b4c0ff;
+    --level-L0-ink: #ffffff;
+    --level-L1-ink: #ffffff;
+    --level-L2-ink: #10163d;
+    --level-none: #6d717c;
+    --term-dV: #4cc68f;
+    --term-dC_saved: #6aa3ff;
+    --term-dC_added: #ff8a5c;
+    --term-Cr: #b897e0;
+    --upstream: #6aa3ff;
+    --upstream-soft: #1c2b47;
+    --downstream: #ff8a5c;
+    --downstream-soft: #3e2419;
+    --series-0: #6f7482;
+    --series-1: #f0a15c;
+    --series-2: #ffcf9e;
+    --stage-grounding: #1b2a21;
+    --stage-anticipation: #1e2238;
+    --stage-planning: #2e2419;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 8px 40px rgb(0 0 0 / 0.6);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #131418;
+  --surface: #1b1d22;
+  --surface-2: #23252c;
+  --surface-3: #2d3038;
+  --border: #353842;
+  --border-strong: #4b4f5c;
+  --text: #ecedf0;
+  --text-2: #b9bcc6;
+  --text-3: #959aa6;
+  --accent: #8d9cf5;
+  --accent-soft: #262c4d;
+  --focus: #7aa5ff;
+  --danger: #ff8d8d;
+  --level-L0: #3a467e;
+  --level-L1: #6577dc;
+  --level-L2: #b4c0ff;
+  --level-L0-ink: #ffffff;
+  --level-L1-ink: #ffffff;
+  --level-L2-ink: #10163d;
+  --level-none: #6d717c;
+  --term-dV: #4cc68f;
+  --term-dC_saved: #6aa3ff;
+  --term-dC_added: #ff8a5c;
+  --term-Cr: #b897e0;
+  --upstream: #6aa3ff;
+  --upstream-soft: #1c2b47;
+  --downstream: #ff8a5c;
+  --downstream-soft: #3e2419;
+  --series-0: #6f7482;
+  --series-1: #f0a15c;
+  --series-2: #ffcf9e;
+  --stage-grounding: #1b2a21;
+  --stage-anticipation: #1e2238;
+  --stage-planning: #2e2419;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 8px 40px rgb(0 0 0 / 0.6);
+}

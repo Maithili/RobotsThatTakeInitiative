@@ -31,17 +31,24 @@ const known = z.enum(['known', 'unknown']);
 // ---------- taxonomy ----------
 
 const defn = z.object({ label: z.string(), definition: z.string() });
+const levelDef = z.object({
+  name: z.string(),
+  knowns: z.object({ goal: known, human_policy: known }),
+  definition: z.string(),
+  note: z.string().optional(),
+});
+const subproblemDef = z.object({
+  name: z.string(),
+  stage: z.string(),
+  input: z.string(),
+  output: z.string(),
+  challenge: z.string(),
+  depends_on: z.array(z.enum(SUBPROBLEM_IDS)),
+  approaches: z.record(z.string()),
+});
 
 export const TaxonomySchema = z.object({
-  levels: z.record(
-    z.enum(LEVEL_IDS),
-    z.object({
-      name: z.string(),
-      knowns: z.object({ goal: known, human_policy: known }),
-      definition: z.string(),
-      note: z.string().optional(),
-    }),
-  ),
+  levels: z.object({ L0: levelDef, L1: levelDef, L2: levelDef }),
   families: z.record(
     z.object({
       name: z.string(),
@@ -55,18 +62,7 @@ export const TaxonomySchema = z.object({
   action_types: z.record(defn),
   observation_modalities: z.record(defn),
   stages: z.record(z.object({ name: z.string(), definition: z.string() })),
-  subproblems: z.record(
-    z.enum(SUBPROBLEM_IDS),
-    z.object({
-      name: z.string(),
-      stage: z.string(),
-      input: z.string(),
-      output: z.string(),
-      challenge: z.string(),
-      depends_on: z.array(z.enum(SUBPROBLEM_IDS)),
-      approaches: z.record(z.string()),
-    }),
-  ),
+  subproblems: z.object(Object.fromEntries(SUBPROBLEM_IDS.map((s) => [s, subproblemDef])) as Record<SubproblemId, typeof subproblemDef>),
   themes: z.record(defn),
   statuses: z.record(z.object({ glyph: z.string(), label: z.string() })),
   relations: z.record(defn),
