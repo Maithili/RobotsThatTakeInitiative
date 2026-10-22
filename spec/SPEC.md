@@ -649,7 +649,13 @@ Columns: name, kind (Dataset or Setup), environment, based on (such as "Extends 
 
 ### 8.6 Metrics list
 
-One tab per metric category, in category order, showing only categories that a paper on the page uses. Each tab lists that category's metrics by their exact names, each with a short definition (one line), direction (↑ or ↓), unit, small term dots, and a used-by count. Metrics that share a `group` show as one item with the group's label and definition, with the member names listed. Clicking a category chip in the table or a tab sets `category=`. Clicking a metric sets `metric=`.
+A vertical list of category boxes, one per metric category in category order, all visible at once with no tabs (per Maithili, Oct 22 2026). Each box shows only categories that a paper on the page uses. The box heading is the category label. Its rows are the metrics themselves, as a concise list:
+- Similar metrics collapse into one row through `group`, for example "Goal precision, recall, and F1" or "Ratings of goal knowledge, helpfulness, and trust".
+- Each row shows the metric or group name, ↑ or ↓, and a one-line definition.
+- Each row links to the papers that use it, as short-name links that open the drawer.
+- Term dots and units appear on hover, not in the row.
+
+Clicking a category chip in the protocols table sets `category=`, filters the table, and scrolls to and highlights that box. Clicking a metric row sets `metric=`.
 
 Metrics with no category never show on this page. That covers metrics used only by tangential or excluded papers (object search, persistence, emergencies) and Din 2025's relation accuracy. Computational metrics (training time, training samples, inference time, planning time) and ProAct's saved steps metrics are out of the data entirely, per Maithili: ProAct's evaluation is activity prediction, not closed loop.
 
