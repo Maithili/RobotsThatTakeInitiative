@@ -554,7 +554,7 @@ A 420 px right-side panel, and a bottom sheet under 640 px. Sections in order, w
 2. Links as buttons: Paper ↗, Code ↗, Project ↗ (only those present). "Copy BibTeX" if present.
 3. Level: knowns chips in the style of the GAP paper Fig. 1 right panel ("g known · π^h unknown → L1"), then family.
 4. Core strength (one line). Inputs → action types as chips.
-5. Subproblems: a strip of seven cells labeled with subproblem short names and status glyphs, then one row per tagged subproblem with note and relation.
+5. Subproblems: a strip of seven cells (four per row, so names never break mid-word) labeled with subproblem short names and status glyphs, then one row per tagged subproblem with note and relation.
 6. Evaluations: per entry, a loop-type pill, datasets, metric chips colored by net value term, and captures glyphs.
 7. Lineage: builds on, built upon by, benchmarks against, benchmarked in, cites, cited by. Only papers in the database. All clickable.
 8. "Appears on": links to each page that shows this paper, focused on it.

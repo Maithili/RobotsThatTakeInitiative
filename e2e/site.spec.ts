@@ -1316,6 +1316,31 @@ test.describe('QA: Evaluations', () => {
 
 // QA: Subproblems and site
 
+test('the drawer subproblem strip keeps every name whole, with no mid-word breaks', async ({ page }) => {
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/#/subproblems?paper=nopa');
+    const ids = page.getByTestId('drawer').locator('.sub-strip__id');
+    await expect(ids).toHaveCount(7);
+    const broken = await ids.evaluateAll((els) =>
+      els.filter((el) => {
+        // A word split across lines shows as a line box narrower than the word itself, or as overflow.
+        const words = (el.textContent ?? '').split(/[\s-]+/);
+        const probe = document.createElement('span');
+        probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font:inherit';
+        el.appendChild(probe);
+        const tooWide = words.some((w) => {
+          probe.textContent = w;
+          return probe.getBoundingClientRect().width > el.clientWidth;
+        });
+        probe.remove();
+        return tooWide || el.scrollWidth > el.clientWidth + 1;
+      }).map((el) => el.textContent),
+    );
+    expect(broken, `at ${width} px`).toEqual([]);
+  }
+});
+
 test('the drawer marks "assumes given" with its own glyph, not the half moon, and keys the strip with a legend', async ({ page }) => {
   await page.goto('/#/subproblems?paper=nopa');
   const drawer = page.getByTestId('drawer');
@@ -1330,9 +1355,11 @@ test('the drawer marks "assumes given" with its own glyph, not the half moon, an
   await expect(assumes.locator('path')).toHaveCount(0);
   await expect(strip.getByRole('listitem').filter({ hasText: 'Goal inference' }).getByRole('img', { name: 'Addresses' })).toBeVisible();
   await expect(strip.getByRole('listitem').filter({ hasText: 'Cost model' })).toHaveAttribute('title', 'Cost modeling: not tagged');
-  // Every glyph in the strip sits on one line, however many lines its label takes.
-  const tops = await strip.locator('[data-status]').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
-  expect(new Set(tops).size).toBe(1);
+  // Glyphs in the same strip row sit on one line, however many lines their labels take.
+  const pos = await strip.locator('[data-status]').evaluateAll((els) =>
+    els.map((e) => ({ row: Math.round(e.closest('[role="listitem"]')!.getBoundingClientRect().top), top: Math.round(e.getBoundingClientRect().top) })),
+  );
+  for (const row of new Set(pos.map((p) => p.row))) expect(new Set(pos.filter((p) => p.row === row).map((p) => p.top)).size).toBe(1);
   const legend = drawer.getByRole('list', { name: 'Status legend' });
   for (const label of ['Addresses', 'Assumes given', 'Skips', 'Blank: not tagged']) await expect(legend).toContainText(label);
   // The compare view shows the same legend.

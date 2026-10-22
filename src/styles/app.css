@@ -918,7 +918,8 @@ tr.clickable:hover td {
 }
 .sub-strip {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  /* Four columns, so the longest names ("association", "anticipation") fit whole instead of breaking mid-word. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 2px;
 }
 .sub-strip__cell {
@@ -940,8 +941,8 @@ tr.clickable:hover td {
   color: var(--text-2);
   text-align: center;
   padding: 0 2px;
-  hyphens: auto;
-  overflow-wrap: anywhere;
+  hyphens: manual;
+  overflow-wrap: normal;
 }
 .sub-legend {
   font-size: 11.5px;
