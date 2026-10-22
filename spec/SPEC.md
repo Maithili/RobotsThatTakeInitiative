@@ -201,9 +201,9 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     approaches: {cirl: Cooperative inverse RL, proactive_communication: Proactive communication, hedging: Hedging under uncertainty}
 
 tangent_types:                # works next to the algorithmic core. Maithili adds more.
-  hri:            {label: HRI studies, definition: HRI work on proactivity, such as user studies on its desirability and reviews of the field.}
+  hri:            {label: User perceptions of proactivity, definition: User studies and reviews of how people see and define proactive robots.}
   conversational: {label: Conversational proactivity, definition: Proactivity in conversational settings.}
-  search:         {label: Search in changing homes, definition: Finds objects or people in homes that change over time, given what to find.}
+  search:         {label: Dynamic mapping and object search, definition: Models how homes change over time and finds objects or people in them, given what to find.}
 
 themes:                       # cross-cutting, RTI §III-A
   joint_optimization: {label: Joint optimization, definition: Optimizing across subproblems instead of solving each alone.}
@@ -555,29 +555,42 @@ The page has two parts. A top band holds the level cards, a condensed timeline, 
 
 ### 7.1 Top band
 
-Left to right: level cards, condensed timeline, legend. Under 900 px the legend moves below the timeline.
+Left to right: level cards, then the condensed timeline across the remaining width. The legend sits with the graph (§7.2), not in the top band.
 
 - **Level cards.** Three stacked cards, L2 on top, then L1, then L0. The L2 and L1 cards show name, knowns chips, one-line definition, and paper count. The L0 card is a baseline description: name, knowns chips, and definition, with no paper count, no timeline row, and no click action. Clicking the L2 or L1 card selects that level and sets `level=`. Clicking it again clears the selection. No toggle bar for g and π^h.
 - **Condensed timeline.** One row beside the L2 card and one beside the L1 card, holding that level's papers with no breakdown by family. The two rows share one year axis. From 2021 on, each year gets one equal-width band. All earlier papers share one narrow band at the left labeled "Before 2021", in year order, with each paper's year in small text and an axis break mark before 2021. One constant holds the cutoff (`TIMELINE_START = 2021`). Papers show as compact chips with the short name, stacked when they share a year.
   - Hovering a chip highlights the same paper in the graph, and hovering a graph node highlights its chip.
   - Clicking a chip opens the drawer and, if the paper is in the graph, focuses its node.
   - A time brush on the shared axis sets `years=`.
-- **Legend**, in the space right of the timeline: the three edge styles with their checkboxes (bound to `edges=`; builds and benchmarks on by default, "Show all citation lines" off by default), the cluster tints and a "Show tangential works" checkbox. No action-type or level legend bound to `tangents=`.
 
 ### 7.2 Literature graph
 
 - **Scope.** The core of the graph is algorithmic: every paper at a level in `FOCUS_LEVELS` (L2) with a method block and no `tangent`. L1 papers appear only in the top band (§6.2 Level scope).
 - **Semi-tangential families.** A family with `semi_tangential: true` (Implicit Cues to start) gets its own cluster like any family, drawn at 75% opacity: dots, hull, label, and its edges. Hover brings it to full opacity. Its papers count as L2 everywhere else.
-- **Tangential works.** Papers with a `tangent` also show in the graph, at half opacity, along with the edges that touch them. Hover or focus brings a tangential node and its edges to full opacity, and its hover card names its tangent type. They sit outside the cluster hulls (§7.2 Layout). They do not appear in the timeline.
+- **Legend**, directly above the graph inside the graph panel (a compact row that wraps on narrow screens), per Maithili. It shows:
+  - the three edge styles with checkboxes bound to `edges=` (builds on and benchmarks on by default, "Show all citation lines" off)
+  - the families, each with its hull tint
+  - the tangential categories, each with its dot color and no hull
+  - "No category" in gray
+  - the framework-paper ring
+  - dot size and darkness
+  - a "Show tangential works" checkbox bound to `tangents=`
+
+  It has no action-type or level groups. The top band keeps only the level cards and the timeline.
+- **Tangential works.** Papers with a `tangent` also show in the graph, along with the edges that touch them. They don't appear in the timeline, and they sit outside the cluster hulls.
+  - Each tangential category (each `tangent_types` entry) has its own color, set by a `color` slot in the taxonomy.
+  - Its papers are dots in that color at 60% opacity, with no hull or background shading.
+  - Each category has a text label in its color near its papers, such as "Dynamic mapping and object search" or "User perceptions of proactivity".
+  - Hover or focus brings a tangential node and its edges to full opacity, and its hover card names its category.
 - **Clusters.** One cluster per L2 family, so Goal Inference and Temporal Imitation to start. Each cluster draws as a soft tinted hull behind its nodes, labeled with the family name, with the scope line, strength, and limitations on hover. Papers with no family sit outside the hulls, in the space between the clusters. GAP is one of these.
-- **Layout.** Computed once at build time in `scripts/build-data.ts` and stored as x, y per paper in `db.json`, so the graph loads instantly and papers keep their positions between visits. `d3-force` runs a fixed number of ticks from seeded positions. Cluster centers sit evenly spaced on a circle, which puts two clusters left and right. Each node pulls toward its cluster center, and nodes with no family pull toward the point between clusters. Tangential works take no cluster pull and sit in a band just outside the clusters, never far off. The layout is spring-style, to keep edges from crossing nodes and each other. Every edge type (builds on, benchmarks, cites) acts as a spring that pulls its two papers together, all nodes repel each other, and a collision force keeps dots and their labels apart. An extra force pushes each node away from edges it is not part of. After the simulation settles, a deterministic clean-up pass nudges nodes within their cluster to remove remaining edge–node overlaps and reduce edge crossings. Filters dim nodes and never move them.
+- **Layout.** Computed once at build time in `scripts/build-data.ts` and stored as x, y per paper in `db.json`, so the graph loads instantly and papers keep their positions between visits. `d3-force` runs a fixed number of ticks from seeded positions. Cluster centers sit evenly spaced on a circle, which puts two clusters left and right. Each node pulls toward its cluster center, and nodes with no family pull toward the point between clusters. Tangential works pull toward an anchor for their own category, placed in the band just outside the clusters, so each category forms a loose labeled group, never far off. The layout is spring-style, to keep edges from crossing nodes and each other. Every edge type (builds on, benchmarks, cites) acts as a spring that pulls its two papers together, all nodes repel each other, and a collision force keeps dots and their labels apart. An extra force pushes each node away from edges it is not part of. After the simulation settles, a deterministic clean-up pass nudges nodes within their cluster to remove remaining edge–node overlaps and reduce edge crossings. Filters dim nodes and never move them.
 - **Growth.** Adding papers or a new family needs no layout code change. A new family gets its own cluster. The graph stays readable and responsive with a synthetic fixture of 300 papers in 4 clusters plus 30 tangential works: pan and zoom stay smooth, and hover responds within 50 ms.
 - **Nodes** are dots, in the style of ResearchRabbit, matching the mock Maithili approved:
   - Radius grows with the number of database papers the node connects to by any edge type, from 7 px to a capped maximum.
-  - Fill hue is the family: teal for Goal Inference, coral for Temporal Imitation, and a third hue for new families. Papers with no family use purple. GAP (`FRAMEWORK_PAPER`) also gets a purple ring.
+  - Fill hue is the family: teal for Goal Inference, coral for Temporal Imitation, and further hues for new families. Papers that fit no category, meaning core papers with no family and tangential works with no known type, stay gray. GAP (`FRAMEWORK_PAPER`) keeps purple, with a purple ring.
   - Darker fill means a newer paper, from the year's position in the visible range.
   - Every dot has a thin outline in the page background color.
-  - Tangential works are smaller gray dots with a dashed outline, at half opacity.
+  - Tangential works are slightly smaller dots in their category's color at 60% opacity (see Tangential works above).
   - No pills, no boxes, no action-type icons on the node.
 - **Labels** sit to the right of the dot as plain text: short name, then the two-digit year in muted text (" '23"). Don't repeat a year that the short name already contains. At the fitted zoom, only the larger dots show labels, with collision-aware placement that hides overlapping labels. Zooming in reveals more. Hover, focus, selection, and search always show a node's label.
 - **Clusters** draw as soft tinted ellipses or rounded hulls behind their dots, with the family name above in the cluster's dark stop. The scope line, strength, and limitations show on hover over the name.
