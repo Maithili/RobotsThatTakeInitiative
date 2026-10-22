@@ -607,7 +607,7 @@ Left to right: level cards, then the condensed timeline across the remaining wid
 
 ## 8. Evaluations page
 
-Sections from top to bottom.
+Sections from top to bottom. A bare `#/evaluations` URL starts unfiltered: no term, category, metric, or loop type selected, every protocol row shown, and every metric row at full strength.
 
 ### 8.1 Net value navigator
 
@@ -619,7 +619,7 @@ Sections from top to bottom.
 
 ### 8.2 Featured comparison
 
-A grouped bar chart built from `featured_comparison`. It starts with the Offline bars only. An "Add closed loop" toggle brings in the two closed-loop bars per method in 300 ms (instant under `prefers-reduced-motion`). Bars carry value labels. The caption names the source ("GAP paper, Table II"). Clicking a bar opens that method's drawer.
+A grouped bar chart built from `featured_comparison`. Each method's Offline bar always shows next to its two closed-loop bars, with no toggle. Bars carry value labels. The caption names the source ("GAP paper, Table II"). Clicking a bar opens that method's drawer.
 
 ### 8.3 Evaluation realism plot
 
@@ -649,11 +649,14 @@ Columns: name, kind (Dataset or Setup), environment, based on (such as "Extends 
 
 ### 8.6 Metrics list
 
-A vertical list of category boxes, one per metric category in category order, all visible at once with no tabs (per Maithili, Oct 22 2026). Each box shows only categories that a paper on the page uses. The box heading is the category label. Its rows are the metrics themselves, as a concise list:
+A vertical list of category boxes, one per metric category in category order, all visible at once with no tabs (per Maithili, Oct 22 2026). Each box shows only categories that a paper on the page uses. The box heading is the category label, followed by the term tags of its metrics. Its rows are the metrics themselves, as a concise list:
 - Similar metrics collapse into one row through `group`, for example "Goal precision, recall, and F1" or "Ratings of goal knowledge, helpfulness, and trust".
-- Each row shows the metric or group name, ↑ or ↓, and a one-line definition.
+- Each row shows the metric or group name, ↑ or ↓, the unit in small light italic text, and a one-line definition. There is no ↕. A group whose members differ in direction has no arrow on its name and lists its members, each with its own ↑ or ↓, and with its own unit when the units differ too. A group with one direction and several units lists the units.
+- A definition says what is measured without repeating the metric's name.
 - Each row links to the papers that use it, as short-name links that open the drawer.
-- Term dots and units appear on hover, not in the row.
+- Static term tags sit in the row's bottom-right corner, with two labels and no arrows: ΔV for `dV`, and ΔC for `dC_saved`, `dC_added`, and `Cr`. A row shows the union over its metrics, and a row whose metrics serve no term shows none. Rows have no hover card.
+
+Clicking a category header collapses its box to the header line, and clicking again expands it. Boxes start expanded, and one "Collapse all / Expand all" control acts on every box. Collapse state stays out of the URL. It persists per viewer in `localStorage` (inside try/catch), and a selected category or metric opens its box.
 
 Clicking a category chip in the protocols table sets `category=`, filters the table, and scrolls to and highlights that box. Clicking a metric row sets `metric=`. A group row sets the group id, which matches papers that use any of its members. When a term is selected (§8.1), rows whose metrics do not measure it dim rather than hide.
 
@@ -717,7 +720,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 
 **npm scripts**: `dev`, `build` (runs `build-data` first), `validate`, `test`, `e2e`, `new-paper`, `preview`.
 
-**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, and an `evaluations_exclude` id that is not a paper), the `evaluations_exclude` scope, metric box rows (a group as one row, at its first member, dimmed only when no member measures the selected term), the category filter, `metric=` with a group id, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
+**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, and an `evaluations_exclude` id that is not a paper), the `evaluations_exclude` scope, metric box rows (a group as one row, at its first member, dimmed only when no member measures the selected term, tagged ΔV or ΔC by the union of its members' terms), the category filter, `metric=` with a group id, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
 
 **End-to-end tests (Playwright)** on the seed data:
 
@@ -726,7 +729,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 3. `?paper=gap` opens the drawer, and Esc closes it.
 4. Hovering a timeline chip highlights the same node in the graph. GAP's node sits outside both cluster hulls.
 5. ΔC↑ counts 12 metrics, all categorized. Clicking it keeps all seven metric boxes, dims every row in the Implicit need detection and Coordination fluency boxes, and hides the protocol rows of papers with no ΔC↑ metric, such as ProAct and Anticipatory TAMP. Net actions saved, perturbed actions, and F1 stay at full strength.
-6. The featured chart shows 2 bars, then 6 after the toggle.
+6. The featured chart shows 6 bars at load, with no toggle.
 7. Selecting A2 lists NOPA, highlights G1, G2, and A1 upstream, and highlights P2 downstream.
 8. In matrix view, clicking a filled cell opens the drawer. Selecting goal inference does not list SLaTe-PRO, which skips it.
 9. Pinning two papers puts both ids in `compare=`.
@@ -735,7 +738,8 @@ Filter chips for the four themes, bound to the global `theme=`.
 12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table's columns run paper, year, metric categories, environment and datasets, loop types, human models, baselines. It has 12 rows and exactly one GAP row, shaded and first, showing three loop-type pills and the categories Change in user actions and Object movement prediction, and it stays first after sorting by year, name, metric categories, and loop type.
 13. The realism plot shows GAP's dot at task-specific policy and adaptive simulated user, at simulator opacity. Hovering it shows a card with a working Paper link.
 14. With a fixture tangential paper, its graph node renders in its category's color at 60% opacity, and unchecking "Show tangential works" removes it and its edges.
-15. The protocols table shows category labels, one chip per category in category order, and no metric names. The metrics list has no tabs, and every category box is visible at once, in category order. The Task performance box shows "Goal precision, recall, and F1" as one row, with links to Watch-And-Help and NOPA and its three member names in the hover card. Clicking a paper link opens the drawer. Clicking the row sets `metric=goal_prf` and filters the table to those two papers. Clicking a category chip in the table sets `category=`, filters the table, and scrolls to and highlights its box. `metric=speedup` marks its row and filters the table. PredictiveGraphs has no row and no realism dot but stays on the graph and the Subproblems page. ProAct has no closed-loop pill.
+15. The protocols table shows category labels, one chip per category in category order, and no metric names. The metrics list has no tabs, and every category box is visible at once, in category order. The Task performance box shows "Goal precision, recall, and F1 ↑ fraction" as one row, with links to Watch-And-Help and NOPA and no hover card. Clicking a paper link opens the drawer. Clicking the row sets `metric=goal_prf` and filters the table to those two papers. Clicking a category chip in the table sets `category=`, filters the table, and scrolls to and highlights its box. `metric=speedup` marks its row and filters the table. PredictiveGraphs has no row and no realism dot but stays on the graph and the Subproblems page. ProAct has no closed-loop pill.
+16. A bare `#/evaluations` URL has no active filter chip, shows all 12 protocol rows, and dims no metric row. Bare `#/methods` and `#/subproblems` URLs also start with nothing selected or dimmed. Category headers show their ΔV and ΔC tags, collapsing a box hides its rows, and no "↕" appears on the page.
 
 **CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes: `npm ci`, validate, typecheck, unit tests, build, end-to-end tests.
 

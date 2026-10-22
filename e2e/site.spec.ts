@@ -201,11 +201,11 @@ test('5. clicking ΔC↑ counts 12 metrics, dims the rows that do not serve it, 
   for (const id of ['proact', 'anticipatory-tamp']) await expect(table.getByTestId(`protocol-${id}`)).toHaveCount(0);
 });
 
-test('6. the featured chart shows 2 bars, then 6 after the toggle', async ({ page }) => {
+test('6. the featured chart shows all 6 bars at load, offline next to closed loop, with no toggle', async ({ page }) => {
   await page.goto('/#/evaluations');
-  await expect(page.getByTestId('featured-bar')).toHaveCount(2);
-  await page.getByTestId('add-closed-loop').check();
   await expect(page.getByTestId('featured-bar')).toHaveCount(6);
+  await expect(page.getByTestId('add-closed-loop')).toHaveCount(0);
+  await expect(page.getByText('Add closed loop')).toHaveCount(0);
 });
 
 test('7. selecting A2 lists NOPA, highlights G1, G2, A1 upstream and P2 downstream', async ({ page }) => {
@@ -609,12 +609,12 @@ test('15. the protocols table shows metric categories, never metric names; metri
   const task = page.getByTestId('metric-box-task_performance');
   await expect(task.locator('.metric-row')).toHaveCount(6);
   const goal = task.getByTestId('metric-row-goal_prf');
-  await expect(goal.locator('.metric-row__name')).toHaveText('Goal precision, recall, and F1 ↑');
+  await expect(goal.locator('.metric-row__name')).toHaveText('Goal precision, recall, and F1 ↑ fraction');
   await expect(goal.locator('.metric-row__paper')).toHaveText(['Watch-And-Help', 'NOPA']);
-  await expect(task.locator('.metric-row').filter({ hasText: 'Goal recall' })).toHaveCount(1);
-  // Member names, term dots, and units sit in the hover card.
+  for (const m of ['goal_predicate_precision', 'goal_predicate_recall', 'goal_predicate_f1']) await expect(page.getByTestId(`metric-row-${m}`)).toHaveCount(0);
+  // There is no hover card.
   await goal.hover();
-  await expect(goal.getByRole('tooltip').locator('.metric-tip__name')).toHaveText([/Goal precision/, /Goal recall/, /Goal F1/]);
+  await expect(goal.getByRole('tooltip')).toHaveCount(0);
 
   // A paper link opens the drawer and leaves metric= alone.
   await goal.getByRole('button', { name: 'NOPA' }).click();
@@ -822,29 +822,163 @@ test('a semi-tangential family draws at 75% opacity (dots, hull, name, label, ed
   await expect(page.locator('.hovercard')).toContainText('Semi-tangential');
 });
 
-test('metric rows show direction; term dots and units sit in the hover card; metric chips name the direction', async ({ page }) => {
+test('metric rows show direction, unit, and ΔV or ΔC tags in the row, with no hover card and no ↕; metric chips name the direction', async ({ page }) => {
   await page.goto('/#/evaluations');
   await expect(page.getByTestId('metric-dir-perturbed_actions')).toHaveText('↓');
   await expect(page.getByTestId('metric-dir-perturbed_actions')).toHaveAttribute('aria-label', 'Lower is better');
   await expect(page.getByTestId('metric-dir-f1')).toHaveText('↑');
-  const perturbed = page.getByTestId('metric-row-perturbed_actions');
-  await expect(perturbed.locator('.metric-row__main .term-dot')).toHaveCount(0);
-  const tip = perturbed.getByRole('tooltip');
-  await expect(tip).toBeHidden();
-  await perturbed.hover();
-  await expect(tip).toBeVisible();
-  await expect(tip.locator('.metric-tip__unit')).toHaveText('%');
-  await expect(tip.locator('.term-dot--dC_added')).toHaveCount(1);
-  // A group whose members differ in direction shows ↕, and its hover card gives each member's direction.
-  await expect(page.getByTestId('metric-dir-used_unused_objects')).toHaveText('↕');
+  // The unit follows the name and arrow, in small, light, italic text.
+  const saved = page.getByTestId('metric-row-net_actions_saved');
+  await expect(saved.locator('.metric-row__name')).toHaveText('Net actions saved ↑ %');
+  await expect(page.getByTestId('metric-unit-net_actions_saved')).toHaveCSS('font-style', 'italic');
+  await expect(page.getByTestId('metric-unit-robot_time_actions')).toHaveText('s, actions');
+
+  // Term tags: only ΔV and ΔC, the union over the row's metrics, and none for a row that serves no term.
+  const tags = (key: string) => page.getByTestId(`metric-row-${key}`).locator('.term-tag');
+  await expect(tags('perturbed_actions')).toHaveText(['ΔC']);
+  await expect(tags('task_success_rate')).toHaveText(['ΔV']);
+  await expect(tags('cumulative_reward')).toHaveText(['ΔV', 'ΔC']);
+  await expect(tags('robot_time_actions')).toHaveText(['ΔC']);
+  await expect(tags('user_ratings')).toHaveText(['ΔV', 'ΔC']);
+  await expect(tags('goal_prf')).toHaveCount(0);
+  await expect(tags('step_detection')).toHaveCount(0);
+  // They sit in the row's bottom-right corner and do nothing on click.
   const used = page.getByTestId('metric-row-used_unused_objects');
-  await used.hover();
-  await expect(used.getByRole('tooltip').getByRole('img', { name: 'Lower is better' })).toHaveCount(3);
-  await expect(used.getByRole('tooltip').getByRole('img', { name: 'Higher is better' })).toHaveCount(2);
+  const rb = (await used.boundingBox())!;
+  const tb = (await used.getByTestId('metric-tags-used_unused_objects').boundingBox())!;
+  expect(rb.x + rb.width - (tb.x + tb.width)).toBeLessThan(8);
+  expect(rb.y + rb.height - (tb.y + tb.height)).toBeLessThan(8);
+  expect(tb.y - rb.y).toBeGreaterThan(rb.height / 2);
+  await expect(used.locator('.term-tag button, button.term-tag, .term-tag[tabindex]')).toHaveCount(0);
+
+  // No hover card and no term dots in the metrics section.
+  const perturbed = page.getByTestId('metric-row-perturbed_actions');
+  await perturbed.hover();
+  await expect(perturbed.getByRole('tooltip')).toHaveCount(0);
+  await expect(page.getByTestId('metric-boxes').locator('.term-dot')).toHaveCount(0);
+
+  // A group whose members differ in direction has no arrow on the group row; each member carries its own.
+  await expect(page.getByTestId('metric-dir-used_unused_objects')).toHaveCount(0);
+  await expect(page.getByTestId('metric-members-used_unused_objects').locator('.metric-row__member')).toHaveText([
+    'Used objects, correct ↑',
+    'Used objects, wrong ↓',
+    'Used objects, missed ↓',
+    'Unused objects, correct ↑',
+    'Unused objects, wrong ↓',
+  ]);
+  await expect(page.getByTestId('metric-unit-used_unused_objects')).toHaveText('%');
+  // When the units differ too, each member carries its own unit.
+  await expect(page.getByTestId('metric-members-task_cost').locator('.metric-row__member')).toHaveText(['Average cost per task ↓ cost units', 'Cost reduction ↑ %']);
+  await expect(page.getByTestId('metric-unit-task_cost')).toHaveCount(0);
+  // A group with one direction keeps one arrow and lists no members.
+  await expect(page.getByTestId('metric-dir-goal_prf')).toHaveText('↑');
+  await expect(page.getByTestId('metric-members-goal_prf')).toHaveCount(0);
+
+  // No ↕ anywhere on the page.
+  expect(await page.evaluate(() => document.body.innerText)).not.toContain('↕');
+  expect(await page.content()).not.toContain('↕');
+
   // Metric chips live in the drawer now; the protocols table shows categories.
   await page.goto('/#/evaluations?paper=gap');
   const chip = page.getByTestId('drawer').locator('.chip--metric').first();
   await expect(chip).toHaveAttribute('title', /(higher|lower) is better · unit: /);
+});
+
+test('definitions do not repeat their metric names', async ({ page }) => {
+  await page.goto('/#/evaluations');
+  await expect(page.getByTestId('metric-row-object_f1').locator('.metric-row__def')).toHaveText('Predicted against true object at each time step.');
+  await expect(page.getByTestId('metric-row-speedup').locator('.metric-row__def')).toHaveText('Episode length with the user alone divided by episode length with the helper, minus 1.');
+  for (const row of await page.locator('.metric-row').all()) {
+    const name = (await row.locator('.metric-row__name strong').allTextContents()).join('').trim().toLowerCase();
+    const def = (await row.locator('.metric-row__def').textContent())!.toLowerCase();
+    expect(def, name).not.toContain(name);
+  }
+});
+
+test('category boxes show ΔV and ΔC tags by their headers and collapse to the header line', async ({ page }) => {
+  await page.goto('/#/evaluations');
+  const head = (c: string) => page.getByTestId(`metric-box-toggle-${c}`).locator('.term-tag');
+  await expect(head('change_in_user_actions')).toHaveText(['ΔC']);
+  await expect(head('task_performance')).toHaveText(['ΔV', 'ΔC']);
+  await expect(head('end_user_perceptions')).toHaveText(['ΔV', 'ΔC']);
+  await expect(head('implicit_need_detection')).toHaveCount(0);
+  await expect(head('coordination_fluency')).toHaveCount(0);
+
+  // Boxes start expanded. Clicking a header collapses its box to the header line, and clicking again expands it.
+  const box = page.getByTestId('metric-box-task_performance');
+  const toggle = page.getByTestId('metric-box-toggle-task_performance');
+  const rows = box.locator('.metric-row');
+  await expect(rows.first()).toBeVisible();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  for (const r of await rows.all()) await expect(r).toBeHidden();
+  await expect(box.locator('.metric-box__title')).toBeVisible();
+  expect((await box.boundingBox())!.height).toBeLessThan(48);
+  await expect(page.getByTestId('metric-row-net_actions_saved')).toBeVisible();
+  // Collapsing sets no URL state.
+  expect(new URL(page.url()).hash).toBe('#/evaluations');
+  await toggle.click();
+  await expect(rows.first()).toBeVisible();
+
+  // One control collapses and expands every box.
+  const all = page.getByTestId('metric-collapse-all');
+  await expect(all).toHaveText('Collapse all');
+  await all.click();
+  await expect(page.locator('.metric-row:visible')).toHaveCount(0);
+  await expect(all).toHaveText('Expand all');
+  // The state persists per viewer, and a selected category still opens its box.
+  await page.reload();
+  await expect(page.locator('.metric-row:visible')).toHaveCount(0);
+  await page.goto('/#/evaluations?category=task_performance');
+  await expect(rows.first()).toBeVisible();
+  await expect(page.getByTestId('metric-row-net_actions_saved')).toBeHidden();
+  // With one box open, the control collapses all; then it expands all.
+  await page.goto('/#/evaluations');
+  await expect(all).toHaveText('Collapse all');
+  await all.click();
+  await expect(page.locator('.metric-box:not(.is-collapsed)')).toHaveCount(0);
+  await expect(all).toHaveText('Expand all');
+  await all.click();
+  await expect(page.locator('.metric-box.is-collapsed')).toHaveCount(0);
+  await expect(page.locator('.metric-row:visible').first()).toBeVisible();
+});
+
+test('16. a bare URL starts with nothing filtered, dimmed, or highlighted on every page', async ({ page }) => {
+  await page.goto('/#/evaluations');
+  const table = page.getByTestId('protocol-table');
+  // Every table row shows.
+  await expect(table.locator('tbody tr')).toHaveCount(12);
+  await expect(page.getByText('12 of 12 papers')).toBeVisible();
+  // No filter chip, term, category, metric, or loop filter.
+  await expect(page.locator('.filterbar .chip')).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Filters' })).toContainText('No filters');
+  await expect(page.getByTestId('loop-filter')).toHaveValue('');
+  await expect(page.locator('[aria-pressed="true"], .chip--on, .term.is-on, .term.is-hot')).toHaveCount(0);
+  // Every metric row at full strength, every box expanded, nothing highlighted.
+  expect(await page.locator('.metric-row').count()).toBeGreaterThan(0);
+  await expect(page.locator('.metric-row[data-dim="true"], .metric-row.is-dim, .metric-row.is-on')).toHaveCount(0);
+  await expect(page.locator('.metric-box.is-dim, .metric-box.is-on, .metric-box.is-collapsed')).toHaveCount(0);
+  await expect(page.locator('.metric-row:visible').first()).toHaveCSS('opacity', '1');
+  await expect(page.locator('.metric-row__main').first()).toHaveCSS('opacity', '1');
+  await expect(page.locator('.realism__dot.is-dim')).toHaveCount(0);
+  expect(new URL(page.url()).hash).toBe('#/evaluations');
+
+  await page.goto('/#/methods');
+  await expect(page.getByTestId('node-gap')).toBeVisible();
+  await expect(page.locator('.filterbar .chip')).toHaveCount(0);
+  await expect(page.locator('[data-testid^="levelcard-"][aria-pressed="true"], [data-testid^="timeline-"][data-selected="true"]')).toHaveCount(0);
+  await expect(page.locator('[data-testid^="node-"].is-dim, [data-testid^="node-"].is-focus, [data-testid^="node-"].is-lit')).toHaveCount(0);
+  expect(new URL(page.url()).hash).toBe('#/methods');
+
+  // No subproblem is selected: the panel lists all seven.
+  await page.goto('/#/subproblems');
+  await expect(page.locator('.overview__row')).toHaveCount(7);
+  await expect(page.getByTestId('sub-detail')).toHaveCount(0);
+  await expect(page.locator('.filterbar .chip')).toHaveCount(0);
+  for (const s of ['G1', 'G2', 'A1', 'A2', 'A3', 'P1', 'P2']) await expect(page.getByTestId(`subnode-${s}`)).toHaveAttribute('data-flow', 'none');
+  await expect(page.locator('[data-testid^="subnode-"][aria-pressed="true"]')).toHaveCount(0);
+  expect(new URL(page.url()).hash).toBe('#/subproblems');
 });
 
 test('tangential datasets sit under the Tangential divider at 60% opacity', async ({ page }) => {

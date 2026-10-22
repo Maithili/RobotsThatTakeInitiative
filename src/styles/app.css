@@ -686,6 +686,9 @@ tr.pulse {
   flex-wrap: wrap;
   margin-bottom: 8px;
 }
+.section-title__end {
+  margin-left: auto;
+}
 
 /* ---------- filter bar ---------- */
 .filterbar {
@@ -1398,9 +1401,6 @@ tr.clickable:hover td {
   height: auto;
   display: block;
 }
-.featured__legend li.is-off {
-  opacity: 0.4;
-}
 .chart-grid {
   stroke: var(--border);
 }
@@ -1418,7 +1418,6 @@ tr.clickable:hover td {
 }
 .bar {
   cursor: pointer;
-  transition: x 300ms ease, y 300ms ease, width 300ms ease, height 300ms ease;
 }
 .bar:hover,
 .bar:focus-visible {
@@ -1426,9 +1425,6 @@ tr.clickable:hover td {
   outline: none;
   stroke: var(--focus);
   stroke-width: 2;
-}
-.bar.is-hidden {
-  pointer-events: none;
 }
 .bar--0,
 .swatch.bar--0 {
@@ -1449,10 +1445,6 @@ tr.clickable:hover td {
   font-size: 11px;
   fill: var(--text);
   font-variant-numeric: tabular-nums;
-  transition: transform 300ms ease, opacity 300ms ease;
-}
-.bar-label.is-hidden {
-  opacity: 0;
 }
 .swatch {
   display: inline-block;
@@ -1522,19 +1514,63 @@ tr.clickable:hover td {
   border-color: var(--accent);
   box-shadow: inset 3px 0 0 var(--accent);
 }
-.metric-box__title {
-  margin: 0 0 4px 4px;
+.metric-box.is-collapsed {
+  padding-bottom: 10px;
+}
+.metric-box__head {
+  margin: 0 0 4px;
   font-size: 14px;
   font-weight: 650;
   text-transform: none;
   letter-spacing: 0;
+}
+.metric-box.is-collapsed .metric-box__head {
+  margin-bottom: 0;
+}
+.metric-box__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  padding: 0 4px;
+  font: inherit;
   color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.metric-box__toggle:hover .metric-box__title {
+  text-decoration: underline;
+}
+.metric-box__chev {
+  width: 10px;
+  font-size: 11px;
+  color: var(--text-3);
 }
 .metric-box.is-on .metric-box__title {
   color: var(--accent);
 }
 .metric-box.is-dim .metric-box__title {
   color: var(--text-3);
+}
+.metric-box__tags,
+.metric-row__tags {
+  display: inline-flex;
+  gap: 4px;
+}
+/* ΔV and ΔC: static tags, no arrows, no hover (SPEC §8.6). */
+.term-tag {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  padding: 0 4px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  white-space: nowrap;
 }
 .metric-rows {
   list-style: none;
@@ -1550,7 +1586,7 @@ tr.clickable:hover td {
 .metric-row {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(140px, 230px);
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 230px) 52px;
   gap: 12px;
   align-items: baseline;
   border-top: 1px solid var(--border);
@@ -1588,6 +1624,31 @@ tr.clickable:hover td {
   font-weight: 700;
   color: var(--text);
 }
+.metric-row__unit {
+  font-size: 11.5px;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--text-3);
+}
+.metric-row__glue {
+  white-space: nowrap;
+}
+/* A group whose members differ in direction lists them, one per line. */
+.metric-row__members {
+  display: block;
+  margin-top: 1px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-2);
+}
+.metric-row__member {
+  display: block;
+}
+/* The tags sit in the row's bottom-right corner. */
+.metric-row__tags {
+  align-self: end;
+  justify-self: end;
+}
 .metric-row__def {
   color: var(--text-2);
   font-size: 12.5px;
@@ -1596,68 +1657,12 @@ tr.clickable:hover td {
   font-size: 12.5px;
   color: var(--text-3);
 }
-/* Under a term filter, rows that do not serve it dim (SPEC §8.6). The hover card stays at full strength. */
+/* Under a term filter, rows that do not serve it dim (SPEC §8.6). */
 .metric-row.is-dim > .metric-row__main,
-.metric-row.is-dim > .metric-row__papers {
+.metric-row.is-dim > .metric-row__papers,
+.metric-row.is-dim > .metric-row__tags {
   opacity: 0.38;
 }
-/* Hover card: term dots and units. It ignores the pointer, so it never blocks the rows below it. */
-.metric-tip {
-  display: none;
-  position: absolute;
-  left: 4px;
-  top: calc(100% - 2px);
-  z-index: 20;
-  flex-direction: column;
-  gap: 3px;
-  width: max-content;
-  max-width: min(440px, calc(100vw - 48px));
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-lg);
-  padding: 6px 8px;
-  font-size: 12px;
-  pointer-events: none;
-}
-.metric-row:hover > .metric-tip,
-.metric-row:focus-within > .metric-tip {
-  display: flex;
-  animation: tip-in 120ms ease-out 250ms both;
-}
-@keyframes tip-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-.metric-tip__row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 10px;
-  align-items: center;
-}
-.metric-tip__name {
-  min-width: 150px;
-  font-weight: 600;
-}
-.metric-tip__terms {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 2px 8px;
-}
-.metric-tip__term {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-.metric-tip__unit,
-.metric-tip__note {
-  color: var(--text-2);
-}
-
 /* ---------- subproblems page ---------- */
 .subnav {
   display: flex;
@@ -2027,8 +2032,13 @@ tr.clickable:hover td {
   .terms {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .metric-row,
+  /* The papers and the term tags share the row's last line. */
+  .metric-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 8px;
+  }
   .metric-row__main {
+    grid-column: 1 / -1;
     grid-template-columns: minmax(0, 1fr);
     gap: 2px;
   }

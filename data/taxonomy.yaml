@@ -157,34 +157,34 @@ metric_categories:            # per Maithili, Oct 22 2026. Ordered. Each metric 
 metric_groups:                # metrics listed as one item in the metrics section, with one short definition (≤ 140). Members share a category.
   used_unused_objects:
     label: "Used and unused objects: correct, wrong, missed"
-    definition: Shares of used and unused objects in the window whose predicted placement is correct, wrong, or missed.
+    definition: Predicted placements of objects the user moved or did not use in the window, as shares of each set.
   activity_object_f1:
     label: Activity and activity-object F1
-    definition: F1 of the predicted activity at each time step, and mean F1 over joint activity-object labels.
+    definition: Predicted against true activity at each time step, and averaged over joint activity-object labels.
   task_match_accuracy:
     label: Exact-match and subgoal accuracy
     definition: Share of predicted subgoal sequences, and of single subgoals, that match the annotated proactive task.
   goal_prf:
     label: Goal precision, recall, and F1
-    definition: Precision, recall, and F1 of the predicted goal predicates against the user's true goal.
+    definition: Predicted goal predicates against the user's true goal.
   robot_time_actions:
     label: Robot time and actions
-    definition: Wall-clock time and number of actions the robot takes to finish the episode or the tasks.
+    definition: Wall-clock seconds and executed actions to finish the episode or the tasks.
   task_cost:
     label: Task cost and its reduction
-    definition: Robot plan cost per task, averaged over task sequences, and its percent reduction relative to a baseline planner.
+    definition: Of the robot's plan, averaged over task sequences, and in percent against a baseline planner.
   user_ratings:
-    label: Ratings of goal knowledge, helpfulness, and trust (1–7)
-    definition: User ratings from 1 to 7 of how much the agent knew about the goal, how helpful it was, and whether they would trust it.
+    label: Ratings of goal knowledge, helpfulness, and trust
+    definition: How much the agent knew about the goal, how helpful it was, and whether users would trust it.
   step_detection:
     label: Trigger, task, and step detection (accuracy and F1, micro and macro)
-    definition: Accuracy and F1 of trigger, task, and step detection on video, micro-averaged and macro-averaged.
+    definition: Scored on video, pooled over classes (micro) and averaged over classes (macro).
   ooi_detection:
     label: Object-of-interest detection (precision, recall, F1, accuracy)
-    definition: Precision, recall, F1, and accuracy of flagging frames that hold an object of interest.
+    definition: Predicted against true presence in each frame.
   thread_entropy:
     label: Thread mixing and robot thread entropy
-    definition: Entropy of how user and robot actions mix across task threads, and of the robot's actions alone, WAIT excluded.
+    definition: How user and robot actions mix across task threads, and how the robot's own actions spread, WAIT excluded.
 
 evaluations_exclude: [saavedra-2026-scene-graphs]   # object search papers stay off the Evaluations page (Maithili, Oct 22 2026)
 
@@ -236,7 +236,7 @@ metrics:                      # GAP paper §IV-A2. Add more as papers come in.
   object_f1:
     label: Object F1
     category: object_movement_prediction
-    definition: F1 of the predicted object against the true object at each time step.
+    definition: Predicted against true object at each time step.
     terms: [dC_saved, dC_added]
     kind: proxy
     direction: higher
@@ -327,7 +327,7 @@ metrics:                      # GAP paper §IV-A2. Add more as papers come in.
   cumulative_reward:
     label: Cumulative reward
     category: task_performance
-    definition: Per-step reward summed over the episode, from −1 (failure) to 1 (goal reached in zero steps).
+    definition: Summed over the episode's steps, from −1 (failure) to 1 (goal reached in zero steps).
     terms: [dV, dC_saved]
     kind: proxy
     direction: higher
@@ -438,7 +438,7 @@ metrics:                      # GAP paper §IV-A2. Add more as papers come in.
   future_action_edit_distance:
     label: Future action edit distance
     category: activity_label_prediction
-    definition: Edit distance between the predicted and true sequences of future user actions.
+    definition: Predicted against true sequence of upcoming user actions.
     terms: []
     kind: unrelated
     direction: lower

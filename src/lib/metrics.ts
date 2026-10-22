@@ -59,6 +59,21 @@ export function itemSummary(item: MetricItem, metrics: Record<string, Categorize
   return { terms, direction: dirs.length === 1 ? dirs[0] : null, units: [...new Set(ms.map((m) => m.unit))] };
 }
 
+/** The two tags a metric row shows (SPEC §8.6): ΔV for value gained, and ΔC for every cost term. */
+export type TermTag = 'ΔV' | 'ΔC';
+export const TERM_TAG: Record<string, TermTag> = { dV: 'ΔV', dC_saved: 'ΔC', dC_added: 'ΔC', Cr: 'ΔC' };
+
+/** The tags for a set of terms, ΔV first. Terms with no tag add none. */
+export function termTags(terms: Iterable<string>): TermTag[] {
+  const on = new Set([...terms].map((t) => TERM_TAG[t]));
+  return (['ΔV', 'ΔC'] as const).filter((t) => on.has(t));
+}
+
+/** A unit as the metrics list shows it. "not stated" would read as part of the name, so it says "unit not stated". */
+export function unitText(unit: string): string {
+  return unit === 'not stated' ? 'unit not stated' : unit;
+}
+
 /** Whether a row serves a net value term: any member measures it. With no term, every row does (SPEC §8.1, §8.6). */
 export function itemServes(item: MetricItem, metrics: Record<string, CategorizedMetric>, term: string | null): boolean {
   return !term || item.members.some((id) => metrics[id]?.terms.includes(term));

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { matchesGlobal, matchesQuery, parseYears, readGlobalFilters } from '../src/lib/filters.ts';
 import { ancestry, subproblemFlow } from '../src/lib/graph.ts';
 import { scorePaper, search } from '../src/lib/search.ts';
-import { categoryItems, itemServes, itemSummary, metricKeyMembers } from '../src/lib/metrics.ts';
+import { categoryItems, itemServes, itemSummary, metricKeyMembers, termTags, unitText } from '../src/lib/metrics.ts';
 import { categoriesOf, closest, furthestLoop, mergePaper, rowMatches, strongest } from '../src/pages/evaluations/merge.ts';
 import { applyParams, toggleInList } from '../src/state/url.ts';
 import type { DbPaper } from '../src/schema.ts';
@@ -232,6 +232,22 @@ describe('metric category boxes', () => {
     const [f1, used] = categoryItems('obj', metrics);
     expect(itemSummary(f1, metrics, TERMS)).toEqual({ terms: ['dC_saved', 'dC_added'], direction: 'higher', units: ['fraction'] });
     expect(itemSummary(used, metrics, TERMS)).toEqual({ terms: ['dC_saved', 'dC_added'], direction: null, units: ['%'] });
+  });
+  it("tags a row with ΔV and ΔC only, as the union of its members' terms", () => {
+    expect(termTags(['dV'])).toEqual(['ΔV']);
+    for (const t of ['dC_saved', 'dC_added', 'Cr']) expect(termTags([t])).toEqual(['ΔC']);
+    expect(termTags(['dC_added', 'Cr', 'dV', 'dC_saved'])).toEqual(['ΔV', 'ΔC']);
+    expect(termTags([])).toEqual([]);
+    const all: Record<string, { terms: string[] }> = metrics;
+    const tagsOf = (category: string) => categoryItems(category, metrics).map((it) => termTags(it.members.flatMap((m) => all[m].terms)));
+    // f1, the used group (ΔC↓ and ΔC↑ members), object F1; a row whose metrics serve no term gets no tag.
+    expect(tagsOf('obj')).toEqual([['ΔC'], ['ΔC'], ['ΔC']]);
+    expect(tagsOf('task')).toEqual([[]]);
+  });
+  it('shows a unit as stored, except "not stated"', () => {
+    expect(unitText('%')).toBe('%');
+    expect(unitText('1–7 rating')).toBe('1–7 rating');
+    expect(unitText('not stated')).toBe('unit not stated');
   });
   it('dims a row only when no member serves the term', () => {
     const [f1, used, objectF1] = categoryItems('obj', metrics);

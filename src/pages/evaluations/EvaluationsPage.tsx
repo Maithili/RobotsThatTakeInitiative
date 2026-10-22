@@ -1,11 +1,22 @@
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { LoopPill, TermDot } from '../../components/Chip.tsx';
 import { EmptyState } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
 import { Math as TeX } from '../../components/Math.tsx';
 import { datasetById, db, FRAMEWORK_PAPER, onEvaluations, paperById, paperLabel, papers, PAPER_URL, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
-import { categoryItems, DIRECTION, itemServes, itemSummary, metricKeyMembers, type MetricItem } from '../../lib/metrics.ts';
+import {
+  categoryItems,
+  DIRECTION,
+  itemServes,
+  itemSummary,
+  metricKeyMembers,
+  termTags,
+  unitText,
+  type MetricDirection,
+  type MetricItem,
+  type TermTag,
+} from '../../lib/metrics.ts';
 import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
 import { DatasetTable } from './DatasetTable.tsx';
@@ -329,8 +340,9 @@ function revealBox(c: string) {
   });
 }
 
-function Direction({ direction, testId }: { direction: 'higher' | 'lower' | null; testId: string }) {
-  const d = direction ? DIRECTION[direction] : { glyph: '↕', label: 'Direction differs by metric' };
+/** ↑ or ↓. There is no mixed arrow: a group whose members differ gives each member its own (SPEC §8.6). */
+function Direction({ direction, testId }: { direction: MetricDirection; testId: string }) {
+  const d = DIRECTION[direction];
   return (
     <span className="metric-row__arrow" role="img" aria-label={d.label} title={d.label} data-testid={testId}>
       {d.glyph}
@@ -338,53 +350,39 @@ function Direction({ direction, testId }: { direction: 'higher' | 'lower' | null
   );
 }
 
-/** Terms as dots with their symbols, or "No term". */
-function TipTerms({ terms }: { terms: string[] }) {
-  if (!terms.length) return <span className="muted">No term</span>;
+function Unit({ units, testId }: { units: string[]; testId: string }) {
   return (
-    <span className="metric-tip__terms">
-      {terms.map((t) => (
-        <span key={t} className="metric-tip__term">
-          <TermDot term={t} />
-          <TeX tex={tx.net_value.terms[t].tex} />
-        </span>
-      ))}
+    <span className="metric-row__unit" data-testid={testId}>
+      {units.map(unitText).join(', ')}
     </span>
   );
 }
 
-/** The hover card of a row: term dots and units, per member for a group (SPEC §8.6). */
-function MetricTip({ id, item }: { id: string; item: MetricItem }) {
-  if (!item.group) {
-    const M = tx.metrics[item.id];
-    return (
-      <span className="metric-tip" role="tooltip" id={id} data-testid={`metric-tip-${item.id}`}>
-        <span className="metric-tip__row">
-          <TipTerms terms={M.terms} />
-          <span className="metric-tip__unit">{M.unit}</span>
-        </span>
-        {M.mapping_note && <span className="metric-tip__note">{M.mapping_note}</span>}
-      </span>
-    );
-  }
+/** A name followed by its arrow and unit. The last word stays on one line with them, so a unit never wraps alone. */
+function NameLine({ label, strong, children }: { label: string; strong?: boolean; children: ReactNode }) {
+  const cut = label.lastIndexOf(' ') + 1;
+  const Name = strong ? 'strong' : 'span';
   return (
-    <span className="metric-tip" role="tooltip" id={id} data-testid={`metric-tip-${item.id}`}>
-      {item.members.map((m) => {
-        const M = tx.metrics[m];
-        const d = DIRECTION[M.direction];
-        return (
-          <span key={m} className="metric-tip__row">
-            <span className="metric-tip__name">
-              {M.label}{' '}
-              <span role="img" aria-label={d.label}>
-                {d.glyph}
-              </span>
-            </span>
-            <TipTerms terms={M.terms} />
-            <span className="metric-tip__unit">{M.unit}</span>
-          </span>
-        );
-      })}
+    <>
+      {cut > 0 && <Name>{label.slice(0, cut)}</Name>}
+      <span className="metric-row__glue">
+        <Name>{label.slice(cut)}</Name>
+        {children}
+      </span>
+    </>
+  );
+}
+
+/** Static ΔV and ΔC tags (SPEC §8.6). Renders nothing when there are none. */
+function TermTags({ tags, className, testId }: { tags: TermTag[]; className: string; testId: string }) {
+  if (!tags.length) return null;
+  return (
+    <span className={className} data-testid={testId}>
+      {tags.map((t) => (
+        <span key={t} className="term-tag">
+          {t}
+        </span>
+      ))}
     </span>
   );
 }
@@ -399,6 +397,10 @@ function MetricRow({ item, onHoverTerms }: { item: MetricItem; onHoverTerms: (t:
   const sum = itemSummary(item, tx.metrics, TERMS);
   const users = ROW_PAPERS.get(key) ?? [];
   const on = metric === key;
+  // A group whose members differ in direction lists its members, each with its own arrow, and with its own unit
+  // when the units differ too. Otherwise the units follow the row's name and arrow.
+  const mixed = sum.direction === null;
+  const oneUnit = sum.units.length === 1;
   // Under a term filter, rows that do not serve it dim rather than hide (SPEC §8.6).
   const dim = !itemServes(item, tx.metrics, term);
   const enter = () => onHoverTerms(sum.terms);
@@ -416,9 +418,40 @@ function MetricRow({ item, onHoverTerms }: { item: MetricItem; onHoverTerms: (t:
       data-testid={`metric-row-${key}`}
       data-dim={dim ? 'true' : 'false'}
     >
-      <button type="button" className="metric-row__main" aria-pressed={on} aria-describedby={`metric-tip-${key}`} onFocus={enter} onBlur={leave}>
+      <button type="button" className="metric-row__main" aria-pressed={on} onFocus={enter} onBlur={leave}>
         <span className="metric-row__name">
-          <strong>{label}</strong> <Direction direction={sum.direction} testId={`metric-dir-${key}`} />
+          <NameLine label={label} strong>
+            {sum.direction && (
+              <>
+                {' '}
+                <Direction direction={sum.direction} testId={`metric-dir-${key}`} />
+              </>
+            )}
+            {(!mixed || oneUnit) && (
+              <>
+                {' '}
+                <Unit units={sum.units} testId={`metric-unit-${key}`} />
+              </>
+            )}
+          </NameLine>
+          {mixed && (
+            <span className="metric-row__members" data-testid={`metric-members-${key}`}>
+              {item.members.map((m) => (
+                <span key={m} className="metric-row__member">
+                  <NameLine label={tx.metrics[m].label}>
+                    {' '}
+                    <Direction direction={tx.metrics[m].direction} testId={`metric-dir-${m}`} />
+                    {!oneUnit && (
+                      <>
+                        {' '}
+                        <Unit units={[tx.metrics[m].unit]} testId={`metric-unit-${m}`} />
+                      </>
+                    )}
+                  </NameLine>
+                </span>
+              ))}
+            </span>
+          )}
         </span>
         <span className="metric-row__def">{definition}</span>
       </button>
@@ -439,20 +472,71 @@ function MetricRow({ item, onHoverTerms }: { item: MetricItem; onHoverTerms: (t:
           </Fragment>
         ))}
       </span>
-      <MetricTip id={`metric-tip-${key}`} item={item} />
+      <TermTags tags={termTags(sum.terms)} className="metric-row__tags" testId={`metric-tags-${key}`} />
     </li>
   );
 }
+
+/** Collapsed boxes persist per viewer. With nothing stored, every box is expanded (SPEC §8.6). */
+const COLLAPSED_KEY = 'evaluations-collapsed-metric-boxes';
+
+function readCollapsed(): Set<string> {
+  try {
+    const v: unknown = JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? '[]');
+    return new Set(Array.isArray(v) ? v.filter((c): c is string => typeof c === 'string' && BOXES.includes(c)) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function writeCollapsed(s: Set<string>) {
+  try {
+    if (s.size) localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...s]));
+    else localStorage.removeItem(COLLAPSED_KEY);
+  } catch {
+    // Storage blocked: the boxes still collapse for this visit.
+  }
+}
+
+/** A category's tags: the union over the metrics it lists. */
+const BOX_TAGS = new Map(BOXES.map((c) => [c, termTags((ITEMS.get(c) ?? []).flatMap((it) => it.members.flatMap((m) => tx.metrics[m].terms)))]));
 
 function MetricsList({ onHoverTerms }: { onHoverTerms: (t: string[]) => void }) {
   const url = useUrl();
   const term = url.get('term');
   const category = url.get('category');
+  const metric = url.get('metric');
+  const [collapsed, setCollapsed] = useState<Set<string>>(readCollapsed);
+  useEffect(() => writeCollapsed(collapsed), [collapsed]);
+  const toggle = (c: string) =>
+    setCollapsed((s) => {
+      const next = new Set(s);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
+      return next;
+    });
+  const allCollapsed = BOXES.length > 0 && BOXES.every((c) => collapsed.has(c));
+  // A selected category or metric opens its box, so the highlight is never hidden.
+  const selectedBox = category ?? (metric ? (keyCategory(metric) ?? null) : null);
+  useEffect(() => {
+    if (!selectedBox) return;
+    setCollapsed((s) => {
+      if (!s.has(selectedBox)) return s;
+      const next = new Set(s);
+      next.delete(selectedBox);
+      return next;
+    });
+  }, [selectedBox]);
   return (
     <section aria-labelledby="metrics-title" className="stack-sm">
       <div className="section-title">
         <h2 id="metrics-title">Metrics</h2>
-        <span className="small muted">Metrics by category, with the papers that use them. Hover a metric for its terms of ΔV − ΔC and its units. Click it to filter the protocols.</span>
+        <span className="small muted">Metrics by category, with the papers that use them and the terms of ΔV − ΔC they serve. Click a metric to filter the protocols.</span>
+        {BOXES.length > 0 && (
+          <button type="button" className="linkish small section-title__end" data-testid="metric-collapse-all" onClick={() => setCollapsed(new Set(allCollapsed ? [] : BOXES))}>
+            {allCollapsed ? 'Expand all' : 'Collapse all'}
+          </button>
+        )}
       </div>
       {!BOXES.length ? (
         <EmptyState>No paper on this page uses a categorized metric.</EmptyState>
@@ -462,18 +546,34 @@ function MetricsList({ onHoverTerms }: { onHoverTerms: (t: string[]) => void }) 
             const items = ITEMS.get(c) ?? [];
             const on = category === c;
             const dim = !items.some((it) => itemServes(it, tx.metrics, term));
+            const open = !collapsed.has(c);
             return (
               <section
                 key={c}
                 id={`metric-box-${c}`}
-                className={`metric-box${on ? ' is-on' : ''}${dim ? ' is-dim' : ''}`}
+                className={`metric-box${on ? ' is-on' : ''}${dim ? ' is-dim' : ''}${open ? '' : ' is-collapsed'}`}
                 aria-labelledby={`metric-box-title-${c}`}
                 data-testid={`metric-box-${c}`}
               >
-                <h3 id={`metric-box-title-${c}`} className="metric-box__title">
-                  {tx.metric_categories[c].label}
+                <h3 className="metric-box__head">
+                  <button
+                    type="button"
+                    className="metric-box__toggle"
+                    aria-expanded={open}
+                    aria-controls={`metric-rows-${c}`}
+                    data-testid={`metric-box-toggle-${c}`}
+                    onClick={() => toggle(c)}
+                  >
+                    <span className="metric-box__chev" aria-hidden="true">
+                      {open ? '▾' : '▸'}
+                    </span>
+                    <span id={`metric-box-title-${c}`} className="metric-box__title">
+                      {tx.metric_categories[c].label}
+                    </span>
+                    <TermTags tags={BOX_TAGS.get(c) ?? []} className="metric-box__tags" testId={`metric-box-tags-${c}`} />
+                  </button>
                 </h3>
-                <ul className="metric-rows">
+                <ul className="metric-rows" id={`metric-rows-${c}`} hidden={!open}>
                   {items.map((it) => (
                     <MetricRow key={it.id} item={it} onHoverTerms={onHoverTerms} />
                   ))}
