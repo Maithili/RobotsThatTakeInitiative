@@ -3,7 +3,6 @@ import { LoopPill, TermDot } from '../../components/Chip.tsx';
 import { EmptyState } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
 import { Math as TeX } from '../../components/Math.tsx';
-import { CaptureGlyph } from '../../components/StatusGlyph.tsx';
 import { datasetById, db, FRAMEWORK_PAPER, onEvaluations, paperById, paperLabel, papers, RTI_URL, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
 import { categoryItems, DIRECTION, itemSummary, metricTooltip, type MetricItem } from '../../lib/metrics.ts';
@@ -99,8 +98,7 @@ function NetValueNavigator({ hoverTerms }: { hoverTerms: Set<string> }) {
 
 // ---------- 8.4 protocols table: one row per paper ----------
 
-type PSort = 'paper' | 'year' | 'env' | 'loop' | 'human' | 'categories' | 'drift' | 'adapt' | 'baselines';
-const CAP_ORDER = { yes: 2, partial: 1, no: 0 } as const;
+type PSort = 'paper' | 'year' | 'env' | 'loop' | 'human' | 'categories' | 'baselines';
 
 function pval(r: PaperEvalRow, k: PSort): string | number {
   switch (k) {
@@ -117,10 +115,6 @@ function pval(r: PaperEvalRow, k: PSort): string | number {
     case 'categories':
       // By the first category in category order, then the next; papers with none sort last.
       return r.categories.map((c) => String(CATEGORIES.indexOf(c)).padStart(2, '0')).join(',') || '~';
-    case 'drift':
-      return r.drift ? CAP_ORDER[r.drift] : -1;
-    case 'adapt':
-      return r.adapt ? CAP_ORDER[r.adapt] : -1;
     case 'baselines':
       return r.baselines.length + r.otherBaselines.length;
   }
@@ -147,8 +141,6 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
     ['loop', 'Loop types'],
     ['human', 'Human models'],
     ['categories', 'Metric categories'],
-    ['drift', tx.captures.state_drift.label],
-    ['adapt', tx.captures.goal_adaptation.label],
     ['baselines', 'Baselines'],
   ];
   if (!rows.length) return <EmptyState>No evaluation matches these filters.</EmptyState>;
@@ -246,12 +238,6 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
                     )}
                   </span>
                 </td>
-                <td className="center">
-                  <CaptureGlyph value={r.drift} label={tx.captures.state_drift.label} />
-                </td>
-                <td className="center">
-                  <CaptureGlyph value={r.adapt} label={tx.captures.goal_adaptation.label} />
-                </td>
                 <td>
                   {nb ? (
                     <>
@@ -305,23 +291,6 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
         </tbody>
       </table>
     </div>
-  );
-}
-
-function CapturesLegend() {
-  return (
-    <ul className="legend small captures-legend" aria-label="Captures legend">
-      <li>
-        <strong>{tx.captures.state_drift.label}:</strong> {tx.captures.state_drift.definition}
-      </li>
-      <li>
-        <strong>{tx.captures.goal_adaptation.label}:</strong> {tx.captures.goal_adaptation.definition}
-      </li>
-      <li>
-        <span className="glyph">●</span> yes <span className="glyph">◐</span> partial <span className="glyph">○</span> no <span className="muted">—</span> not recorded. A paper
-        with several entries shows its strongest value.
-      </li>
-    </ul>
   );
 }
 
@@ -611,7 +580,6 @@ export function EvaluationsPage() {
           </span>
         </div>
         <ProtocolTable rows={rows} />
-        <CapturesLegend />
       </section>
       <MetricsTabs onHoverTerms={setHover} />
       <DatasetTable />

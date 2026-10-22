@@ -1460,11 +1460,6 @@ tr.clickable:hover td {
   height: 10px;
   border-radius: 2px;
 }
-.captures-legend {
-  margin-top: 10px;
-  flex-direction: column;
-  align-items: flex-start;
-}
 .center {
   text-align: center !important;
 }
