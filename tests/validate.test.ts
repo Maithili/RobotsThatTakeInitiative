@@ -509,26 +509,38 @@ describe('datasets, setups, and realism', () => {
     t.realism.environment.levels.simulator.opacity = 0.25;
     expectError(run([], { taxonomy: t }), /realism\.environment\.levels\.simulator: Unrecognized key.*opacity/);
   });
-  it('accepts known task complexity levels and null, and rejects unknown ones', () => {
+  it('accepts each of the four action space levels and null, and rejects unknown ones', () => {
+    expect(Object.keys(bareTaxonomy().action_space_complexity.levels)).toEqual(['low', 'medium', 'high', 'very_high']);
     const ok = run([
       base('a', {
         evaluations: [
-          { id: 'e1', loop: 'offline_replay', task_complexity: 'medium' },
-          { id: 'e2', loop: 'offline_replay', task_complexity: null },
-          { id: 'e3', loop: 'offline_replay' },
+          { id: 'e1', loop: 'offline_replay', action_space_complexity: 'low' },
+          { id: 'e2', loop: 'offline_replay', action_space_complexity: 'medium' },
+          { id: 'e3', loop: 'offline_replay', action_space_complexity: 'high' },
+          { id: 'e4', loop: 'offline_replay', action_space_complexity: 'very_high' },
+          { id: 'e5', loop: 'offline_replay', action_space_complexity: null },
+          { id: 'e6', loop: 'offline_replay' },
         ],
       }),
     ]);
     expect(ok.errors).toEqual([]);
-    expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', task_complexity: 'galactic' }] })]), /evaluation e: unknown task_complexity level "galactic"/);
+    expectError(
+      run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', action_space_complexity: 'galactic' }] })]),
+      /evaluation e: unknown action_space_complexity level "galactic"/,
+    );
+    // The old key is gone.
+    expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', task_complexity: 'high' }] })]), /Unrecognized key.*task_complexity/);
   });
-  it('rejects a task complexity scale with more levels than the color ramp has steps', () => {
-    const t = bareTaxonomy();
-    t.task_complexity.levels.extreme = { label: 'Extreme', definition: 'More than the ramp can show.' };
-    expectError(run([], { taxonomy: t }), /task_complexity\.levels: needs 1 to 3 levels/);
+  it('allows 1 to 4 action space levels, one per step of the color ramp', () => {
+    const five = bareTaxonomy();
+    five.action_space_complexity.levels.extreme = { label: 'Extreme', definition: 'More than the ramp can show.' };
+    expectError(run([], { taxonomy: five }), /action_space_complexity\.levels: needs 1 to 4 levels/);
     const none = bareTaxonomy();
-    none.task_complexity.levels = {};
-    expectError(run([], { taxonomy: none }), /task_complexity\.levels: needs 1 to 3 levels/);
+    none.action_space_complexity.levels = {};
+    expectError(run([], { taxonomy: none }), /action_space_complexity\.levels: needs 1 to 4 levels/);
+    const one = bareTaxonomy();
+    one.action_space_complexity.levels = { low: { label: 'Low', definition: 'Few.' } };
+    expect(run([], { taxonomy: one }).errors).toEqual([]);
   });
   it('derives basis_of', () => {
     const r = run([], { datasets: [sim, ds, { ...setup, environment: 'sim', based_on: [{ id: 'ds', relation: 'uses' }], human_models: ['Scripted'], loops: ['closed_scripted'] }] });

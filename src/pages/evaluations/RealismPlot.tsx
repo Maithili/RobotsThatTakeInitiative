@@ -1,4 +1,4 @@
-// Evaluation realism plot (SPEC §8.3): environment realism (x) by human realism (y), task complexity as color,
+// Evaluation realism plot (SPEC §8.3): environment realism (x) by human realism (y), action space complexity as color,
 // one dot per paper, a target past the top-right corner. Robot realism shows only in the hover card.
 import { useEffect, useRef, useState } from 'react';
 import { datasetById, FRAMEWORK_PAPER, paperLabel, tx } from '../../data.ts';
@@ -15,18 +15,18 @@ const TOP = 56;
 const BOTTOM = 52;
 const TARGET = 70;
 
-/** CSS fill for a task-complexity level: one ramp step per level, in taxonomy order, gray when not assessed. */
-export function complexityFill(id: string | null, order: string[]): string {
+/** CSS fill for an action-space-complexity level: one ramp step per level, in taxonomy order, gray when not assessed. */
+export function actionSpaceFill(id: string | null, order: string[]): string {
   const i = id ? order.indexOf(id) : -1;
-  return i >= 0 ? `var(--complexity-${i + 1})` : 'var(--complexity-none)';
+  return i >= 0 ? `var(--action-space-${i + 1})` : 'var(--action-space-none)';
 }
 
 export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: Set<string> }) {
   const url = useUrl();
   const RX = Object.keys(tx.realism.environment.levels);
   const RY = Object.keys(tx.realism.human.levels);
-  const TC = tx.task_complexity;
-  const TC_ORDER = Object.keys(TC.levels);
+  const AS = tx.action_space_complexity;
+  const AS_ORDER = Object.keys(AS.levels);
   const placed = rows.filter((r) => r.realism.environment && r.realism.human);
   const skipped = rows.length - placed.length;
   const [card, setCard] = useState<{ row: PaperEvalRow; x: number; y: number } | null>(null);
@@ -69,7 +69,7 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
     setCard({ row, x: x * scale, y: y * scale });
   };
   const levelLabel = (axis: 'robot' | 'human' | 'environment', id: string | null) => (id ? tx.realism[axis].levels[id]?.label ?? id : 'Not stated');
-  const complexityLabel = (id: string | null) => (id ? TC.levels[id]?.label ?? id : 'Not assessed');
+  const actionSpaceLabel = (id: string | null) => (id ? AS.levels[id]?.label ?? id : 'Not assessed');
 
   return (
     <section className="card realism" aria-labelledby="realism-title">
@@ -114,7 +114,7 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
           {order.map(({ r, x, y }) => {
             const dim = !matches.has(r.paper.id);
             const framework = r.paper.id === FRAMEWORK_PAPER;
-            const assessed = !!r.complexity && r.complexity in TC.levels;
+            const assessed = !!r.actionSpaceComplexity && r.actionSpaceComplexity in AS.levels;
             return (
               <g
                 key={r.paper.id}
@@ -122,13 +122,13 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
                 tabIndex={0}
                 role="button"
                 aria-label={`${r.paper.short_name}, ${r.paper.year}: ${levelLabel('human', r.realism.human)}, ${levelLabel('environment', r.realism.environment)}, ${
-                  assessed ? `${complexityLabel(r.complexity)} task complexity` : 'task complexity not assessed'
+                  assessed ? `action space complexity ${actionSpaceLabel(r.actionSpaceComplexity)}` : 'action space complexity not assessed'
                 }`}
                 data-testid={`realism-dot-${r.paper.id}`}
                 data-robot={r.realism.robot ?? ''}
                 data-human={r.realism.human ?? ''}
                 data-env={r.realism.environment ?? ''}
-                data-complexity={r.complexity ?? ''}
+                data-action-space={r.actionSpaceComplexity ?? ''}
                 onMouseEnter={() => open(r, x, y)}
                 onMouseLeave={scheduleClose}
                 onFocus={() => open(r, x, y)}
@@ -141,7 +141,7 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
                 }}
               >
                 {framework && <circle cx={x} cy={y} r={R + 3.5} className="realism__ring" />}
-                <circle cx={x} cy={y} r={R} className="realism__fill" style={{ fill: complexityFill(r.complexity, TC_ORDER) }} />
+                <circle cx={x} cy={y} r={R} className="realism__fill" style={{ fill: actionSpaceFill(r.actionSpaceComplexity, AS_ORDER) }} />
                 <circle cx={x} cy={y} r={R} className="realism__outline" />
               </g>
             );
@@ -178,12 +178,12 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
               <dd>{levelLabel('human', card.row.realism.human)}</dd>
               <dt>Setting</dt>
               <dd>{levelLabel('environment', card.row.realism.environment)}</dd>
-              <dt>Task complexity</dt>
-              <dd data-testid="realism-card-complexity" title={card.row.complexity ? TC.levels[card.row.complexity]?.definition : undefined}>
+              <dt>{AS.label}</dt>
+              <dd data-testid="realism-card-action-space" title={card.row.actionSpaceComplexity ? AS.levels[card.row.actionSpaceComplexity]?.definition : undefined}>
                 <svg width="10" height="10" aria-hidden="true" className="realism__swatch">
-                  <circle cx="5" cy="5" r="4.5" style={{ fill: complexityFill(card.row.complexity, TC_ORDER) }} />
+                  <circle cx="5" cy="5" r="4.5" style={{ fill: actionSpaceFill(card.row.actionSpaceComplexity, AS_ORDER) }} />
                 </svg>
-                {complexityLabel(card.row.complexity)}
+                {actionSpaceLabel(card.row.actionSpaceComplexity)}
               </dd>
               <dt>Robot</dt>
               <dd>{levelLabel('robot', card.row.realism.robot)}</dd>
@@ -195,23 +195,23 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
           </div>
         )}
       </div>
-      <ul className="legend small realism__legend" aria-label={`${TC.label} colors`} data-testid="complexity-legend">
-        <li className="muted" title={TC.definition}>
-          {TC.label}:
+      <ul className="legend small realism__legend" aria-label={`${AS.label} colors`} data-testid="action-space-legend">
+        <li className="muted" title={AS.definition}>
+          {AS.label}:
         </li>
-        {TC_ORDER.map((id) => (
-          <li key={id} title={TC.levels[id].definition} data-testid={`complexity-legend-${id}`}>
+        {AS_ORDER.map((id) => (
+          <li key={id} title={AS.levels[id].definition} data-testid={`action-space-legend-${id}`}>
             <svg width="16" height="16" aria-hidden="true">
-              <circle cx="8" cy="8" r="6" className="realism__fill" style={{ fill: complexityFill(id, TC_ORDER) }} />
+              <circle cx="8" cy="8" r="6" className="realism__fill" style={{ fill: actionSpaceFill(id, AS_ORDER) }} />
               <circle cx="8" cy="8" r="6" className="realism__outline" />
             </svg>
-            {TC.levels[id].label}
-            <span className="sr-only">: {TC.levels[id].definition}</span>
+            {AS.levels[id].label}
+            <span className="sr-only">: {AS.levels[id].definition}</span>
           </li>
         ))}
-        <li className="is-unassessed" title="No level recorded for this paper's evaluations yet." data-testid="complexity-legend-none">
+        <li className="is-unassessed" title="No level recorded for this paper's evaluations yet." data-testid="action-space-legend-none">
           <svg width="16" height="16" aria-hidden="true">
-            <circle cx="8" cy="8" r="6" className="realism__fill" style={{ fill: complexityFill(null, TC_ORDER) }} />
+            <circle cx="8" cy="8" r="6" className="realism__fill" style={{ fill: actionSpaceFill(null, AS_ORDER) }} />
             <circle cx="8" cy="8" r="6" className="realism__outline" />
           </svg>
           Not assessed

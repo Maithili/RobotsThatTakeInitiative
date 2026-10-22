@@ -78,4 +78,4 @@ evaluations:
       robot: null
       human: recorded
       environment: null
-    task_complexity: null  # undecided: trigger and step detection is low, robot step choice over task graphs is not described
+    action_space_complexity: null  # 2 trigger classes, 75 tasks (ProAct arXiv 2602.03430 App. B.4, §1). Step and robot-action counts not stated

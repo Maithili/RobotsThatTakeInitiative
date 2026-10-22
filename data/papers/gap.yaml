@@ -73,7 +73,7 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    task_complexity: medium  # draft: object placements, scored by the user actions they skip
+    action_space_complexity: null  # per-step count not stated. Plain LLM schema lists 61 objects, destinations truncated (GAP arXiv 2609.28910 App. IV-B)
     results:
       - method: slate-pro
         metric: f1
@@ -106,7 +106,7 @@ evaluations:
       robot: task_specific
       human: adaptive_sim
       environment: simulator
-    task_complexity: medium  # draft: a planner proposes and selects candidate object placements
+    action_space_complexity: null  # per-step count not stated. Plain LLM schema lists 61 objects, destinations truncated (GAP arXiv 2609.28910 App. IV-B)
     results:
       - method: slate-pro
         metric: f1
@@ -139,7 +139,7 @@ evaluations:
       robot: task_specific
       human: scripted
       environment: simulator
-    task_complexity: medium  # draft: a planner proposes and selects candidate object placements
+    action_space_complexity: null  # per-step count not stated. Plain LLM schema lists 61 objects, destinations truncated (GAP arXiv 2609.28910 App. IV-B)
     results:
       - method: slate-pro
         metric: f1

@@ -521,7 +521,14 @@ test('12. datasets table has no simulator rows; GAP has one shaded protocol row 
   await expect(page.getByTestId('protocol-gap')).toHaveCount(0);
 });
 
-test('13. the realism plot puts GAP at Simulator and Adaptive simulated user, in the medium task-complexity color', async ({ page }) => {
+/** Action space complexity fills (SPEC §8.3), as computed CSS colors, per theme. */
+const ACTION_SPACE_FILL = {
+  light: { low: 'rgb(126, 186, 113)', medium: 'rgb(85, 150, 71)', high: 'rgb(55, 112, 41)', very_high: 'rgb(35, 75, 25)', none: 'rgb(213, 215, 220)' },
+  dark: { low: 'rgb(63, 110, 53)', medium: 'rgb(88, 153, 74)', high: 'rgb(128, 194, 113)', very_high: 'rgb(184, 231, 174)', none: 'rgb(61, 64, 73)' },
+} as const;
+const ACTION_SPACE_LABEL: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', very_high: 'Very high' };
+
+test('13. the realism plot puts GAP at Simulator and Adaptive simulated user, and its card shows its action space complexity', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/#/evaluations');
   const plot = page.getByTestId('realism-plot');
@@ -534,7 +541,10 @@ test('13. the realism plot puts GAP at Simulator and Adaptive simulated user, in
   const dot = page.getByTestId('realism-dot-gap');
   await expect(dot).toHaveAttribute('data-human', 'adaptive_sim');
   await expect(dot).toHaveAttribute('data-env', 'simulator');
-  await expect(dot).toHaveAttribute('data-complexity', 'medium');
+  // GAP's level, whatever it is; empty means not assessed.
+  const level = (await dot.getAttribute('data-action-space')) ?? '';
+  expect(['', ...Object.keys(ACTION_SPACE_LABEL)]).toContain(level);
+  const key = (level || 'none') as keyof (typeof ACTION_SPACE_FILL)['light'];
   // The dot sits in the Simulator column and the Adaptive simulated user row.
   const box = (await dot.locator('.realism__fill').boundingBox())!;
   const col = (await plot.getByTestId('realism-x-simulator').boundingBox())!;
@@ -542,24 +552,33 @@ test('13. the realism plot puts GAP at Simulator and Adaptive simulated user, in
   const row = (await plot.getByTestId('realism-y-adaptive_sim').boundingBox())!;
   expect(box.x + box.width / 2).toBeLessThan((col.x + col.width / 2 + vr.x + vr.width / 2) / 2);
   expect(Math.abs(box.y + box.height / 2 - (row.y + row.height / 2))).toBeLessThan(28);
-  // Fully opaque, filled with the medium step of the ramp. GAP keeps its ring.
+  // Fully opaque, filled with its level's ramp step, or gray with a dashed edge when not assessed. GAP keeps its ring.
   const fill = dot.locator('.realism__fill');
-  await expect(fill).toHaveCSS('fill', 'rgb(71, 134, 56)');
+  await expect(fill).toHaveCSS('fill', ACTION_SPACE_FILL.light[key]);
   await expect(fill).toHaveCSS('fill-opacity', '1');
   await expect(dot).toHaveCSS('opacity', '1');
   await expect(dot.locator('.realism__ring')).toHaveCount(1);
+  if (!level) await expect(dot).toHaveClass(/is-unassessed/);
   // The dark theme has its own steps.
   await page.emulateMedia({ colorScheme: 'dark' });
-  await expect(fill).toHaveCSS('fill', 'rgb(99, 170, 83)');
+  await expect(fill).toHaveCSS('fill', ACTION_SPACE_FILL.dark[key]);
   await page.emulateMedia({ colorScheme: 'light' });
-  // The legend names each level, with its definition on hover.
-  await expect(page.getByTestId('complexity-legend-medium')).toHaveAttribute('title', /object–destination/);
-  await expect(page.getByTestId('complexity-legend-none')).toContainText('Not assessed');
+  // The legend names the four levels in order, with definitions on hover, then Not assessed.
+  const legend = page.getByTestId('action-space-legend');
+  await expect(legend).toContainText('Action space complexity:');
+  await expect(legend.locator('[data-testid^="action-space-legend-"]')).toHaveText(['Low', 'Medium', 'High', 'Very high', 'Not assessed'].map((t) => new RegExp(`^${t}`)));
+  await expect(page.getByTestId('action-space-legend-medium')).toHaveAttribute('title', '50 to 100 options, such as 10 objects on any of 10 locations.');
+  await expect(page.getByTestId('action-space-legend-very_high')).toHaveAttribute('title', /unbounded/);
+  // A dot with a level takes its ramp color: Watch-And-Help's helper has 167 actions per step on average.
+  const wah = page.getByTestId('realism-dot-watch-and-help');
+  await expect(wah).toHaveAttribute('data-action-space', 'high');
+  await expect(wah.locator('.realism__fill')).toHaveCSS('fill', ACTION_SPACE_FILL.light.high);
 
   await dot.hover();
   const card = page.getByTestId('realism-card');
   await expect(card).toBeVisible();
-  await expect(card.getByTestId('realism-card-complexity')).toHaveText('Medium');
+  await expect(card.locator('dt', { hasText: 'Action space complexity' })).toHaveCount(1);
+  await expect(card.getByTestId('realism-card-action-space')).toHaveText(level ? ACTION_SPACE_LABEL[level] : 'Not assessed');
   await expect(card).toContainText('Task-specific policy');
   const link = card.getByRole('link', { name: 'Paper ↗' });
   await expect(link).toHaveAttribute('href', 'https://arxiv.org/abs/2609.28910');

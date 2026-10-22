@@ -59,7 +59,7 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    task_complexity: high  # draft: predicts the set of goal predicates of a multi-predicate household goal
+    action_space_complexity: null  # goal inference, no robot action. 30 predicate types, 2-8 predicates per goal (WAH arXiv 2010.09890 §3)
   - id: watch-and-help-help
     environment: virtualhome
     loop: closed_scripted
@@ -73,7 +73,7 @@ evaluations:
       robot: task_specific
       human: scripted
       environment: simulator
-    task_complexity: high  # draft: goal-conditioned planning until every predicate of the goal holds
+    action_space_complexity: high  # "167 different actions per step" on average, > 100 (WAH arXiv 2010.09890 App. A.2.4)
   - id: watch-and-help-human
     environment: virtualhome
     loop: user_study_short
@@ -90,4 +90,4 @@ evaluations:
       robot: task_specific
       human: non_target
       environment: simulator
-    task_complexity: high  # draft: same task as the help stage, with participants
+    action_space_complexity: high  # same helper and action space: "167 different actions per step" on average (WAH App. A.2.4)

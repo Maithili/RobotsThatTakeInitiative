@@ -70,7 +70,7 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    task_complexity: high  # draft: sampled TAMP plans for goal-fluent tasks
+    action_space_complexity: null  # 100 (NAMO) / 200 (cabinet) sampled candidate plans per task (§5.1-5.2), action space not stated (arXiv 2407.13694)
   - id: anticipatory-tamp-fetch
     environment: null
     datasets: []
@@ -86,4 +86,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: null
-    task_complexity: high  # draft: the same TAMP planner on a two-task sequence
+    action_space_complexity: null  # six cylinders (§5.3), option count not stated (arXiv 2407.13694)

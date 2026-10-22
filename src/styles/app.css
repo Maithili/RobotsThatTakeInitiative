@@ -2857,9 +2857,9 @@ label.lgd__item {
   font-size: 20px;
   fill: var(--text-2);
 }
-/* Fill comes from the task-complexity ramp (--complexity-*), set inline. Dots are fully opaque. */
+/* Fill comes from the action-space-complexity ramp (--action-space-*), set inline. Dots are fully opaque. */
 .realism__fill {
-  fill: var(--complexity-none);
+  fill: var(--action-space-none);
 }
 .realism__outline {
   fill: none;
@@ -2868,7 +2868,7 @@ label.lgd__item {
 }
 .realism__dot.is-unassessed .realism__outline,
 .realism__legend li.is-unassessed .realism__outline {
-  stroke: var(--complexity-none-edge);
+  stroke: var(--action-space-none-edge);
   stroke-width: 1.2;
   stroke-dasharray: 2.5 2;
 }
@@ -2910,6 +2910,7 @@ label.lgd__item {
 }
 .realism__levels dt {
   color: var(--text-3);
+  max-width: 96px;
 }
 .realism__levels dd {
   margin: 0;

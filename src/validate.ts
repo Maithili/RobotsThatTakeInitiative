@@ -199,8 +199,8 @@ export function buildDb(input: BuildInput): BuildResult {
         const lv = e.realism?.[axis];
         if (lv != null && !inSet(t.realism[axis].levels, lv)) errors.push(`${eat}: unknown realism.${axis} level "${lv}"`);
       }
-      if (e.task_complexity != null && !inSet(t.task_complexity.levels, e.task_complexity)) {
-        errors.push(`${eat}: unknown task_complexity level "${e.task_complexity}"`);
+      if (e.action_space_complexity != null && !inSet(t.action_space_complexity.levels, e.action_space_complexity)) {
+        errors.push(`${eat}: unknown action_space_complexity level "${e.action_space_complexity}"`);
       }
       for (const mt of e.metrics ?? []) if (!inSet(t.metrics, mt)) errors.push(`${eat}: unknown metric "${mt}"`);
       for (const b of e.baselines ?? []) {

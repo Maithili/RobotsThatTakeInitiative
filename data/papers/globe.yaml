@@ -38,4 +38,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    task_complexity: medium  # draft: one activity and one object (of 93 HOMER+ entities) per time step
+    action_space_complexity: null  # 24 activities (HOMER+ notes), but objects come from O(a_t), size not stated (GLOBE arXiv 2606.08458 §III-A)

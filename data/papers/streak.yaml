@@ -66,4 +66,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    task_complexity: medium  # draft: object relocations, scored per object as in STOT
+    action_space_complexity: null  # 108 objects per household (HOMER notes). STREAK §V gives no object or location count (arXiv 2411.05549)

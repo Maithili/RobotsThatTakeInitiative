@@ -80,8 +80,8 @@ const realismAxis = z.object({
   levels: z.record(z.object({ label: z.string(), definition: z.string().optional(), refs: z.array(z.string()).optional() }).strict()),
 });
 
-/** Steps in the task-complexity color ramp (SPEC §8.3), one CSS token each (`--complexity-1` …). */
-export const COMPLEXITY_STEPS = 3;
+/** Steps in the action-space-complexity color ramp (SPEC §8.3), one CSS token each (`--action-space-1` …). */
+export const ACTION_SPACE_STEPS = 4;
 
 export const TaxonomySchema = z.object({
   levels: z.object({ L0: levelDef, L1: levelDef, L2: levelDef }),
@@ -159,14 +159,14 @@ export const TaxonomySchema = z.object({
     source_url: url.nullable(),
   }),
   /** Ordered from low to high. Colors the realism plot's dots (SPEC §8.3), one ramp step per level. */
-  task_complexity: z
+  action_space_complexity: z
     .object({
       label: z.string(),
       definition: z.string(),
       levels: z
         .record(defn.strict())
-        .refine((l) => Object.keys(l).length >= 1 && Object.keys(l).length <= COMPLEXITY_STEPS, {
-          message: `needs 1 to ${COMPLEXITY_STEPS} levels, one per step of the color ramp`,
+        .refine((l) => Object.keys(l).length >= 1 && Object.keys(l).length <= ACTION_SPACE_STEPS, {
+          message: `needs 1 to ${ACTION_SPACE_STEPS} levels, one per step of the color ramp`,
         }),
     })
     .strict(),
@@ -224,8 +224,9 @@ export const EvaluationSchema = z
       .object({ robot: z.string().nullable().optional(), human: z.string().nullable().optional(), environment: z.string().nullable().optional() })
       .strict()
       .optional(),
-    /** A `task_complexity` level id. Null when the paper does not let you decide. */
-    task_complexity: z.string().nullable().optional(),
+    /** An `action_space_complexity` level id, set only when the paper states the option count at one decision point
+     *  (or that the set is generative). Null otherwise. */
+    action_space_complexity: z.string().nullable().optional(),
     results: z.array(ResultSchema).optional(),
   })
   .strict();

@@ -940,13 +940,14 @@ realism:                      # the plot in SPEC §8.3: environment (x) by human
   # TODO(Maithili): set realism.source_url once the source paper is public (SPEC §16).
   source_url: null            # link to the paper this organization comes from, once it is public
 
-task_complexity:              # colors the dots in the realism plot (SPEC §8.3). Levels ordered from low to high, at most 3. Pending Maithili's review.
-  label: Task complexity
-  definition: The combinatorial complexity of the tasks or actions the evaluation asks for.
+action_space_complexity:      # colors the dots in the realism plot (SPEC §8.3). Per Maithili, Oct 22 2026. Levels ordered from low to high, at most 4.
+  label: Action space complexity
+  definition: The number of options the policy has at a given point in time.
   levels:
-    low:    {label: Low, definition: "Few options per decision: a trigger, a label, or one choice from a short list."}
-    medium: {label: Medium, definition: "One object–destination (or object–action) choice at a time, from the objects and places in the scene."}
-    high:   {label: High, definition: "Composed plans: sequences of actions or subgoals over many objects."}
+    low:       {label: Low, definition: "A fixed set of under 50 options, such as activity labels."}
+    medium:    {label: Medium, definition: "50 to 100 options, such as 10 objects on any of 10 locations."}
+    high:      {label: High, definition: "More than 100 options."}
+    very_high: {label: Very high, definition: "Generative: an unbounded set of options."}
 
 featured_comparison:          # drives the chart in §8.2
   title: Offline evaluation overstates performance

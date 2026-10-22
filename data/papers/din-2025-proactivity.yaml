@@ -72,4 +72,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    task_complexity: high  # draft: short sequences of (action, object) subgoals, scored as whole sequences. Borderline with medium
+    action_space_complexity: null  # (action, object) subgoals from a fixed vocabulary of unstated size. No landing page

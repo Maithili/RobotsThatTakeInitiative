@@ -60,7 +60,7 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    task_complexity: medium  # draft: predicts routine object usage as object relocations on HOMER+
+    action_space_complexity: null  # 93 entities, objects and locations together, split not stated (HOMER+ notes; SLaTe-PRO arXiv 2309.06252 §6)
   - id: slate-pro-queries
     datasets:
       - homer-plus
@@ -75,4 +75,4 @@ evaluations:
       robot: task_specific
       human: scripted
       environment: simulator
-    task_complexity: medium  # draft: same predictions, one query each
+    action_space_complexity: null  # as slate-pro-original. Query candidates not counted (SLaTe-PRO §5.2)

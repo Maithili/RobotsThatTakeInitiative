@@ -33,7 +33,7 @@ const REALISM_ORDER = {
   human: Object.keys(tx.realism.human.levels),
   environment: Object.keys(tx.realism.environment.levels),
 };
-const COMPLEXITY_ORDER = Object.keys(tx.task_complexity.levels);
+const ACTION_SPACE_ORDER = Object.keys(tx.action_space_complexity.levels);
 
 const categoryOf = (m: string) => tx.metrics[m]?.category;
 /** Uncategorized metrics never show on this page (SPEC §8.6), so they count toward no term. */
@@ -46,7 +46,7 @@ const inScope = (r: { paper: string }) => {
 };
 const paperRows: PaperEvalRow[] = papers
   .filter((p) => onEvaluations(p) && (p.evaluations ?? []).length)
-  .map((p) => mergePaper(p, LOOPS, REALISM_ORDER, { order: CATEGORIES, of: categoryOf }, COMPLEXITY_ORDER));
+  .map((p) => mergePaper(p, LOOPS, REALISM_ORDER, { order: CATEGORIES, of: categoryOf }, ACTION_SPACE_ORDER));
 
 /** Papers on this page that use each metric. */
 const papersUsing = new Map(METRICS.map((m) => [m, new Set((db.metric_used_by[m] ?? []).filter(inScope).map((r) => r.paper))]));

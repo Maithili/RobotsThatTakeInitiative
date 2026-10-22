@@ -318,13 +318,14 @@ realism:                      # the plot in §8.3: environment (x) by human (y).
       own_home:          {label: Users' own homes}
   source_url: null       # link to the paper this organization comes from, once it is public
 
-task_complexity:              # colors the dots in §8.3. Levels ordered from low to high, at most 3 (one per ramp step). Pending Maithili's review.
-  label: Task complexity
-  definition: The combinatorial complexity of the tasks or actions the evaluation asks for.
+action_space_complexity:      # colors the dots in §8.3. Per Maithili, Oct 22 2026. Levels ordered from low to high, at most 4 (one per ramp step).
+  label: Action space complexity
+  definition: The number of options the policy has at a given point in time.
   levels:
-    low:    {label: Low, definition: "Few options per decision: a trigger, a label, or one choice from a short list."}
-    medium: {label: Medium, definition: "One object–destination (or object–action) choice at a time, from the objects and places in the scene."}
-    high:   {label: High, definition: "Composed plans: sequences of actions or subgoals over many objects."}
+    low:       {label: Low, definition: "A fixed set of under 50 options, such as activity labels."}
+    medium:    {label: Medium, definition: "50 to 100 options, such as 10 objects on any of 10 locations."}
+    high:      {label: High, definition: "More than 100 options."}
+    very_high: {label: Very high, definition: "Generative: an unbounded set of options."}
 
 featured_comparison:          # drives the chart in §8.2
   title: Offline evaluation overstates performance
@@ -381,7 +382,7 @@ Evaluation entry:
 | `provenance` | string ≤ 140 | |
 | `results` | list of `{method, method_label?, metric, value, sd?}` | `method` is a paper id. Use `method_label` alone for a baseline with no paper. |
 | `realism` | `{robot, human, environment}`, each a level id from `realism` or null | Filled only from what the paper states about its evaluation. `human` and `environment` place the dot in the plot in §8.3; `robot` shows only in its hover card. |
-| `task_complexity` | level id from `task_complexity` or null | The combinatorial complexity of the evaluation's tasks or actions, read from its task descriptions, outputs, and metrics. Colors the dot in §8.3. Null when the paper does not let you decide. The current values are drafts for Maithili to confirm. |
+| `action_space_complexity` | level id from `action_space_complexity` or null | The number of options the evaluated policy has at one decision point. Set it only when the paper's own text (its file, a dataset file, or its landing or full-text page) states that count, or states that the set is generative. A comment gives the count and its source. Otherwise null. Colors the dot in §8.3. |
 
 Example:
 
@@ -632,15 +633,15 @@ A grouped bar chart built from `featured_comparison`. Each method's Offline bar 
 
 ### 8.3 Evaluation realism plot
 
-This plot shows how close each paper's evaluation is to the real target, on two axes from `realism` in the taxonomy, with task complexity as color. The idea comes from a figure in a paper that is not yet public (§16).
+This plot shows how close each paper's evaluation is to the real target, on two axes from `realism` in the taxonomy, with action space complexity as color. The idea comes from a figure in a paper that is not yet public (§16).
 
 - **x axis**: environment realism, from Simulator on the left to Users' own homes on the right. **y axis**: human realism, far at the bottom. Each axis has one band per level, in taxonomy order, labeled with the level names.
 - **No robot axis.** Every evaluation in the database uses a task-specific policy, so robot realism would not separate papers (per Maithili, Oct 22 2026). `realism.robot` stays in the data and in the hover card.
-- **Color** is task complexity (`task_complexity` in the taxonomy): the combinatorial complexity of the tasks or actions the evaluation asks for, which stands in for the complexity of the policy. It uses one sequential green ramp, light for low and dark for high on the light theme, with its own steps on the dark theme so high keeps the most contrast. Purple stays GAP's, and the ramp avoids the tangential-category hues. An evaluation with no level is pale gray with a dashed outline. Dots are fully opaque. A compact legend under the plot lists the levels, each with its definition on hover, then "Not assessed" and the framework-paper ring.
+- **Color** is action space complexity (`action_space_complexity` in the taxonomy): the number of options the policy has at a given point in time, which stands in for the complexity of the policy. It uses one four-step sequential green ramp, light for low and dark for very high on the light theme, with its own steps on the dark theme so very high keeps the most contrast. Purple stays GAP's, and the ramp avoids the tangential-category hues. An evaluation with no level is pale gray with a dashed outline. Dots are fully opaque. A compact legend under the plot lists the levels, each with its definition on hover, then "Not assessed" and the framework-paper ring.
 - A dashed "target" circle with a star sits past the top-right corner, beyond the last band on both axes.
-- **One dot per paper.** A paper with several evaluation entries takes the closest level on each axis and the most complex task level across its entries. A paper appears only when it has both a human and an environment level. A note under the plot counts the papers it leaves out.
-- Dots that share a cell pack into a small grid inside it, ordered by year, so they never overlap. GAP's dot has a ring in the framework-paper color, and its fill follows task complexity like every other dot.
-- **Hover or focus** on a dot shows a card with short name, year, title, Paper ↗ and Code ↗ links, the people, setting, task complexity, and robot levels in words, loop types, and datasets. The card stays open while the pointer moves into it, so its links can be clicked. Clicking a dot opens the drawer.
+- **One dot per paper.** A paper with several evaluation entries takes the closest level on each axis and the most complex action space level across its entries. A paper appears only when it has both a human and an environment level. A note under the plot counts the papers it leaves out.
+- Dots that share a cell pack into a small grid inside it, ordered by year, so they never overlap. GAP's dot has a ring in the framework-paper color, and its fill follows action space complexity like every other dot.
+- **Hover or focus** on a dot shows a card with short name, year, title, Paper ↗ and Code ↗ links, the people, setting, action space complexity, and robot levels in words, loop types, and datasets. The card stays open while the pointer moves into it, so its links can be clicked. Clicking a dot opens the drawer.
 - Filters dim dots. Dots are keyboard-focusable in year order.
 - **Credit line.** When `realism.source_url` is set, the caption reads "Organization adapted from" with a link to that paper. It stays null until the paper is public.
 - The loop-type filter moves to the filter bar as a dropdown bound to `loop=`.
@@ -713,7 +714,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 - Color tokens on `:root`, redefined for dark mode under `prefers-color-scheme`, plus a manual theme toggle saved in `localStorage` inside try/catch.
 - **Levels** use one sequential hue ramp, lightest for L0 and darkest for L2, since levels are ordered by unknowns. Color never carries meaning alone. Lanes have labels and chips say "L1".
 - **Statuses** use glyphs ● ◐ ○, with a blank cell for "not tagged". Every view that uses them shows a legend.
-- **Task complexity** (§8.3) uses one sequential green ramp (`--complexity-1` to `--complexity-3`), with its own dark-theme steps, and pale gray for "Not assessed".
+- **Action space complexity** (§8.3) uses one sequential green ramp (`--action-space-1` to `--action-space-4`), with its own dark-theme steps, and pale gray for "Not assessed".
 - **No subproblem codes.** G1, G2, A1, A2, A3, P1, and P2 never appear as visible text. The UI uses subproblem names, or the `short` labels where space is tight. Codes stay in data files and URLs.
 - **Net value terms** use four categorical colors plus their symbols. The same colors appear in the equation, metric chips, and table dots.
 - System UI sans-serif for the interface, KaTeX for math, tabular numerals in tables.
@@ -731,7 +732,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 
 **npm scripts**: `dev`, `build` (runs `build-data` first), `validate`, `test`, `e2e`, `new-paper`, `preview`.
 
-**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, an `evaluations_exclude` id that is not a paper, an unknown `task_complexity` level, a `task_complexity` scale with more levels than ramp steps, and an `opacity` on a realism level), the `evaluations_exclude` scope, the most complex task level across a paper's entries and its ramp color, metric box rows (a group as one row, at its first member, dimmed only when no member measures the selected term, tagged ΔV or ΔC by the union of its members' terms), the category filter, `metric=` with a group id, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
+**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, an `evaluations_exclude` id that is not a paper, an unknown `action_space_complexity` level, an `action_space_complexity` scale with no levels or more than four, and an `opacity` on a realism level), the `evaluations_exclude` scope, the most complex action space level across a paper's entries and its ramp color, metric box rows (a group as one row, at its first member, dimmed only when no member measures the selected term, tagged ΔV or ΔC by the union of its members' terms), the category filter, `metric=` with a group id, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
 
 **End-to-end tests (Playwright)** on the seed data:
 
@@ -747,7 +748,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 10. At 375 px wide, no page scrolls horizontally.
 11. On Methods, the STOT to SLaTe-PRO edge is solid. With "Show all citation lines" off, no dotted edge shows until a node is hovered. The fit button brings every node into view. No drawn edge, in the seed data or the synthetic fixture, passes within clearance of a node that isn't one of its ends. A unit test over the edge geometry checks this; it would catch Watch-And-Help to NOPA passing through ProAct.
 12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table's columns run paper, year, metric categories, environment and datasets, loop types, human models, baselines. It has 12 rows and exactly one GAP row, shaded and first, showing three loop-type pills and the categories Change in user actions and Object movement prediction, and it stays first after sorting by year, name, metric categories, and loop type.
-13. The realism plot's axes are setting (x) and people (y), with no robot axis. GAP's dot sits at Simulator and Adaptive simulated user, fully opaque, in the medium task-complexity color in both themes, with its ring. Hovering it shows a card with a working Paper link and "Medium" task complexity. ProAct, with no stated setting, has no dot, and the note under the plot counts it.
+13. The realism plot's axes are setting (x) and people (y), with no robot axis. GAP's dot sits at Simulator and Adaptive simulated user, fully opaque, in its action-space-complexity color in both themes (gray with a dashed edge while not assessed), with its ring. The legend lists Low, Medium, High, Very high, and Not assessed. Hovering GAP's dot shows a card with a working Paper link and an action space complexity row with GAP's level or "Not assessed". ProAct, with no stated setting, has no dot, and the note under the plot counts it.
 14. With a fixture tangential paper, its graph node renders in its category's color at 60% opacity, and unchecking "Show tangential works" removes it and its edges.
 15. The protocols table shows category labels, one chip per category in category order, and no metric names. The metrics list has no tabs, and every category box is visible at once, in category order. The Task performance box shows "Goal precision, recall, and F1 ↑ fraction" as one row, with links to Watch-And-Help and NOPA and no hover card. Clicking a paper link opens the drawer. Clicking the row sets `metric=goal_prf` and filters the table to those two papers. Clicking a category chip in the table sets `category=`, filters the table, and scrolls to and highlights its box. `metric=speedup` marks its row and filters the table. PredictiveGraphs has no row and no realism dot but stays on the graph and the Subproblems page. ProAct has no closed-loop pill.
 16. A bare `#/evaluations` URL has no active filter chip, shows all 12 protocol rows, and dims no metric row. Bare `#/methods` and `#/subproblems` URLs also start with nothing selected or dimmed. Category headers show their ΔV and ΔC tags, collapsing a box hides its rows, and no "↕" appears on the page.
@@ -792,10 +793,10 @@ Confirmed by Maithili (Oct 22, 2026): the Koch van den Broek review sits under "
 
 The three anticipatory planning papers (Anticipatory TAMP, Talukder 2025, Courteous Anticipation) are open loop, per Maithili: their task streams are fixed and never respond to the robot. Their entries use `offline_replay`, with the human side at `recorded`.
 
-Realism plot axes, per Maithili (Oct 22, 2026): x is environment and y is human. Robot realism leaves the plot because every evaluation uses a task-specific policy; it stays in the data and the hover card. Environment no longer sets opacity. Color shows task complexity, which she chose to measure as "the combinatorial complexity of tasks or actions", as a way to show policy complexity. Every placed paper currently sits in the Simulator column.
+Realism plot axes, per Maithili (Oct 22, 2026): x is environment and y is human. Robot realism leaves the plot because every evaluation uses a task-specific policy; it stays in the data and the hover card. Environment no longer sets opacity. Color shows action space complexity, as a way to show policy complexity. Maithili's definition: "Action space combinatorial complexity is the number of options the policy has at a given point in time." Under 50 fixed options (such as activity labels) is low, up to 100 (such as 10 objects on any of 10 locations) is medium, more is high, and a generative, unbounded set is very high. This replaced an earlier three-level task complexity scale. Every placed paper currently sits in the Simulator column.
 
 
 1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them.
-2. **Task complexity.** The three levels in `task_complexity` (§5.1) and the per-evaluation values are drafts, read from the paper files and, where reachable, the papers' abstracts. Each value carries a one-line evidence comment in its paper file. Maithili reviews them. Din 2025 (short subgoal sequences) sits between medium and high, and ProAct stays null.
+2. **Action space complexity.** A level is set only where the paper's own text gives the option count at one decision point. So far that is Watch-And-Help's help and user-study entries ("167 different actions per step" on average, App. A.2.4). Every other entry is null, with what the text does state and what is missing in a comment beside it, pending the librarian.
 3. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.
 4. **Tangential works.** Maithili lists them. Candidates from the GAP paper references that fit the two tangent types: Peng et al. 2019 [16] (a CHI design and evaluation of service-robot proactivity), and the works that ask questions [17] and [18]. Both left the database earlier. ADAPT [19] stays on the Subproblems page only and is not tangential, per Maithili.

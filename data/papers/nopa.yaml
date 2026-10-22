@@ -66,7 +66,7 @@ evaluations:
       robot: task_specific
       human: scripted
       environment: simulator
-    task_complexity: high  # draft: goal-conditioned planning toward multi-predicate goals (goal predicate F1, speedup)
+    action_space_complexity: null  # "same action space in [2]" (NOPA arXiv 2301.05223 §IV), no count. K=20 goal proposals (§V-A)
   - id: nopa-user-study
     environment: virtualhome
     loop: user_study_short
@@ -82,4 +82,4 @@ evaluations:
       robot: task_specific
       human: non_target
       environment: simulator
-    task_complexity: high  # draft: same task as the simulation
+    action_space_complexity: null  # as nopa-simulation: action space size not stated (NOPA §IV)

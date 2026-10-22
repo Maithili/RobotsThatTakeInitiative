@@ -69,4 +69,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    task_complexity: high  # draft: PDDL plans for predicate-set tasks, 1 to 3 robots
+    action_space_complexity: null  # no object, location, action or candidate-plan count (arXiv 2607.20289 §V-VI)
