@@ -49,6 +49,8 @@ subproblems:
 evaluations:
   - id: watch-and-help-original
     environment: virtualhome
+    datasets:
+      - wah-task-set  # research agent audit, Oct 22 2026: WAH task set (WAH §3, §5.1, App. B)
     loop: offline_replay
     human_model: Recorded demonstrations (goal inference)
     metrics:
@@ -62,6 +64,8 @@ evaluations:
     action_space_complexity: medium  # tagged by Maithili, Oct 22 2026. Goal inference over 30 predicate types, 2-8 predicates per goal (WAH §3)
   - id: watch-and-help-help
     environment: virtualhome
+    datasets:
+      - wah-task-set  # research agent audit, Oct 22 2026: WAH task set (WAH §3, §5.1, App. B)
     loop: closed_scripted
     human_model: Built-in planner agent (Alice)
     metrics:
@@ -77,6 +81,8 @@ evaluations:
   - id: watch-and-help-human
     secondary: true  # user study. The main evaluation is the simulated one, per Maithili, Oct 22 2026
     environment: virtualhome
+    datasets:
+      - wah-task-set  # research agent audit, Oct 22 2026: the user studies run 30 test tasks of the WAH task set (WAH §6)
     loop: user_study_short
     human_model: 12 participants
     metrics:

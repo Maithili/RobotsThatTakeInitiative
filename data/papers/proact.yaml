@@ -52,6 +52,8 @@ subproblems:
     note: Does not predict future goals
 evaluations:
   - id: proact-original
+    datasets:
+      - proact-75  # research agent audit, Oct 22 2026: ProAct-75 (ProAct §4, §6.1)
     loop: offline_replay
     human_model: Recorded videos (ProAct-75)
     metrics:

@@ -21,6 +21,8 @@ method:
   builds_on: []
 evaluations:
   - id: hoiabot-vidhoi
+    datasets:
+      - vidhoi  # from this entry's own human_model and provenance (HOI4ABOT §4.1–4.3); not in the research agent audit
     loop: offline_replay
     human_model: Recorded videos (VidHOI)
     other_baselines:

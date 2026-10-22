@@ -114,7 +114,11 @@ export function furthestLoop(r: PaperEvalRow, loopOrder: string[]) {
   return Math.max(-1, ...r.loops.map((l) => loopOrder.indexOf(l)));
 }
 
-/** Datasets table groups (SPEC §8.5): tangential datasets form their own group at the bottom. Order is kept. */
-export function datasetGroups<T extends { tangent?: boolean }>(rows: readonly T[]): { core: T[]; tangent: T[] } {
-  return { core: rows.filter((d) => !d.tangent), tangent: rows.filter((d) => !!d.tangent) };
+/** Datasets table groups (SPEC §8.5): the main group, then activity datasets, then tangential ones. Order is kept. */
+export function datasetGroups<T extends { activity?: boolean; tangent?: boolean }>(rows: readonly T[]): { core: T[]; activity: T[]; tangent: T[] } {
+  return {
+    core: rows.filter((d) => !d.activity && !d.tangent),
+    activity: rows.filter((d) => !!d.activity && !d.tangent),
+    tangent: rows.filter((d) => !!d.tangent),
+  };
 }

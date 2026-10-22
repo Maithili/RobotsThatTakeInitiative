@@ -298,6 +298,11 @@ export const DatasetSchema = z
     name: z.string(),
     kind: z.enum(['dataset', 'evaluation_setup', 'simulator']),
     introduced_in: z.string().nullable().optional(),
+    /** The introducing paper when it is not in data/papers (then `introduced_in` stays null). The info panel links it. */
+    reference: z
+      .object({ title: z.string(), authors: z.string(), venue: z.string(), year: z.number().int(), url })
+      .strict()
+      .optional(),
     links: z.object({ home: url.nullable() }).strict(),
     sim_or_real: z.enum(['sim', 'real', 'both']),
     span: capped('span').nullable().optional(),
@@ -310,6 +315,9 @@ export const DatasetSchema = z
     human_models: z.array(capped('human_model')).optional(),
     loops: z.array(z.string()).optional(),
     notes: capped('notes').nullable().optional(),
+    /** Default false. Activity datasets (recorded human activity, such as Ego4D) form their own group between the main
+     *  group and the tangential one in the datasets table (SPEC §8.5). A dataset is in one group at most. */
+    activity: z.boolean().optional(),
     /** Default false. Tangential datasets form their own group at the bottom of the datasets table (SPEC §8.5). */
     tangent: z.boolean().optional(),
     provenance: capped('provenance'),

@@ -25,7 +25,7 @@ export function DatasetTable({ datasets = db.datasets }: { datasets?: DbDataset[
   const nameOf = (id: string) => datasets.find((d) => d.id === id)?.name ?? datasetById.get(id)?.name ?? id;
   // Simulators never show as rows, only in the environment column (SPEC §8.5).
   const rows = datasets.filter((d) => d.kind !== 'simulator');
-  // Tangential datasets form their own group at the bottom, under a "Tangential" divider.
+  // The main group, then activity datasets and tangential ones, each under its own divider.
   const groups = datasetGroups(rows);
   const jump = (id: string) => {
     setFlash(id);
@@ -116,6 +116,14 @@ export function DatasetTable({ datasets = db.datasets }: { datasets?: DbDataset[
                     <button type="button" className="linkish" onClick={() => url.openPaper(d.introduced_in!)}>
                       {paperLabel(d.introduced_in)}
                     </button>
+                  ) : d.reference ? (
+                    // A paper outside the database: a citation linked to its landing page.
+                    <span data-testid={`ds-reference-${d.id}`}>
+                      <a href={d.reference.url} target="_blank" rel="noreferrer">
+                        {d.reference.title} ↗
+                      </a>{' '}
+                      {d.reference.authors}, {d.reference.venue} {d.reference.year}
+                    </span>
                   ) : (
                     <span className="muted">—</span>
                   )}
@@ -172,6 +180,16 @@ export function DatasetTable({ datasets = db.datasets }: { datasets?: DbDataset[
               </tr>
             )}
           </tbody>
+          {groups.activity.length > 0 && (
+            <tbody data-testid="ds-group-activity">
+              <tr className="group-row ds-divider" data-testid="ds-activity-divider">
+                <th colSpan={COLS} scope="colgroup">
+                  Activity datasets <span className="muted">· {groups.activity.length}</span>
+                </th>
+              </tr>
+              {groups.activity.map(row)}
+            </tbody>
+          )}
           {groups.tangent.length > 0 && (
             <tbody data-testid="ds-group-tangent">
               <tr className="group-row ds-divider" data-testid="ds-tangent-divider">

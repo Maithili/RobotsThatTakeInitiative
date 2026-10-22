@@ -1,0 +1,22 @@
+# Added Oct 22 2026, per Maithili, from the research agent's notes on activity datasets. Values come only from the sources in provenance.
+# Its labels are human-object interaction predicates. The notes do not call them activity or action labels, so no
+# activity_labels chip until Maithili confirms.
+id: vidhoi
+name: VidHOI
+kind: dataset
+introduced_in: null
+reference:
+  title: "ST-HOI: A Spatial-Temporal Baseline for Human-Object Interaction Detection in Videos"
+  authors: Meng-Jiun Chiou, Chun-Yu Liao, Li-Wei Wang, et al.
+  venue: ACM ICMR Workshop on Intelligent Cross-Data Analysis and Retrieval
+  year: 2021
+  url: https://doi.org/10.1145/3463944.3469097
+links:
+  home: https://github.com/coldmanck/VidHOI
+sim_or_real: real
+span: null
+observations:
+  - video
+notes: Built from VidOR's user-generated videos, 7,122 videos and 70 hours, with human-object interaction labels (50 predicates)
+activity: true
+provenance: "Research agent, Oct 22 2026: ST-HOI §1, §4.1, Table 1 (arXiv 2105.11731); github.com/coldmanck/VidHOI"

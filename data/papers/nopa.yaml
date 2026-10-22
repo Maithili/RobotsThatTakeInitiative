@@ -49,6 +49,8 @@ subproblems:
 evaluations:
   - id: nopa-simulation
     environment: virtualhome
+    datasets:
+      - o-wah  # research agent audit, Oct 22 2026: NOPA evaluates on O-WAH, not the WAH task set (NOPA §IV, §V)
     loop: closed_scripted
     human_model: Built-in planner agent
     metrics:
@@ -70,6 +72,8 @@ evaluations:
   - id: nopa-user-study
     secondary: true  # user study. The main evaluation is the simulated one, per Maithili, Oct 22 2026
     environment: virtualhome
+    datasets:
+      - o-wah  # research agent audit, Oct 22 2026: 40 trials on 10 O-WAH test episodes (NOPA §V-B)
     loop: user_study_short
     human_model: 10 participants
     metrics:

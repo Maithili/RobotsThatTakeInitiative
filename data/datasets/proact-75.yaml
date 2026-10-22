@@ -1,0 +1,17 @@
+# Added Oct 22 2026, per Maithili, from the research agent's notes on activity datasets. Values come only from the sources in provenance.
+# Fig. 2's per-source counts sum to 5,701 videos; the text says 5,383, which the notes use (ProAct §1, §4.1).
+# COIN here is a video source of ProAct-75, not the coin-ownership entry.
+id: proact-75
+name: ProAct-75
+kind: dataset
+introduced_in: proact
+links:
+  home: https://github.com/ZhuXMMM/ProAct
+sim_or_real: real
+span: null
+observations:
+  - activity_labels  # task labels and step segments with step names (ProAct §4.1, Fig. 3)
+  - video
+notes: Exocentric video of 75 tasks, 5,383 videos, with task, step and trigger labels. Sources Ego-Exo4D, COIN, UCF-Crime, self-collected
+activity: true
+provenance: "Research agent, Oct 22 2026: ProAct §1, §4.1, App. D (arXiv 2602.03430 v3); github.com/ZhuXMMM/ProAct"

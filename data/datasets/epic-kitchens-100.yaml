@@ -1,0 +1,21 @@
+# Added Oct 22 2026, per Maithili, from the research agent's notes on activity datasets. Values come only from the sources in provenance.
+id: epic-kitchens-100
+name: EPIC-KITCHENS-100
+kind: dataset
+introduced_in: null
+reference:
+  title: "Rescaling Egocentric Vision: Collection, Pipeline and Challenges for EPIC-KITCHENS-100"
+  authors: Dima Damen, Hazel Doughty, Giovanni Maria Farinella, et al.
+  venue: IJCV
+  year: 2022
+  url: https://doi.org/10.1007/s11263-021-01531-2
+links:
+  home: https://epic-kitchens.github.io/
+sim_or_real: real
+span: 2–4 days per participant  # "2–4 days of their typical kitchen activities" (EPIC-KITCHENS-100 §2)
+observations:
+  - activity_labels  # verb-noun actions: 97 verbs, 300 nouns (Table 1)
+  - video
+notes: Egocentric, unscripted video from 37 participants in 45 home kitchens, 100 hours, with 89,977 verb-noun action segments
+activity: true
+provenance: "Research agent, Oct 22 2026: EPIC-KITCHENS-100 abstract, §2, Table 1 (arXiv 2006.13256); epic-kitchens.github.io"

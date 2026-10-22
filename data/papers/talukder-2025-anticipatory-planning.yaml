@@ -54,7 +54,8 @@ subproblems:
 evaluations:
   - id: talukder-2025-anticipatory-planning-sim
     environment: null
-    datasets: []
+    datasets:
+      - alfred  # research agent audit, Oct 22 2026: home tasks from ALFRED task specifications in ProcTHOR homes (Talukder §I, §V, §V-B)
     loop: offline_replay
     human_model: No human. Tasks sampled from a fixed P(τ)
     metrics:

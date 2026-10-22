@@ -495,11 +495,29 @@ describe('tangential datasets', () => {
     expectError(run([], { datasets: [sim, { ...ds, tangent: 'search' }] }), /datasets\/ds.yaml: tangent/);
   });
 
-  it('groups tangential datasets after the others, keeping order', () => {
-    const rows = [{ id: 'x', tangent: true }, { id: 'y' }, { id: 'z', tangent: false }, { id: 'w', tangent: true }];
+  it('groups activity datasets, then tangential datasets, after the others, keeping order', () => {
+    const rows = [{ id: 'x', tangent: true }, { id: 'a1', activity: true }, { id: 'y' }, { id: 'z', tangent: false, activity: false }, { id: 'w', tangent: true }, { id: 'a2', activity: true }];
     const g = datasetGroups(rows);
     expect(g.core.map((d) => d.id)).toEqual(['y', 'z']);
+    expect(g.activity.map((d) => d.id)).toEqual(['a1', 'a2']);
     expect(g.tangent.map((d) => d.id)).toEqual(['x', 'w']);
+  });
+
+  it('rejects a dataset in two groups or a non-boolean activity flag', () => {
+    expectError(run([], { datasets: [sim, { ...ds, activity: true, tangent: true }] }), /activity and tangent are both set/);
+    expectError(run([], { datasets: [sim, { ...ds, activity: 'yes' }] }), /datasets\/ds.yaml: activity/);
+    expect(run([], { datasets: [sim, { ...ds, activity: true }] }).errors).toEqual([]);
+  });
+
+  it('takes a reference for an introducing paper outside the database, with a landing-page link, only when introduced_in is null', () => {
+    const reference = { title: 'A Dataset Paper', authors: 'A. Author, B. Author', venue: 'CVPR', year: 2020, url: 'https://example.org/paper.html' };
+    const r = run([], { datasets: [sim, { ...ds, introduced_in: null, reference }] });
+    expect(r.errors).toEqual([]);
+    expect(r.db!.datasets.find((d) => d.id === 'ds')!.reference).toEqual(reference);
+    expectError(run([], { datasets: [sim, { ...ds, reference: { ...reference, url: 'https://example.org/paper.pdf' } }] }), /reference.url points to a PDF/);
+    expectError(run([], { datasets: [sim, { ...ds, reference: { ...reference, year: 'old' } }] }), /reference/);
+    expectError(run([], { datasets: [sim, { ...ds, reference: { title: 'T' } }] }), /reference/);
+    expectError(run([base('p')], { datasets: [sim, { ...ds, introduced_in: 'p', reference }] }), /drop it when introduced_in is set/);
   });
 });
 

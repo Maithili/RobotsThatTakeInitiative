@@ -1,0 +1,11 @@
+# Added Oct 22 2026, per Maithili, from the research agent's notes on activity datasets. Values come only from the sources in provenance.
+id: o-wah
+name: Online Watch-And-Help (O-WAH)
+kind: dataset
+introduced_in: nopa
+links:
+  home: https://www.tshu.io/online_watch_and_help
+sim_or_real: sim  # VirtualHome-Social (NOPA §IV)
+span: null
+notes: "Simulated household episodes with predicate goals, 6,000 or 300 for training and 100 for testing. Not released yet (\"Dataset coming soon\")"
+provenance: "Research agent, Oct 22 2026: NOPA §IV, §V-B, Table I (arXiv 2301.05223); github.com/xavierpuigf/online_watch_and_help"

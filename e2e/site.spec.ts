@@ -665,6 +665,46 @@ test('the datasets table keeps name, kind, sim or real, span, modality, setup, a
   await expect(panel).toContainText('Source:');
 });
 
+test('the datasets table has an Activity datasets group with six rows between the main and tangential groups, and Used by fills for the linked evaluations', async ({ page }) => {
+  // Per Maithili, Oct 22 2026 (SPEC §8.5, §16).
+  await page.goto('/#/evaluations');
+  const ds = page.getByTestId('dataset-table');
+  const groupIds = await ds.locator('tbody').evaluateAll((els) => els.map((e) => e.getAttribute('data-testid')));
+  expect(groupIds).toEqual(['ds-group-core', 'ds-group-activity', 'ds-group-tangent']);
+  const activity = ds.getByTestId('ds-group-activity');
+  await expect(activity.getByTestId('ds-activity-divider')).toContainText('Activity datasets');
+  await expect(activity.locator('tr[data-testid^="ds-row-"] .ds-name')).toHaveText([/^50 Salads/, /^CAD-120/, /^Ego4D/, /^EPIC-KITCHENS-100/, /^ProAct-75/, /^VidHOI/]);
+  await expect(activity.locator('tr[data-testid^="ds-row-"]').first()).toHaveCSS('opacity', '1');
+  // Every activity dataset records video; those whose sources name activity or action labels show them too.
+  for (const id of ['ego4d', 'epic-kitchens-100', 'cad-120', 'proact-75']) await expect(ds.getByTestId(`ds-row-${id}`).locator('.chip--input'), id).toHaveText(['Activity labels', 'Video']);
+  for (const id of ['50-salads', 'vidhoi']) await expect(ds.getByTestId(`ds-row-${id}`).locator('.chip--input'), id).toHaveText(['Video']);
+  // The main group gains the Watch-And-Help task set, O-WAH and ALFRED; their Used by lists the linked papers.
+  const core = ds.getByTestId('ds-group-core');
+  for (const id of ['wah-task-set', 'o-wah', 'alfred']) await expect(core.getByTestId(`ds-row-${id}`)).toHaveCount(1);
+  const users = (id: string) => ds.getByTestId(`ds-users-${id}`).getByRole('button');
+  await expect(users('wah-task-set')).toHaveText(['Watch-And-Help']);
+  await expect(users('o-wah')).toHaveText(['NOPA']);
+  await expect(users('alfred')).toHaveText(['Courteous Anticipation', 'Talukder 2025']);
+  await expect(users('proact-75')).toHaveText(['ProAct']);
+  // CAD-120 and VidHOI are used only by L1 papers, which the Evaluations page leaves out (SPEC §6.2); their drawers name them.
+  for (const id of ['cad-120', 'vidhoi', 'ego4d']) await expect(ds.getByTestId(`ds-row-${id}`).locator('td').last()).toHaveText('—');
+  // The info panel cites an introducing paper outside the database with a link, and one inside it as a paper link.
+  await page.getByRole('button', { name: 'About Ego4D', exact: true }).click();
+  const ref = page.getByTestId('ds-reference-ego4d');
+  await expect(page.locator('.info-panel')).toContainText('Introduced in: Ego4D: Around the World in 3,000 Hours of Egocentric Video ↗');
+  await expect(ref.getByRole('link')).toHaveAttribute('href', /^https:\/\/openaccess\.thecvf\.com\/.+\.html$/);
+  await expect(ref).toContainText('CVPR 2022');
+  await page.getByRole('button', { name: 'About ProAct-75', exact: true }).click();
+  await page.locator('.info-panel').getByRole('button', { name: 'ProAct', exact: true }).click();
+  await expect.poll(() => params(page).get('paper')).toBe('proact');
+  await expect(page.getByTestId('drawer')).toContainText('ProAct-75');
+  await page.goto('/#/evaluations?paper=koppula-2016-anticipating');
+  await expect(page.getByTestId('drawer')).toContainText('CAD-120');
+  // The protocols table shows the new datasets beside each paper.
+  await page.goto('/#/evaluations');
+  await expect(page.getByTestId('protocol-talukder-2025-anticipatory-planning').locator('td').nth(3)).toHaveText('ALFRED');
+});
+
 /** Action space complexity fills (SPEC §8.3), as computed CSS colors, per theme. */
 const ACTION_SPACE_FILL = {
   light: { low: 'rgb(126, 186, 113)', medium: 'rgb(85, 150, 71)', high: 'rgb(55, 112, 41)', very_high: 'rgb(35, 75, 25)', none: 'rgb(213, 215, 220)' },

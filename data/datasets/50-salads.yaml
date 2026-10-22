@@ -1,0 +1,22 @@
+# Added Oct 22 2026, per Maithili, from the research agent's notes on activity datasets. Values come only from the sources in provenance.
+# Annotation levels and class counts are not stated in the sources reached, so no activity_labels chip. The official
+# page (cvip.computing.dundee.ac.uk) was unreachable, so links.home is the University of Dundee dataset record.
+id: 50-salads
+name: 50 Salads
+kind: dataset
+introduced_in: null
+reference:
+  title: Combining embedded accelerometers with computer vision for recognizing food preparation activities
+  authors: Sebastian Stein, Stephen J. McKenna
+  venue: UbiComp
+  year: 2013
+  url: https://doi.org/10.1145/2493432.2493482
+links:
+  home: https://discovery.dundee.ac.uk/en/datasets/50-salads/
+sim_or_real: real
+span: 2 sequences per participant  # 25 people preparing 2 mixed salads each (Dundee dataset record)
+observations:
+  - video  # RGB-D video (abstract; dataset record)
+notes: 25 people each prepare 2 mixed salads, in RGB-D video with accelerometer data, over 4.5 hours, with detailed annotations
+activity: true
+provenance: "Research agent, Oct 22 2026: 50 Salads abstract (UbiComp 2013); Dundee dataset record, DOI 10.15132/10000120"

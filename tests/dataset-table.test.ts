@@ -1,5 +1,6 @@
-// Component test for the datasets table (SPEC §8.5): tangential datasets sit in their own group at the bottom,
-// under a "Tangential" divider. Renders to static markup, so it needs src/generated/db.json (npm run build-data).
+// Component test for the datasets table (SPEC §8.5): activity datasets and tangential datasets each sit in their own
+// group after the main one, under an "Activity datasets" or "Tangential" divider. Renders to static markup, so it
+// needs src/generated/db.json (npm run build-data).
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
@@ -46,9 +47,23 @@ describe('datasets table', () => {
     expect(html.slice(0, at('data-testid="ds-group-tangent"'))).not.toContain('is-tangent');
   });
 
+  it('puts activity datasets under their own divider, between the main group and the tangential one', () => {
+    const html = render([row('tan-a', { tangent: true }), row('act-a', { activity: true }), row('core-a'), row('act-b', { activity: true })]);
+    const at = (s: string) => html.indexOf(s);
+    for (const s of ['ds-row-core-a', 'ds-activity-divider', 'ds-row-act-a', 'ds-row-act-b', 'ds-tangent-divider', 'ds-row-tan-a']) expect(at(s), s).toBeGreaterThan(-1);
+    expect(at('ds-row-core-a')).toBeLessThan(at('ds-activity-divider'));
+    expect(at('ds-activity-divider')).toBeLessThan(at('ds-row-act-a'));
+    expect(at('ds-row-act-a')).toBeLessThan(at('ds-row-act-b'));
+    expect(at('ds-row-act-b')).toBeLessThan(at('ds-tangent-divider'));
+    expect(html.slice(at('data-testid="ds-group-activity"'))).toMatch(/^data-testid="ds-group-activity"><tr class="group-row ds-divider" data-testid="ds-activity-divider"><th[^>]*>Activity datasets/);
+    // Activity rows are not drawn part-way transparent.
+    expect(html).toMatch(/<tr id="ds-act-a" data-testid="ds-row-act-a">/);
+  });
+
   it('draws no divider when no dataset is tangential', () => {
     const html = render([row('core-a'), row('core-b')]);
     expect(html).not.toContain('ds-tangent-divider');
     expect(html).not.toContain('Tangential');
+    expect(html).not.toContain('ds-activity-divider');
   });
 });

@@ -1,0 +1,11 @@
+# Added Oct 22 2026, per Maithili, from the research agent's notes on activity datasets. Values come only from the sources in provenance.
+id: wah-task-set
+name: Watch-And-Help task set
+kind: dataset
+introduced_in: watch-and-help
+links:
+  home: https://github.com/xavierpuigf/watch_and_help  # code and data (WAH fn. 1)
+sim_or_real: sim  # VirtualHome-Social (WAH §4)
+span: null
+notes: Simulated household tasks in 7 apartments, 1,011 to train and two test sets of 100, each with a predicate goal and a planner demonstration
+provenance: "Research agent, Oct 22 2026: WAH §3, §4, §5.1, App. A.2.1, B (arXiv 2010.09890); github.com/xavierpuigf/watch_and_help"

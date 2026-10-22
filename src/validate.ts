@@ -276,7 +276,10 @@ export function buildDb(input: BuildInput): BuildResult {
     if (d.introduced_in != null) {
       referenced.add(d.introduced_in);
       if (!paperById.has(d.introduced_in)) errors.push(`${at}: introduced_in "${d.introduced_in}" does not exist`);
+      if (d.reference) errors.push(`${at}: reference is for a paper outside the database; drop it when introduced_in is set`);
     }
+    if (d.reference && isPdfUrl(d.reference.url)) errors.push(`${at}: reference.url points to a PDF; use a landing page`);
+    if (d.activity && d.tangent) errors.push(`${at}: activity and tangent are both set; a dataset sits in one group`);
     if (d.environment != null) {
       const env = datasetById.get(d.environment);
       if (!env) errors.push(`${at}: environment "${d.environment}" does not exist`);

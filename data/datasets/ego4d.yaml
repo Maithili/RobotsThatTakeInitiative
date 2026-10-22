@@ -1,0 +1,21 @@
+# Added Oct 22 2026, per Maithili, from the research agent's notes on activity datasets. Values come only from the sources in provenance.
+id: ego4d
+name: Ego4D
+kind: dataset
+introduced_in: null
+reference:
+  title: "Ego4D: Around the World in 3,000 Hours of Egocentric Video"
+  authors: Kristen Grauman, Andrew Westbury, Eugene Byrne, et al.
+  venue: CVPR
+  year: 2022
+  url: https://openaccess.thecvf.com/content/CVPR2022/html/Grauman_Ego4D_Around_the_World_in_3000_Hours_of_Egocentric_Video_CVPR_2022_paper.html
+links:
+  home: https://ego4d-data.org/
+sim_or_real: real
+span: 1 to 10 hours at a time  # per camera wearer (Ego4D §3.1)
+observations:
+  - activity_labels  # narrations, a verb-noun taxonomy, and 110 activity classes (Ego4D §4, §5.1, App. D.3)
+  - video
+notes: Egocentric, unscripted daily-life video, 3,670 hours from 931 camera wearers in 74 locations, with dense narrations  # 931 from the paper; the homepage says 923, the docs 926
+activity: true
+provenance: "Research agent, Oct 22 2026: Ego4D abstract, §3.1–3.3, §4, §5.1, Table 1 (arXiv 2110.07058); ego4d-data.org"

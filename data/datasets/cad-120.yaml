@@ -1,0 +1,23 @@
+# Added Oct 22 2026, per Maithili, from the research agent's notes on activity datasets. Values come only from the sources in provenance.
+# The paper names http://pr.cs.cornell.edu/humanactivities as the dataset page (§IX-A). It returned 502 on Oct 22 2026,
+# so links.home stays null until it answers again.
+id: cad-120
+name: CAD-120
+kind: dataset
+introduced_in: null
+reference:
+  title: Learning Human Activities and Object Affordances from RGB-D Videos
+  authors: Hema Swetha Koppula, Rudhir Gupta, Ashutosh Saxena
+  venue: IJRR
+  year: 2013
+  url: https://doi.org/10.1177/0278364913478446
+links:
+  home: null
+sim_or_real: real
+span: Each activity 3 times per subject  # §IX-A
+observations:
+  - activity_labels  # 10 high-level activities and 10 sub-activity labels (§IX-A)
+  - video  # RGB-D video
+notes: Third-person RGB-D video of 4 subjects doing 10 household activities, 120 sequences, with sub-activity and object affordance labels
+activity: true
+provenance: "Research agent, Oct 22 2026: CAD-120 paper abstract, §I, §III, §IX-A (IJRR 2013, arXiv 1210.1207)"
