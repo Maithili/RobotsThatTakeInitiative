@@ -51,3 +51,58 @@
 # PredictiveGraphs (IEEE-copyright version)
 - {from: saavedra-2026-scene-graphs, to: stot, source: "Librarian, Oct 21 2026", where: "Sec. VI-B, p. 7, ref. [22] (as HOMER)"}
 - {from: saavedra-2026-scene-graphs, to: flowmaps, source: "Librarian, Oct 21 2026", where: "Sec. VI-B, p. 7, ref. [35]"}
+
+# GAP (arXiv 2609.28910). Oct 22, 2026: every entry in GAP's reference list that is a paper in the database, read from
+# the arXiv HTML. OpenAlex returns no reference list for this preprint. Reference numbers follow the typeset paper,
+# which numbers the appendix references [45]–[66] (the arXiv HTML restarts that list at [1]). Locations use the paper's
+# labels: Sec. I–VII, Table I, App. I–IV. [11] is printed as "Hoiabot: Human-object interaction anticipation for
+# proactive bot", IEEE RO-MAN 2023; Maithili confirmed it is the CoRL 2023 HOI4ABOT paper (data/SEED_REPORT.md).
+- {from: gap, to: saycan, source: "GAP reference list, Oct 22 2026", where: "Sec. I, App. II-A1, ref. [3]"}
+- {from: gap, to: slate-pro, source: "GAP reference list, Oct 22 2026", where: "Sec. I, II, II-B, Table I, Sec. III-A2, III-B, IV-A, IV-A1, IV-B, V, VI, App. II-A2, ref. [9]"}
+- {from: gap, to: streak, source: "GAP reference list, Oct 22 2026", where: "Sec. I, II-B, Table I, Sec. III-A2, III-B, IV-B, V, VI, App. II-A2, ref. [10]"}
+- {from: gap, to: hoiabot, source: "GAP reference list, Oct 22 2026", where: "Sec. II, II-B, ref. [11]"}
+- {from: gap, to: huang-2016-anticipatory, source: "GAP reference list, Oct 22 2026", where: "Sec. II, II-B, ref. [12]"}
+- {from: gap, to: nemlekar-2023-transfer, source: "GAP reference list, Oct 22 2026", where: "Sec. II, II-B, ref. [13]"}
+- {from: gap, to: adapt, source: "GAP reference list, Oct 22 2026", where: "Sec. II, App. II-A3, II-C, ref. [19]"}
+- {from: gap, to: stot, source: "GAP reference list, Oct 22 2026", where: "Sec. II, II-B, Table I, Sec. III-A2, III-B, IV, App. II-A2, ref. [20]"}
+- {from: gap, to: nopa, source: "GAP reference list, Oct 22 2026", where: "Sec. II, II-B, Table I, Sec. III-A2, III-B, IV-A, App. II-A2, ref. [21]"}
+- {from: gap, to: koch-2024-proactive-hri-review, source: "GAP reference list, Oct 22 2026", where: "Sec. II, ref. [22]"}
+- {from: gap, to: malik-2019-task-allocation, source: "GAP reference list, Oct 22 2026", where: "Sec. II-A, App. II-A3, ref. [23]"}
+- {from: gap, to: smith-2020-dynamic-cost, source: "GAP reference list, Oct 22 2026", where: "Sec. II-A, Table I, Sec. III-A3, App. II-A3, ref. [24]"}
+- {from: gap, to: zhao-2022-strategy-matching, source: "GAP reference list, Oct 22 2026", where: "Sec. II-B, ref. [26]"}
+- {from: gap, to: koppula-2016-anticipating, source: "GAP reference list, Oct 22 2026", where: "Sec. II-B, ref. [27]"}
+- {from: gap, to: huang-2025-intention-tracking, source: "GAP reference list, Oct 22 2026", where: "Sec. II-B, ref. [28]"}
+- {from: gap, to: watch-and-help, source: "GAP reference list, Oct 22 2026", where: "Sec. II-B, Table I, Sec. III-A1, III-B, IV, App. II-A1, ref. [29]"}
+- {from: gap, to: proact, source: "GAP reference list, Oct 22 2026", where: "Sec. II-B, Table I, Sec. III-A2, III-B, App. II-A2, ref. [30]"}
+- {from: gap, to: nakahashi-2015-subgoal, source: "GAP reference list, Oct 22 2026", where: "Table I, Sec. III-A1, App. II-A1, ref. [31]"}
+- {from: gap, to: zhi-xuan-2020-goal-inference, source: "GAP reference list, Oct 22 2026", where: "Table I, Sec. III-A1, App. II-A1, ref. [32]"}
+- {from: gap, to: baker-2009-inverse-planning, source: "GAP reference list, Oct 22 2026", where: "Table I, Sec. III-A1, App. II-A1, ref. [33]"}
+- {from: gap, to: nikolaidis-2015-joint-action, source: "GAP reference list, Oct 22 2026", where: "Table I, Sec. III-A2, App. II-A2, ref. [34]"}
+- {from: gap, to: jayanthi-2022-strategy-discovery, source: "GAP reference list, Oct 22 2026", where: "Table I, Sec. III-A2, App. II-A2, ref. [35]"}
+- {from: gap, to: ramirez-2010-plan-recognition, source: "GAP reference list, Oct 22 2026", where: "Table I, Sec. III-A2, App. II-A2, ref. [36]"}
+- {from: gap, to: lynch-2019-play, source: "GAP reference list, Oct 22 2026", where: "Table I, Sec. III-A2, App. II-A2, ref. [37]"}
+- {from: gap, to: patel-2025-personalization, source: "GAP reference list, Oct 22 2026", where: "Table I, Sec. III-A3, App. II-A3, ref. [38]"}
+- {from: gap, to: grace, source: "GAP reference list, Oct 22 2026", where: "Table I, Sec. III-A3, App. II-A3, ref. [39]"}
+- {from: gap, to: banerjee-2018-interruptibility, source: "GAP reference list, Oct 22 2026", where: "Table I, Sec. III-A3, App. II-A3, ref. [40]"}
+- {from: gap, to: cirl, source: "GAP reference list, Oct 22 2026", where: "Table I, Sec. III-A3, App. I-B, II-A3, ref. [41]"}
+- {from: gap, to: saavedra-2026-scene-graphs, source: "GAP reference list, Oct 22 2026", where: "Sec. III-B, App. II-A2, ref. [42]"}
+- {from: gap, to: zhang-2023-llm-human-models, source: "GAP reference list, Oct 22 2026", where: "Sec. VII, ref. [44]"}
+- {from: gap, to: levy-2019-hierarchies, source: "GAP reference list, Oct 22 2026", where: "App. II-A1, ref. [46]"}
+- {from: gap, to: zhu-2022-skill-discovery, source: "GAP reference list, Oct 22 2026", where: "App. II-A1, ref. [47]"}
+- {from: gap, to: yao-2023-language-action-survey, source: "GAP reference list, Oct 22 2026", where: "App. II-A1, ref. [48]"}
+- {from: gap, to: hindsight-experience-replay, source: "GAP reference list, Oct 22 2026", where: "App. II-A1, ref. [49]"}
+- {from: gap, to: actionable-models, source: "GAP reference list, Oct 22 2026", where: "App. II-A1, ref. [50]"}
+- {from: gap, to: ravichandar-2020-lfd-review, source: "GAP reference list, Oct 22 2026", where: "App. II-A2, ref. [51]"}
+- {from: gap, to: xiong-2021-learning-by-watching, source: "GAP reference list, Oct 22 2026", where: "App. II-A2, ref. [52]"}
+- {from: gap, to: torabi-2018-bco, source: "GAP reference list, Oct 22 2026", where: "App. II-A2, ref. [53]"}
+- {from: gap, to: sakr-2025-everyday-users, source: "GAP reference list, Oct 22 2026", where: "App. II-A2, ref. [54]"}
+- {from: gap, to: schrum-2022-mind-meld, source: "GAP reference list, Oct 22 2026", where: "App. II-A2, ref. [55]"}
+- {from: gap, to: pereira-2020-landmark, source: "GAP reference list, Oct 22 2026", where: "App. II-A2, ref. [56]"}
+- {from: gap, to: amado-2018-lstm, source: "GAP reference list, Oct 22 2026", where: "App. II-A2, ref. [57]"}
+- {from: gap, to: amado-2018-latent, source: "GAP reference list, Oct 22 2026", where: "App. II-A2, ref. [58]"}
+- {from: gap, to: anticipate-and-act, source: "GAP reference list, Oct 22 2026", where: "App. II-A2, ref. [59]"}
+- {from: gap, to: zeng-2020-semantic-linking, source: "GAP reference list, Oct 22 2026", where: "App. II-A2, ref. [60]"}
+- {from: gap, to: fogarty-2005-interruptibility, source: "GAP reference list, Oct 22 2026", where: "App. II-A3, ref. [61]"}
+- {from: gap, to: assistancezero, source: "GAP reference list, Oct 22 2026", where: "App. II-A3, ref. [62]"}
+- {from: gap, to: zhao-2023-contribution-preferences, source: "GAP reference list, Oct 22 2026", where: "App. II-A3, ref. [63]"}
+- {from: gap, to: ju-2008-implicit-interactions, source: "GAP reference list, Oct 22 2026", where: "App. II-A3, ref. [64]"}

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-21T19:42:57.378Z",
+  "generated_at": "2026-10-22T18:31:02.078Z",
   "source": "OpenAlex",
   "papers": {
     "actionable-models": {
@@ -25,7 +25,17 @@
     },
     "anticipate-and-act": {
       "s2_id": "https://openalex.org/W4401413973",
-      "cites": []
+      "cites": [
+        "saycan"
+      ]
+    },
+    "anticipatory-tamp": {
+      "s2_id": "https://openalex.org/W4416078179",
+      "cites": [
+        "anticipate-and-act",
+        "ravichandar-2020-lfd-review",
+        "talukder-2025-anticipatory-planning"
+      ]
     },
     "assistancezero": {
       "s2_id": "https://openalex.org/W4417249509",
@@ -43,6 +53,18 @@
     },
     "cirl": {
       "s2_id": "https://openalex.org/W2410842990",
+      "cites": []
+    },
+    "courteous-anticipation": {
+      "s2_id": "https://openalex.org/W7170204282",
+      "cites": []
+    },
+    "evolvingnav": {
+      "s2_id": "https://openalex.org/W7215057436",
+      "cites": []
+    },
+    "flowmaps": {
+      "s2_id": "https://openalex.org/W7165384682",
       "cites": []
     },
     "fogarty-2005-interruptibility": {
@@ -116,6 +138,12 @@
       "s2_id": "https://openalex.org/W2953773709",
       "cites": []
     },
+    "mullen-2025-home-emergency": {
+      "s2_id": "https://openalex.org/W4409494238",
+      "cites": [
+        "stot"
+      ]
+    },
     "nakahashi-2015-subgoal": {
       "s2_id": "https://openalex.org/W2963501068",
       "cites": [
@@ -138,6 +166,8 @@
       "s2_id": "https://openalex.org/W4383108805",
       "cites": [
         "cirl",
+        "nikolaidis-2015-joint-action",
+        "watch-and-help",
         "zhi-xuan-2020-goal-inference"
       ]
     },
@@ -147,6 +177,8 @@
         "cirl",
         "malik-2019-task-allocation",
         "nemlekar-2023-transfer",
+        "slate-pro",
+        "stot",
         "zhang-2023-llm-human-models",
         "zhao-2022-strategy-matching"
       ]
@@ -182,21 +214,53 @@
       "s2_id": "https://openalex.org/W4410893076",
       "cites": []
     },
+    "saycan": {
+      "s2_id": "https://openalex.org/W4224912544",
+      "cites": []
+    },
+    "sgm": {
+      "s2_id": "https://openalex.org/W7124243614",
+      "cites": []
+    },
     "singh-2026-synthetic-households": {
       "s2_id": "https://openalex.org/W7128529023",
+      "cites": []
+    },
+    "slate-pro": {
+      "s2_id": "https://openalex.org/W4386721960",
       "cites": []
     },
     "smith-2020-dynamic-cost": {
       "s2_id": "https://openalex.org/W2922921726",
       "cites": []
     },
+    "stot": {
+      "s2_id": "https://openalex.org/W4310428737",
+      "cites": []
+    },
     "streak": {
       "s2_id": "https://openalex.org/W4415821946",
+      "cites": []
+    },
+    "talukder-2025-anticipatory-planning": {
+      "s2_id": "https://openalex.org/W4413925047",
+      "cites": [
+        "anticipate-and-act"
+      ]
+    },
+    "tap": {
+      "s2_id": "https://openalex.org/W4392929766",
       "cites": []
     },
     "torabi-2018-bco": {
       "s2_id": "https://openalex.org/W2802726207",
       "cites": []
+    },
+    "watch-and-help": {
+      "s2_id": "https://openalex.org/W3093967600",
+      "cites": [
+        "nikolaidis-2015-joint-action"
+      ]
     },
     "xiong-2021-learning-by-watching": {
       "s2_id": "https://openalex.org/W3122520957",
@@ -217,11 +281,15 @@
     },
     "zhang-2023-llm-human-models": {
       "s2_id": "https://openalex.org/W4389665836",
-      "cites": []
+      "cites": [
+        "saycan"
+      ]
     },
     "zhao-2022-strategy-matching": {
       "s2_id": "https://openalex.org/W4312583411",
-      "cites": []
+      "cites": [
+        "nikolaidis-2015-joint-action"
+      ]
     },
     "zhi-xuan-2020-goal-inference": {
       "s2_id": "https://openalex.org/W3099899614",
@@ -235,12 +303,8 @@
     }
   },
   "unresolved": [
-    "saycan",
+    "din-2025-proactivity",
     "schrum-2022-mind-meld",
-    "slate-pro",
-    "stot",
-    "watch-and-help",
     "zhao-2023-contribution-preferences"
-  ],
-  "note": "Title search was rate-limited for saycan, schrum-2022-mind-meld, slate-pro, stot, watch-and-help, zhao-2023-contribution-preferences. Rerun to fill them in."
+  ]
 }

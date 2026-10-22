@@ -418,7 +418,7 @@ test('11. the STOT to SLaTe-PRO edge is solid; cites show only on hover until "S
   await settleGraph(page);
   await expect.poll(outside).toBe(0);
 
-  // The seed has no citation between graph papers, so the fixture shows the hover rule.
+  // The synthetic fixture shows the hover rule at scale (GAP's own lines have their own test).
   await page.goto('/#/methods?view=graph&synthetic=1');
   await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
   await settleGraph(page);
@@ -1063,4 +1063,22 @@ test('the drawer shows where each citation comes from on hover', async ({ page }
   await expect(cites.first()).toHaveAttribute('title', /^Sources?: \S/);
   await page.goto('/#/methods?paper=baker-2009-inverse-planning');
   await expect(page.getByTestId('drawer-cited-by').getByRole('button').first()).toHaveAttribute('title', /^Sources?: \S/);
+});
+
+test('GAP cites NOPA: the drawer lists it, and hovering GAP draws its dotted citation lines', async ({ page }) => {
+  await page.goto('/#/methods?paper=gap');
+  const nopa = page.getByTestId('drawer-cites').getByRole('button', { name: 'NOPA', exact: true });
+  await expect(nopa).toHaveAttribute('title', /GAP reference list.*ref\. \[21\]/);
+
+  await page.goto('/#/methods?view=graph');
+  await settleGraph(page);
+  await expect(page.locator('[data-type="cites"]')).toHaveCount(0);
+  await page.getByTestId('node-gap').hover();
+  const line = page.getByTestId('edge-nopa-gap');
+  await expect(line).toHaveAttribute('data-type', 'cites');
+  expect(await line.evaluate((el) => getComputedStyle(el).strokeDasharray)).not.toBe('none');
+  // Only GAP's own citation lines show.
+  const shown = await page.locator('[data-type="cites"]').evaluateAll((els) => els.map((el) => el.getAttribute('data-testid')!));
+  expect(shown.length).toBeGreaterThan(1);
+  for (const id of shown) expect(id).toMatch(/^edge-.+-gap$/);
 });
