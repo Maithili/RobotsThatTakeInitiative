@@ -1,5 +1,5 @@
 // Level scope (SPEC §6.2): which papers each part of the site shows. Pure, so tests can use it without the db.
-import type { DbPaper, LevelId } from '../schema.ts';
+import type { DbPaper, LevelId, SubproblemId } from '../schema.ts';
 
 /** The paper the site is built on. Its protocol row is pinned and shaded (SPEC §8.4); its realism dot (§8.3) and
  *  graph dot have a ring. */
@@ -42,4 +42,13 @@ export function evaluationsScope(exclude: Iterable<string>): (p: Scoped & Pick<D
 /** Subproblems page (lists, counts, matrix): papers at a focus level plus papers with no level. */
 export function inSubproblems(p: Scoped): boolean {
   return !p.level || atFocusLevel(p);
+}
+
+/**
+ * Subproblems page (SPEC §9): a work is listed under a subproblem only when its tag there is `addresses` and names an
+ * approach from that subproblem's taxonomy list. A display rule only: the paper data keeps every tag.
+ */
+export function solvesSubproblem(p: Pick<DbPaper, 'subproblems'>, sub: SubproblemId, approaches: Readonly<Record<string, string>>): boolean {
+  const t = p.subproblems?.[sub];
+  return t?.status === 'addresses' && !!t.approach && Object.hasOwn(approaches, t.approach);
 }

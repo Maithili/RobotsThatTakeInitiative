@@ -1,6 +1,6 @@
 // The generated database, plus lookup maps the UI uses everywhere.
 import raw from './generated/db.json';
-import { evaluationsScope, inMethodsGraph, inMethodsTopBand, inSubproblems } from './lib/scope.ts';
+import { evaluationsScope, inMethodsGraph, inMethodsTopBand, inSubproblems, solvesSubproblem } from './lib/scope.ts';
 import type { Db, DbDataset, DbPaper, LevelId, SubproblemId } from './schema.ts';
 import { SUBPROBLEM_IDS } from './schema.ts';
 
@@ -42,9 +42,14 @@ export function paperLabel(id: string) {
   return paperById.get(id)?.short_name ?? id;
 }
 
-/** The Subproblems page lists only works that address a subproblem (SPEC §9). */
-export function addressesAny(p: DbPaper) {
-  return Object.values(p.subproblems ?? {}).some((t) => t?.status === 'addresses');
+/** Whether the Subproblems page lists the work under `s`: it addresses it with an approach from the taxonomy (SPEC §9).
+ *  Every list, count, and view on that page uses this, as does the drawer's "Appears on". */
+export function solves(p: DbPaper, s: SubproblemId): boolean {
+  return solvesSubproblem(p, s, tx.subproblems[s].approaches);
+}
+
+export function solvesAny(p: DbPaper): boolean {
+  return SUBS.some((s) => solves(p, s));
 }
 
 /** Pages that show a paper (SPEC §6.4 item 8), following the level scope (§6.2). */
@@ -52,7 +57,7 @@ export function pagesFor(p: DbPaper): ('methods' | 'evaluations' | 'subproblems'
   const out: ('methods' | 'evaluations' | 'subproblems')[] = [];
   if (inMethodsTopBand(p) || inMethodsGraph(p)) out.push('methods');
   if (p.evaluations?.length && onEvaluations(p)) out.push('evaluations');
-  if (addressesAny(p) && inSubproblems(p)) out.push('subproblems');
+  if (solvesAny(p) && inSubproblems(p)) out.push('subproblems');
   return out;
 }
 

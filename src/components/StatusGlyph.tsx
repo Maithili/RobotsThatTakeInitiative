@@ -27,6 +27,38 @@ export function StatusLegend({ className }: { className?: string }) {
   );
 }
 
+export type Relation = 'direct' | 'adjacent';
+
+/** A full moon (●) or a left half moon (◐), drawn so both have the same size whatever font the reader has. */
+function Moon({ half }: { half: boolean }) {
+  return (
+    <svg className="moon" viewBox="0 0 10 10" aria-hidden="true">
+      <circle cx="5" cy="5" r="4.2" fill={half ? 'none' : 'currentColor'} stroke="currentColor" strokeWidth="1.3" />
+      {half && <path d="M5,0.8 A4.2,4.2 0 0 0 5,9.2 Z" fill="currentColor" />}
+    </svg>
+  );
+}
+
+/** Direct as a full moon, adjacent as a half moon (SPEC §9.2). `decorative` hides it from assistive tech when a text
+ *  label sits next to it. */
+export function RelationGlyph({ relation, decorative }: { relation: Relation; decorative?: boolean }) {
+  const r = tx.relations[relation];
+  const label = `${r.label}: ${r.definition}`;
+  const cls = `glyph glyph--rel-${relation}`;
+  const moon = <Moon half={relation === 'adjacent'} />;
+  if (decorative)
+    return (
+      <span className={cls} aria-hidden="true">
+        {moon}
+      </span>
+    );
+  return (
+    <span className={cls} role="img" aria-label={label} title={label} data-relation={relation}>
+      {moon}
+    </span>
+  );
+}
+
 const CAPTURE_GLYPH = { yes: '●', partial: '◐', no: '○' } as const;
 
 export function CaptureGlyph({ value, label }: { value: 'yes' | 'partial' | 'no' | null | undefined; label: string }) {

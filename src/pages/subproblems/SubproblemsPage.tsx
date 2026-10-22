@@ -3,8 +3,8 @@ import { Chip, LevelChip } from '../../components/Chip.tsx';
 import { EmptyState } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
 import { Math as TeX } from '../../components/Math.tsx';
-import { StatusGlyph } from '../../components/StatusGlyph.tsx';
-import { addressesAny, papers, SUBS, tx } from '../../data.ts';
+import { RelationGlyph, StatusGlyph } from '../../components/StatusGlyph.tsx';
+import { papers, solves, solvesAny, SUBS, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
 import { yearAfterName } from '../../lib/year.ts';
 import { inSubproblems } from '../../lib/scope.ts';
@@ -19,15 +19,15 @@ function isSub(s: string | null): s is SubproblemId {
   return !!s && (SUBPROBLEM_IDS as readonly string[]).includes(s);
 }
 
-/** This page lists only works that address a subproblem (SPEC §9). */
-const addresses = (p: DbPaper, s: SubproblemId) => p.subproblems?.[s]?.status === 'addresses';
+// Every list and count on this page uses `solves` (SPEC §9): the work addresses the subproblem with an approach from
+// the taxonomy.
 
 function Overview({ visible, onSelect }: { visible: DbPaper[]; onSelect: (s: SubproblemId) => void }) {
   return (
     <div className="overview">
       <ul className="plain overview__list">
         {SUBS.map((s) => {
-          const n = visible.filter((p) => addresses(p, s)).length;
+          const n = visible.filter((p) => solves(p, s)).length;
           const S = tx.subproblems[s];
           return (
             <li key={s}>
@@ -53,14 +53,13 @@ function Detail({ sub, visible }: { sub: SubproblemId; visible: DbPaper[] }) {
   const S = tx.subproblems[sub];
   const relations = url.list('relation');
   const tagged = visible
-    .map((p) => ({ p, t: p.subproblems?.[sub] }))
-    .filter((x): x is { p: DbPaper; t: SubproblemTag } => x.t?.status === 'addresses')
+    .filter((p) => solves(p, sub))
+    .map((p) => ({ p, t: p.subproblems![sub]! }))
     .filter((x) => !relations.length || relations.includes(x.t.relation));
-  const groups = [
-    ...Object.entries(S.approaches).map(([id, label]) => ({ id, label, rows: tagged.filter((x) => x.t.approach === id) })),
-    { id: 'other', label: 'Other', rows: tagged.filter((x) => !x.t.approach || !S.approaches[x.t.approach]) },
-  ].filter((g) => g.rows.length);
-  const anyDirect = visible.some((p) => addresses(p, sub) && p.subproblems?.[sub]?.relation === 'direct');
+  const groups = Object.entries(S.approaches)
+    .map(([id, label]) => ({ id, label, rows: tagged.filter((x) => x.t.approach === id) }))
+    .filter((g) => g.rows.length);
+  const anyDirect = visible.some((p) => solves(p, sub) && p.subproblems?.[sub]?.relation === 'direct');
 
   return (
     <div className="detail" data-testid="sub-detail">
@@ -80,7 +79,7 @@ function Detail({ sub, visible }: { sub: SubproblemId; visible: DbPaper[] }) {
         <span className="chips" role="group" aria-label="Relation">
           {RELATIONS.map((r) => (
             <Chip key={r} pressed={relations.includes(r)} onClick={() => url.set({ relation: toggleInList(relations, r) })} title={tx.relations[r].definition}>
-              {tx.relations[r].label}
+              <RelationGlyph relation={r} decorative /> {tx.relations[r].label}
             </Chip>
           ))}
         </span>
@@ -100,10 +99,10 @@ function Detail({ sub, visible }: { sub: SubproblemId; visible: DbPaper[] }) {
                 .map(({ p, t }) => (
                   <li key={p.id}>
                     <button type="button" className="work-row" data-locate={p.id} data-testid={`work-${p.id}`} onClick={() => url.openPaper(p.id)}>
+                      <RelationGlyph relation={t.relation} />
                       <span className="work-row__name">
                         <strong>{p.short_name}</strong>{yearAfterName(p) !== null && <> <span className="muted">{p.year}</span></>}
                       </span>
-                      <span className={`rel rel--${t.relation}`}>{tx.relations[t.relation].label}</span>
                       <span className="work-row__note small">{t.note}</span>
                     </button>
                   </li>
@@ -119,7 +118,7 @@ function Detail({ sub, visible }: { sub: SubproblemId; visible: DbPaper[] }) {
 function Matrix({ visible }: { visible: DbPaper[] }) {
   const url = useUrl();
   const gaps = url.get('gaps') === '1';
-  const tagged = visible.filter(addressesAny);
+  const tagged = visible.filter(solvesAny);
   const groups = useMemo(() => {
     const methodPapers = tagged.filter((p) => p.method && p.level);
     const out: { id: string; title: string; level: DbPaper['level']; method: boolean; rows: DbPaper[] }[] = buildLanes(methodPapers)
@@ -130,7 +129,7 @@ function Matrix({ visible }: { visible: DbPaper[] }) {
     return out;
   }, [tagged]);
   const stages = Object.keys(tx.stages).map((st) => ({ id: st, subs: SUBS.filter((s) => tx.subproblems[s].stage === st) }));
-  const count = (s: SubproblemId) => tagged.filter((p) => addresses(p, s)).length;
+  const count = (s: SubproblemId) => tagged.filter((p) => solves(p, s)).length;
 
   if (!tagged.length) return <EmptyState>No work that addresses a subproblem matches these filters.</EmptyState>;
   return (
@@ -179,7 +178,7 @@ function Matrix({ visible }: { visible: DbPaper[] }) {
                     {yearAfterName(p) !== null && <span className="muted small">{p.year}</span>}
                   </th>
                   {SUBS.map((s) => {
-                    const t = addresses(p, s) ? p.subproblems![s]! : null;
+                    const t = solves(p, s) ? p.subproblems![s]! : null;
                     const name = tx.subproblems[s].short;
                     return (
                       <td key={s} className={`matrix__cell${t ? ' is-filled' : ' is-empty'}${g.method ? ' is-method' : ''}`}>
@@ -217,13 +216,12 @@ export function SubproblemsPage() {
   const themes = url.filters.theme;
   // Level scope (SPEC §6.2): papers at a focus level plus papers with no level. Never L1 papers.
   const visible = papers.filter((p) => inSubproblems(p) && matchesGlobal(p, url.filters));
-  const counts = Object.fromEntries(SUBS.map((s) => [s, visible.filter((p) => addresses(p, s)).length]));
+  const counts = Object.fromEntries(SUBS.map((s) => [s, visible.filter((p) => solves(p, s)).length]));
 
   return (
     <div className="page">
       <div className="page__intro">
         <h1>Subproblems</h1>
-        <p className="lede">Proactive assistance split into grounding, anticipation, and planning. Pick a subproblem to see the works that tackle it.</p>
       </div>
       <SubproblemNavigator selected={sub} counts={counts} onSelect={(s) => url.set({ sub: s, ...(s && view === 'matrix' ? { view: null } : {}) })} />
       <div className="themes" role="group" aria-label="Themes">

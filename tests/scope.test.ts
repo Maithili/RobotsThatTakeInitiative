@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { atFocusLevel, BAND_LEVELS, evaluationsScope, FOCUS_LEVELS, inEvaluations, inMethodsGraph, inMethodsTopBand, inSubproblems } from '../src/lib/scope.ts';
+import { atFocusLevel, BAND_LEVELS, evaluationsScope, FOCUS_LEVELS, inEvaluations, inMethodsGraph, inMethodsTopBand, inSubproblems, solvesSubproblem } from '../src/lib/scope.ts';
 import type { DbPaper } from '../src/schema.ts';
 
 // Level scope (SPEC §6.2): which papers each part of the site shows.
@@ -47,5 +47,20 @@ describe('level scope', () => {
   it('shows focus-level papers and papers with no level on Subproblems, never L1', () => {
     expect(ids(inSubproblems)).toEqual(['l2', 'work', 'tangent']);
     expect(inSubproblems(l1)).toBe(false);
+  });
+});
+
+describe('subproblems display rule', () => {
+  const approaches = { symbolic: 'Symbolic', learned: 'Learned' };
+  const tagged = (tag: NonNullable<DbPaper['subproblems']>['A2']) => P('x', { subproblems: { A2: tag } });
+  it('lists a work under a subproblem only when it addresses it with an approach from the taxonomy', () => {
+    expect(solvesSubproblem(tagged({ status: 'addresses', relation: 'direct', approach: 'learned', note: '' }), 'A2', approaches)).toBe(true);
+    expect(solvesSubproblem(tagged({ status: 'addresses', relation: 'adjacent', approach: 'symbolic', note: '' }), 'A2', approaches)).toBe(true);
+    // No approach: the tags that once went under "Other".
+    expect(solvesSubproblem(tagged({ status: 'addresses', relation: 'direct', note: '' }), 'A2', approaches)).toBe(false);
+    expect(solvesSubproblem(tagged({ status: 'addresses', relation: 'direct', approach: 'toString', note: '' }), 'A2', approaches)).toBe(false);
+    expect(solvesSubproblem(tagged({ status: 'assumes', relation: 'direct', approach: 'learned', note: '' }), 'A2', approaches)).toBe(false);
+    expect(solvesSubproblem(tagged({ status: 'addresses', relation: 'direct', approach: 'learned', note: '' }), 'A1', approaches)).toBe(false);
+    expect(solvesSubproblem(P('none'), 'A2', approaches)).toBe(false);
   });
 });

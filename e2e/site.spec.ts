@@ -235,6 +235,75 @@ test('8. in matrix view, clicking a filled cell opens the drawer; goal inference
   await expect(page.getByRole('group', { name: 'Status' })).toHaveCount(0);
 });
 
+/** Each subproblem edge on the map, as "from-to", grouped by its data-flow. */
+async function edgeFlows(page: Page) {
+  const edges = await page.locator('[data-testid^="subedge-"]').evaluateAll((els) => els.map((e) => [e.getAttribute('data-testid')!.slice('subedge-'.length), e.getAttribute('data-flow')!]));
+  const by = (f: string) => edges.filter(([, x]) => x === f).map(([id]) => id).sort();
+  return { up: by('up'), down: by('down'), dim: by('dim'), none: by('none'), all: edges.length };
+}
+
+test('the subproblem map lights every dependency path into the selected subproblem as upstream and out of it as downstream', async ({ page }) => {
+  // Edges from data/taxonomy.yaml depends_on, as prerequisite-dependent.
+  await page.goto('/#/subproblems');
+  expect(await edgeFlows(page)).toEqual({ up: [], down: [], dim: [], none: ['A1-A2', 'A1-P2', 'A2-P2', 'A3-P2', 'G1-A1', 'G1-A2', 'G1-A3', 'G1-G2', 'G2-A1', 'G2-A3', 'P1-P2'], all: 11 });
+
+  // Goal-space representation starts the flow: nothing upstream, everything it feeds downstream.
+  await page.getByTestId('subnode-G1').click();
+  await expect.poll(() => params(page).get('sub')).toBe('G1');
+  expect(await edgeFlows(page)).toEqual({ up: [], down: ['A1-A2', 'A1-P2', 'A2-P2', 'A3-P2', 'G1-A1', 'G1-A2', 'G1-A3', 'G1-G2', 'G2-A1', 'G2-A3'], dim: ['P1-P2'], none: [], all: 11 });
+
+  // Goal inference sits in the middle: the paths from goal space, action-goal association, and human policy into it are
+  // upstream; its edge to action selection is downstream. Edges that bypass it dim.
+  await page.getByTestId('subnode-A2').click();
+  await expect.poll(() => params(page).get('sub')).toBe('A2');
+  expect(await edgeFlows(page)).toEqual({ up: ['A1-A2', 'G1-A1', 'G1-A2', 'G1-G2', 'G2-A1'], down: ['A2-P2'], dim: ['A1-P2', 'A3-P2', 'G1-A3', 'G2-A3', 'P1-P2'], none: [], all: 11 });
+
+  const drawn = await page.evaluate(() => {
+    const pts = (d: string) => (d.match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((s) => s.split(',').map(Number));
+    const edges = [...document.querySelectorAll('[data-testid^="subedge-"]')].map((e) => {
+      const [from, to] = e.getAttribute('data-testid')!.slice('subedge-'.length).split('-');
+      const p = pts(e.getAttribute('d')!);
+      const head = document.querySelector(`${e.getAttribute('marker-end')!.slice(4, -1)} path`)!;
+      return { from, to, start: p[0], end: p[p.length - 1], flow: e.getAttribute('data-flow'), stroke: getComputedStyle(e).stroke, head: getComputedStyle(head).fill };
+    });
+    // An arrowhead that lands where the target's own edges leave reads as an edge pointing back into it.
+    const clashes = edges.flatMap((a) => edges.filter((b) => b.from === a.to && Math.hypot(a.end[0] - b.start[0], a.end[1] - b.start[1]) < 8).map((b) => `${a.from}-${a.to} ends on ${b.from}-${b.to}`));
+    const heads = edges.filter((e) => e.flow === 'up' || e.flow === 'down').filter((e) => e.head !== e.stroke).map((e) => `${e.from}-${e.to}`);
+    return { clashes, heads };
+  });
+  expect(drawn.clashes).toEqual([]);
+  // Arrowheads take the color of their edge.
+  expect(drawn.heads).toEqual([]);
+});
+
+test('a subproblem lists only works that solve it with a named approach, each marked direct or adjacent by a full or half moon', async ({ page }) => {
+  await page.goto('/#/subproblems?sub=A1');
+  const detail = page.getByTestId('sub-detail');
+  await expect(detail.getByTestId('work-nikolaidis-2015-joint-action')).toBeVisible();
+  await expect(detail.locator('h3', { hasText: /^Other/ })).toHaveCount(0);
+  // These address human policy learning in their tags but name no approach for it.
+  for (const id of ['gap', 'sgm', 'flowmaps', 'evolvingnav', 'tap']) await expect(page.getByTestId(`work-${id}`)).toHaveCount(0);
+  // The badge and the list use the same rule.
+  const rows = await detail.locator('[data-testid^="work-"]').count();
+  await expect(page.getByTestId('subnode-A1').locator('.subnav__badge')).toHaveText(String(rows));
+
+  await expect(page.getByTestId('work-nikolaidis-2015-joint-action').getByRole('img', { name: /^Direct: / })).toBeVisible();
+  await expect(page.getByTestId('work-sakr-2025-everyday-users').getByRole('img', { name: /^Adjacent: / })).toBeVisible();
+  await expect(page.getByTestId('work-sakr-2025-everyday-users').locator('[data-relation="adjacent"]')).toHaveAttribute('title', 'Adjacent: A starting point from an adjacent field.');
+  await expect(detail.locator('.rel')).toHaveCount(0);
+  // The relation chips carry the same moons, so they read as the legend.
+  const chips = page.getByRole('group', { name: 'Relation' });
+  await expect(chips.getByRole('button', { name: 'Direct' }).locator('.glyph--rel-direct')).toHaveCount(1);
+  await expect(chips.getByRole('button', { name: 'Adjacent' }).locator('.glyph--rel-adjacent')).toHaveCount(1);
+
+  // GAP names no approach on any subproblem, so the drawer no longer sends readers to the Subproblems page for it.
+  await page.goto('/#/methods?paper=gap');
+  await expect(page.getByTestId('drawer').getByRole('link', { name: 'Evaluations', exact: true })).toBeVisible();
+  await expect(page.getByTestId('drawer').getByRole('link', { name: 'Subproblems', exact: true })).toHaveCount(0);
+  await page.goto('/#/methods?paper=nopa');
+  await expect(page.getByTestId('drawer').getByRole('link', { name: 'Subproblems', exact: true })).toBeVisible();
+});
+
 test('9. pinning two papers puts both ids in compare=', async ({ page }) => {
   await page.goto('/#/methods?paper=gap');
   await page.getByTestId('drawer').getByRole('button', { name: 'Pin to compare' }).click();

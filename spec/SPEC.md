@@ -675,21 +675,21 @@ Metrics with no category never show on this page. That covers metrics used only 
 
 ## 9. Subproblems page
 
-This page shows the different methodologies for each subproblem, so it lists only works whose status is `addresses`. Works that assume a subproblem is given or skip it do not appear here. Those tags still show in the paper drawer and the compare view.
+This page shows the different methodologies for each subproblem, so it lists a work under a subproblem only when its tag there is `addresses` and names an approach from that subproblem's `approaches` list in the taxonomy. Works that assume a subproblem is given, skip it, or address it without a named approach do not appear here. This is a display rule: the paper data keeps every tag, and the tags still show in the paper drawer and the compare view. Every list and count on the page uses the rule (overview counts, navigator badges, detail lists, matrix), as does the drawer's "Appears on" link to this page.
 
 ### 9.1 Navigator
 
-An interactive version of GAP paper Fig. 2. It runs left to right on wide screens and top to bottom under 900 px: ξ₀:ₜ → Grounding (goal space, action-goal association) → Anticipation (human policy, goal inference, goal anticipation) → Planning (cost model, action selection) → aʳₜ. Each node shows its name and a badge counting works that address it under the current filters. Edges come from `depends_on`.
+An interactive version of GAP paper Fig. 2. It runs left to right on wide screens and top to bottom under 900 px: ξ₀:ₜ → Grounding (goal space, action-goal association) → Anticipation (human policy, goal inference, goal anticipation) → Planning (cost model, action selection) → aʳₜ. Each node shows its name and a badge counting the works the page lists under it under the current filters. Edges come from `depends_on` and point from a prerequisite to the subproblem that depends on it. An edge within a stage crosses the gap between its two nodes, so its arrowhead never lands where the target's edges to the next stage leave.
 
-Selecting a node sets `sub=`. Its upstream dependencies (all transitive ancestors through `depends_on`) take one highlight color, its downstream dependents (all transitive descendants) another, and the rest dim.
+Selecting a node sets `sub=`. Its upstream dependencies (all transitive ancestors through `depends_on`) take one highlight color, its downstream dependents (all transitive descendants) another, and the rest dim. An edge is upstream when both its ends are the selected node or its ancestors, and downstream when both are the selected node or its descendants, so the lit edges are exactly the dependency paths into and out of the selected node. Arrowheads take their edge's color.
 
 ### 9.2 Detail panel
 
 With nothing selected, the panel lists all seven subproblems with the count of works that address each. With a subproblem selected, it shows:
 
 - name, input → output in KaTeX, and the one-line challenge;
-- works that address it, grouped by approach (taxonomy order, then "Other"), each row with short name, year, relation tag, and note, and a click that opens the drawer;
-- filter chips for relation (direct, adjacent);
+- the works listed under it, grouped by approach in taxonomy order, each row with a relation glyph (a full moon for direct, a half moon for adjacent, with the relation's definition as its tooltip and label), short name, year, and note, and a click that opens the drawer;
+- filter chips for relation (direct, adjacent), which carry the same glyphs and so serve as their legend;
 - an empty state when no work addresses it directly, such as "No work in the database addresses goal-space representation directly. Suggest one."
 
 ### 9.3 Themes
@@ -698,7 +698,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 
 ### 9.4 Matrix view
 
-`view=matrix` replaces the detail panel with a matrix. Rows are papers that address at least one subproblem, grouped by level and family (method papers first). Columns are the seven subproblems, labeled with short names under their stage headers, and each column header shows how many works address it. A cell shows ● when the work addresses that subproblem and stays blank otherwise. Clicking a filled cell opens the drawer. The header row and first column stay sticky. The "Gaps" toggle (`gaps=1`) dims filled cells and outlines empty cells in method rows.
+`view=matrix` replaces the detail panel with a matrix. Rows are papers the page lists under at least one subproblem, grouped by level and family (method papers first). Columns are the seven subproblems, labeled with short names under their stage headers, and each column header shows how many works the page lists under it. A cell shows ● when the page lists the work under that subproblem and stays blank otherwise. Clicking a filled cell opens the drawer. The header row and first column stay sticky. The "Gaps" toggle (`gaps=1`) dims filled cells and outlines empty cells in method rows.
 
 ## 10. Contribution flow
 
@@ -794,6 +794,8 @@ Confirmed by Maithili (Oct 22, 2026): the Koch van den Broek review sits under "
 The three anticipatory planning papers (Anticipatory TAMP, Talukder 2025, Courteous Anticipation) are open loop, per Maithili: their task streams are fixed and never respond to the robot. Their entries use `offline_replay`, with the human side at `recorded`.
 
 Realism plot axes, per Maithili (Oct 22, 2026): x is environment and y is human. Robot realism leaves the plot because every evaluation uses a task-specific policy; it stays in the data and the hover card. Environment no longer sets opacity. Color shows action space complexity, as a way to show policy complexity. Maithili's definition: "Action space combinatorial complexity is the number of options the policy has at a given point in time." Under 50 fixed options (such as activity labels) is low, up to 100 (such as 10 objects on any of 10 locations) is medium, more is high, and a generative, unbounded set is very high. This replaced an earlier three-level task complexity scale. Every placed paper currently sits in the Simulator column.
+
+Subproblems page, per Maithili (Oct 22, 2026): a subproblem lists only works that solve it, even toward a goal other than proactivity, and never works that assume it away or do not actually solve it. The page applies this as a display rule (§9). A tag counts only when it is `addresses` and names an approach from the taxonomy, so the "Other" group is gone. The seed mapped "partly", "implicitly", and "indirectly" to `addresses`, and those tags name no approach. The paper data is unchanged. The rule takes ten papers off the page: GAP (it names no approach on any subproblem), the five object search papers (SGM, FlowMaps, EvolvingNav, TAP, Mullen 2025), Din 2025, and the three anticipatory planning papers. This supersedes the Oct 22 note above that the object search papers appear on the page. In the same change, the relation tags became a full moon for direct and a half moon for adjacent.
 
 
 1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them.
