@@ -565,8 +565,13 @@ test('the legend has edges, clusters, and tangential works, and no action-type o
 test('the list view ends with tangential works grouped by type', async ({ page }) => {
   await page.goto('/#/methods?view=list');
   const groups = page.locator('[data-testid^="list-group-"]');
-  await expect(groups.last()).toHaveAttribute('data-testid', 'list-group-tangent:hri');
-  await expect(groups.last()).toContainText('Koch van den Broek 2024');
+  await expect(groups.first()).toBeVisible();
+  const ids = await groups.evaluateAll((els) => els.map((e) => e.getAttribute('data-testid') ?? ''));
+  // Tangential groups come last, in tangent-type order (types with no paper have no group).
+  const first = ids.findIndex((id) => id.startsWith('list-group-tangent:'));
+  expect(first).toBeGreaterThan(0);
+  expect(ids.slice(first)).toEqual(['list-group-tangent:hri', 'list-group-tangent:search']);
+  await expect(page.getByTestId('list-group-tangent:hri')).toContainText('Koch van den Broek 2024');
 });
 
 test('a semi-tangential family draws at 75% opacity (dots, hull, name, label, edges) until hovered, and the legend says so', async ({ page }) => {
