@@ -35,7 +35,7 @@ import {
 } from '../../lib/literatureLayout.ts';
 import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
-import { familyHue, FOCUS_LEVELS, FRAMEWORK_HUE, NO_CATEGORY_HUE, tangentHue, TANGENTS_IN_GRAPH, type FamilyInfo } from './constants.ts';
+import { familyHue, FOCUS_LEVELS, FRAMEWORK_HUE, tangentHue, TANGENTS_IN_GRAPH, type FamilyInfo } from './constants.ts';
 import { GraphLegend } from './GraphLegend.tsx';
 import { CAT_DY, HULL_DY, LABEL_DX, LABEL_DY, measureLabels, sameMetrics, YEAR_DX, type LabelMetrics, type MeasureInput } from './labelMetrics.ts';
 
@@ -344,16 +344,6 @@ export function LiteratureGraph({
       n.tangent ? clusterOrder.length + 1 + (n.cat ? cats.indexOf(n.cat) : cats.length) : n.cluster ? clusterOrder.indexOf(n.cluster) : clusterOrder.length;
     return [...visible].sort((a, b) => rank(a) - rank(b) || a.p.year - b.p.year || a.p.short_name.localeCompare(b.p.short_name));
   }, [visible, clusterOrder]);
-
-  // Legend contents (SPEC §7.2): what the graph holds, whether or not tangential works are shown.
-  const legend = useMemo(() => {
-    const all = [...nodes.values()];
-    return {
-      categories: Object.keys(tx.tangent_types).filter((t) => all.some((n) => n.cat === t)),
-      uncategorized: all.some((n) => n.hue === NO_CATEGORY_HUE),
-      framework: nodes.has(FRAMEWORK_PAPER),
-    };
-  }, [nodes]);
 
   // Content bounds at zoom 1: dots, labels, hulls, and room for hull names.
   const bounds = useMemo(() => {
@@ -947,7 +937,7 @@ export function LiteratureGraph({
       data-testid="literature-graph"
       style={hotInk ? ({ '--hot': hotInk } as CSSProperties) : undefined}
     >
-      <GraphLegend clusters={clusterOrder} families={families} categories={legend.categories} uncategorized={legend.uncategorized} framework={legend.framework} />
+      <GraphLegend framework={nodes.has(FRAMEWORK_PAPER)} />
       <div
         className="litg__viewport"
         ref={wrap}

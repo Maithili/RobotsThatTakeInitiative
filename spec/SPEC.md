@@ -590,14 +590,11 @@ Left to right: level cards, then the condensed timeline across the remaining wid
 - **Semi-tangential families.** A family with `semi_tangential: true` (Implicit Cues to start) gets its own cluster like any family, drawn at 75% opacity: dots, hull, label, and its edges. Hover brings it to full opacity. Its papers count as L2 everywhere else.
 - **Legend**, directly above the graph inside the graph panel (a compact row that wraps on narrow screens), per Maithili. It shows:
   - the three edge styles with checkboxes bound to `edges=` (builds on and benchmarks on by default, "Show all citation lines" off)
-  - the families, each with its hull tint
-  - the tangential categories, each with its dot color and no hull
-  - "No category" in gray
   - the framework-paper ring
   - dot size and darkness
   - a "Show tangential works" checkbox bound to `tangents=`
 
-  It has no action-type or level groups. The top band keeps only the level cards and the timeline.
+  It has no group titles ("Edges", "Dots") and no rows for families, tangential categories, or "No category": those are named on the graph itself (per Maithili, Oct 22 2026). It has no action-type or level groups. The top band keeps only the level cards and the timeline.
 - **Tangential works.** Papers with a `tangent` also show in the graph, along with the edges that touch them. They don't appear in the timeline, and they sit outside the cluster hulls.
   - Each tangential category (each `tangent_types` entry) has its own color, set by a `color` slot in the taxonomy.
   - Its papers are dots in that color at 60% opacity, with no hull or background shading.

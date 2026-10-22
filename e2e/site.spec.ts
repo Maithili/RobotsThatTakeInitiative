@@ -846,18 +846,13 @@ test('the legend sits in the graph panel directly above the graph; the top band 
   const axis = (await page.locator('.mtop__axis').boundingBox())!;
   expect(band.x + band.width - (axis.x + axis.width)).toBeLessThan(20);
 
-  // Edge styles with their checkboxes, families with hull tints, tangential categories in their colors with no hull,
-  // gray for no category, the framework ring, dot size and darkness, and Show tangential works.
-  await expect(legend).toContainText('Edges');
+  // Edge styles with their checkboxes, the framework ring, dot size and darkness, and Show tangential works.
+  // No group titles, and no family, tangential-category, or no-category rows: the graph names those itself.
   for (const t of ['builds', 'benchmarks', 'cites']) await expect(legend.getByTestId(`edges-${t}`)).toHaveCount(1);
-  for (const f of ['goal_inference', 'temporal_imitation', 'implicit_cues']) {
-    await expect(legend.getByTestId(`legend-family-${f}`).locator('.lgd__hull .lgd__dot')).toHaveCount(1);
+  for (const gone of ['Edges', 'Families', 'Tangential', 'Dots', 'No category', 'Goal Inference', 'Temporal Imitation', 'semi-tangential', 'Dynamic mapping']) {
+    await expect(legend).not.toContainText(gone);
   }
-  await expect(legend.getByTestId('legend-tangent-search')).toHaveText('Dynamic mapping and object search');
-  await expect(legend.getByTestId('legend-tangent-hri')).toHaveText('User perceptions of proactivity');
-  await expect(legend.locator('[data-testid^="legend-tangent-"] .lgd__hull')).toHaveCount(0);
-  await expect(legend.getByTestId('legend-tangent-search').locator('.lgd__dot')).toHaveCSS('opacity', '0.6');
-  await expect(legend.getByTestId('legend-none')).toHaveText('No category');
+  await expect(legend.locator('[data-testid^="legend-family-"], [data-testid^="legend-tangent-"], [data-testid="legend-none"]')).toHaveCount(0);
   await expect(legend.getByTestId('legend-framework')).toContainText('Framework paper');
   await expect(legend.getByTestId('legend-framework').locator('.lgd__dot--ring')).toHaveCount(1);
   await expect(legend).toContainText('Larger');
@@ -979,9 +974,6 @@ test('a semi-tangential family draws at 75% opacity (dots, hull, name, label, ed
   await expect(semiEdges.first()).toHaveCSS('stroke-opacity', '0.75');
   // Tangential works keep 60% opacity.
   await expect(page.getByTestId('node-synthetic-t0')).toHaveCSS('opacity', '0.6');
-  await expect(page.getByTestId('legend-family-synthetic_d')).toContainText('semi-tangential');
-  await expect(page.getByTestId('legend-family-synthetic_d').locator('.lgd__hull')).toHaveCSS('opacity', '0.75');
-  await expect(page.getByTestId('legend-family-synthetic_a')).not.toContainText('semi-tangential');
 
   // Hovering a paper brings its cluster to full opacity.
   await node.hover();
@@ -1467,9 +1459,14 @@ test('shell: page titles, a one-row header at 1024 px, and search results that s
   }
   await page.setViewportSize({ width: 1024, height: 800 });
   await page.goto('/#/subproblems');
-  const tabs = (await page.locator('.tabs').boundingBox())!;
-  const tools = (await page.locator('.header__tools').boundingBox())!;
-  expect(Math.abs(tabs.y + tabs.height / 2 - (tools.y + tools.height / 2))).toBeLessThan(4);
+  // The header refits once web fonts load, so wait for it to settle on one row.
+  await expect
+    .poll(async () => {
+      const tabs = (await page.locator('.tabs').boundingBox())!;
+      const tools = (await page.locator('.header__tools').boundingBox())!;
+      return Math.abs(tabs.y + tabs.height / 2 - (tools.y + tools.height / 2));
+    })
+    .toBeLessThan(4);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/#/subproblems');
