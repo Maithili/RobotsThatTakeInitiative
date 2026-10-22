@@ -64,10 +64,11 @@ evaluations:
     provenance: "NOPA §IV, §V-A, §V-B.1 (HPGPN is the best Watch-And-Help approach); Librarian Oct 2026, B-6"
     realism:
       robot: task_specific
-      human: scripted
+      human: scripted  # built-in planner agent
       environment: simulator
     action_space_complexity: high  # "We adopt the same action space in [2]", [2] = Watch-And-Help (NOPA §IV-A), which has "167 different actions per step" on average (WAH App. A.2.4; Librarian, Oct 22 2026)
   - id: nopa-user-study
+    secondary: true  # user study. The main evaluation is the simulated one, per Maithili, Oct 22 2026
     environment: virtualhome
     loop: user_study_short
     human_model: 10 participants
@@ -80,6 +81,6 @@ evaluations:
     provenance: NOPA §V-B.2; Librarian Oct 2026, B-6
     realism:
       robot: task_specific
-      human: non_target
+      human: real_humans  # 10 participants
       environment: simulator
     action_space_complexity: high  # as nopa-simulation

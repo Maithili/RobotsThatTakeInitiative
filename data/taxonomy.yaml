@@ -892,44 +892,53 @@ metrics:                      # GAP paper §IV-A2. Add more as papers come in.
     unit: "%"
     mapping_note: Same link as exact-match accuracy, credited per subgoal.
 
-loop_types:                   # ordered
+loop_types:                   # ordered. `interaction` places each loop type on the realism plot's x axis (realism.interaction, SPEC §8.3).
   offline_replay:
     label: Offline replay
     definition: Scores each robot action against a fixed record of human behavior.
+    interaction: open_loop
   closed_scripted:
     label: Closed loop, scripted human
     definition: Robot actions change the state, and a scripted human continues its routine from that state.
+    interaction: closed_loop
   closed_adaptive:
     label: Closed loop, adaptive simulated human
     definition: A simulated human, such as an LLM proxy, adapts its actions to the robot.
     refs: [zhang-2023-llm-human-models]
+    interaction: adaptive_humans
   user_study_short:
     label: User study, short
     definition: Real users interact with the robot in one or a few sessions.
+    interaction: adaptive_humans   # real people adapt too
   user_study_longitudinal:
     label: User study, longitudinal
     definition: Real users live or work with the robot over weeks or longer.
+    interaction: adaptive_humans   # real people adapt too
 
 captures:                     # GAP paper Appendix I
   state_drift:     {label: State drift, definition: Robot errors shift the state, which compounds cost (Relaxation 1).}
   goal_adaptation: {label: Goal adaptation, definition: The user reallocates effort to new goals in response to the robot (Relaxation 2).}
   values: [yes, partial, no]
 
-realism:                      # the plot in SPEC §8.3: environment (x) by human (y). Robot shows only in its hover card. Levels ordered from far to close. Pending Maithili's review.
+realism:                      # the plot in SPEC §8.3: interaction (x) by human behavior (y), per Maithili, Oct 22 2026. Setting and robot show only in its hover card. Levels ordered from far to close.
   robot:
     label: "Robot: closer to the target robot"
     levels:
       wizard:        {label: Wizard or oracle, definition: "A person or an oracle with ground truth chooses the robot's actions."}
       task_specific: {label: Task-specific policy, definition: "A policy learned for this task chooses the robot's actions."}
       generalist:    {label: Generalist policy, definition: "A general-purpose policy, such as an LLM planner, chooses the robot's actions."}
-  human:
-    label: "People: closer to the target users"
+  human:                      # y axis: where the human behavior comes from
+    label: "Human behavior: closer to real humans"
     levels:
-      recorded:      {label: Recorded behavior, definition: "Replayed human behavior that does not respond to the robot."}
-      scripted:      {label: Scripted simulated user, definition: "A simulated user that follows fixed rules."}
-      adaptive_sim:  {label: Adaptive simulated user, definition: "A simulated user that adapts to the robot, such as an LLM proxy.", refs: [zhang-2023-llm-human-models]}
-      non_target:    {label: Real participants, definition: "Real people who are not the target users, such as students."}
-      target_users:  {label: Target users, definition: "The people the robot is meant to assist."}
+      scripted:      {label: Scripted behavior, definition: "Behavior from a script, rules, or a planner."}
+      crowdsourced:  {label: Generated behavior from crowdsourced data, definition: "Behavior generated from data people provided, such as crowdsourced routines."}
+      real_humans:   {label: Real humans, definition: "Behavior of real people, live or recorded."}
+  interaction:                # x axis. Derived from each evaluation's loop type (loop_types.*.interaction), never filled by hand.
+    label: "Interaction: closer to humans who adapt"
+    levels:
+      open_loop:       {label: Open loop, definition: "Robot outputs are scored against a fixed record and change nothing."}
+      closed_loop:     {label: Closed loop robot actions, definition: "Robot actions change the state, and the human carries on without adapting to the robot."}
+      adaptive_humans: {label: Adaptive humans, definition: "The human, simulated or real, adapts to the robot's actions.", refs: [zhang-2023-llm-human-models]}
   environment:
     label: "Setting: closer to the target setting"
     levels:

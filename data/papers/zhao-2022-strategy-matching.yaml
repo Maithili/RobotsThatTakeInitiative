@@ -28,7 +28,7 @@ evaluations:
     provenance: MESH §V (Overcooked simulator)
     realism:
       robot: task_specific
-      human: scripted
+      human: null  # was scripted on the old scale, which does not fix the new level
       environment: simulator
   - id: zhao-2022-strategy-matching-user-study
     loop: user_study_short
@@ -38,5 +38,5 @@ evaluations:
     provenance: MESH §VI–VII (online Overcooked game)
     realism:
       robot: task_specific
-      human: non_target
+      human: real_humans  # was non_target on the old scale
       environment: simulator

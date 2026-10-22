@@ -58,7 +58,7 @@ evaluations:
     provenance: "GAP paper §I, §IV; SLaTe-PRO §6–7.2, Figs. 2–3; Librarian Oct 2026, B-2 S1–S2"
     realism:
       robot: task_specific
-      human: recorded
+      human: crowdsourced  # generated HOMER+ routines. HOMER+ extends crowdsourced HOMER (homer-plus.yaml)
       environment: simulator
     action_space_complexity: high  # derived: 59 dynamic objects × 93 entities = 5,487 placements ("93 entities, which all serve as potential locations for the 59 dynamic objects", App. A.3 p.14; Librarian, Oct 22 2026)
   - id: slate-pro-queries
@@ -73,6 +73,6 @@ evaluations:
     provenance: "Librarian Oct 2026, B-2 S3; SLaTe-PRO §5.2, §7.3, Fig. 4. One query per prediction, answered from ground truth"
     realism:
       robot: task_specific
-      human: scripted
+      human: crowdsourced  # generated HOMER+ routines. An oracle answers the queries
       environment: simulator
     action_space_complexity: null  # at most 60 candidate queries (1 activity + 59 objects, derived), count not stated (SLaTe-PRO §5.2; Librarian, Oct 22 2026)

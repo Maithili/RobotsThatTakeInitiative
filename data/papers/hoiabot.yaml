@@ -32,7 +32,7 @@ evaluations:
     provenance: HOI4ABOT §4.1–4.3
     realism:
       robot: task_specific
-      human: recorded
+      human: null  # was recorded on the old scale, which does not fix the new level
       environment: null
   - id: hoiabot-robot
     loop: user_study_short
@@ -40,5 +40,5 @@ evaluations:
     provenance: "HOI4ABOT §4.4, App. B–C (Franka Panda bartender task in the kitchen lab)"
     realism:
       robot: task_specific
-      human: non_target
+      human: real_humans  # was non_target on the old scale
       environment: lab

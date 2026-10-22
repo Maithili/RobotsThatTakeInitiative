@@ -3,8 +3,8 @@ import { matchesGlobal, matchesQuery, parseYears, readGlobalFilters } from '../s
 import { ancestry, subproblemFlow } from '../src/lib/graph.ts';
 import { scorePaper, search } from '../src/lib/search.ts';
 import { categoryItems, itemServes, itemSummary, metricKeyMembers, termTags, unitText } from '../src/lib/metrics.ts';
-import { categoriesOf, closest, furthestLoop, mergePaper, mostComplex, rowMatches, strongest } from '../src/pages/evaluations/merge.ts';
-import { actionSpaceFill } from '../src/pages/evaluations/RealismPlot.tsx';
+import { categoriesOf, closest, furthestLoop, interactionOf, mainEntries, mergePaper, mostComplex, rowMatches, strongest, type RealismOrder } from '../src/pages/evaluations/merge.ts';
+import { actionSpaceFill, wrapLabel } from '../src/pages/evaluations/RealismPlot.tsx';
 import { applyParams, toggleInList } from '../src/state/url.ts';
 import type { DbPaper } from '../src/schema.ts';
 
@@ -136,11 +136,23 @@ describe('graph traversal', () => {
 
 describe('protocols table rows', () => {
   const LOOPS = ['offline_replay', 'closed_scripted', 'closed_adaptive', 'user_study_short'];
-  const R = { robot: ['wizard', 'task_specific', 'generalist'], human: ['recorded', 'scripted', 'adaptive_sim'], environment: ['simulator', 'lab'] };
+  const LOOP_TYPES: Record<string, { interaction: string }> = {
+    offline_replay: { interaction: 'open_loop' },
+    closed_scripted: { interaction: 'closed_loop' },
+    closed_adaptive: { interaction: 'adaptive_humans' },
+    user_study_short: { interaction: 'adaptive_humans' },
+  };
+  const R: RealismOrder = {
+    robot: ['wizard', 'task_specific', 'generalist'],
+    human: ['scripted', 'crowdsourced', 'real_humans'],
+    environment: ['simulator', 'lab'],
+    interaction: ['open_loop', 'closed_loop', 'adaptive_humans'],
+    interactionOf: (loop) => interactionOf({ loop }, LOOP_TYPES),
+  };
   const paper = P('gap', 'GAP', {
     evaluations: [
-      { id: 'a', loop: 'offline_replay', datasets: ['d1'], metrics: ['f1'], baselines: ['x'], captures: { state_drift: 'no', goal_adaptation: 'no' }, realism: { robot: 'task_specific', human: 'recorded' } },
-      { id: 'b', loop: 'closed_adaptive', environment: 'sim', datasets: ['d1', 'd2'], metrics: ['f1', 'nas'], baselines: ['x', 'y'], other_baselines: ['Oracle'], human_model: 'LLM', captures: { state_drift: 'yes', goal_adaptation: 'partial' }, realism: { robot: 'task_specific', human: 'adaptive_sim', environment: 'simulator' } },
+      { id: 'a', loop: 'offline_replay', datasets: ['d1'], metrics: ['f1'], baselines: ['x'], captures: { state_drift: 'no', goal_adaptation: 'no' }, realism: { robot: 'task_specific', human: 'crowdsourced' } },
+      { id: 'b', loop: 'closed_adaptive', environment: 'sim', datasets: ['d1', 'd2'], metrics: ['f1', 'nas'], baselines: ['x', 'y'], other_baselines: ['Oracle'], human_model: 'LLM', captures: { state_drift: 'yes', goal_adaptation: 'partial' }, realism: { robot: 'task_specific', human: 'crowdsourced', environment: 'simulator' } },
       { id: 'c', loop: 'closed_scripted', human_model: 'Scripted', captures: { state_drift: 'yes', goal_adaptation: 'no' }, realism: { human: 'scripted' } },
     ],
   });
@@ -155,14 +167,52 @@ describe('protocols table rows', () => {
     expect(row.otherBaselines).toEqual(['Oracle']);
     expect(row.drift).toBe('yes');
     expect(row.adapt).toBe('partial');
-    expect(row.realism).toEqual({ robot: 'task_specific', human: 'adaptive_sim', environment: 'simulator' });
+    expect(row.realism).toEqual({ robot: 'task_specific', human: 'crowdsourced', environment: 'simulator', interaction: 'adaptive_humans' });
     expect(furthestLoop(row, LOOPS)).toBe(2);
   });
   it('takes the strongest capture and the closest realism level', () => {
     expect(strongest(['no', null, 'partial'])).toBe('partial');
     expect(strongest([null, undefined])).toBeNull();
-    expect(closest(['recorded', 'adaptive_sim', 'scripted'], R.human)).toBe('adaptive_sim');
+    expect(closest(['scripted', 'real_humans', 'crowdsourced'], R.human)).toBe('real_humans');
     expect(closest([null], R.human)).toBeNull();
+  });
+  it('derives the interaction level from each loop type, never from a hand-filled field', () => {
+    expect(interactionOf({ loop: 'offline_replay' }, LOOP_TYPES)).toBe('open_loop');
+    expect(interactionOf({ loop: 'closed_scripted' }, LOOP_TYPES)).toBe('closed_loop');
+    expect(interactionOf({ loop: 'closed_adaptive' }, LOOP_TYPES)).toBe('adaptive_humans');
+    expect(interactionOf({ loop: 'user_study_short' }, LOOP_TYPES)).toBe('adaptive_humans');
+    expect(interactionOf({ loop: null }, LOOP_TYPES)).toBeNull();
+    expect(interactionOf({ loop: 'vibes' }, LOOP_TYPES)).toBeNull();
+    // The closest interaction across entries wins; a paper with no loop types has none.
+    const open = P('o', 'O', { evaluations: [{ id: 'a', loop: 'offline_replay' }, { id: 'b', loop: 'closed_scripted' }] });
+    expect(mergePaper(open, LOOPS, R).realism.interaction).toBe('closed_loop');
+    const none = P('n', 'N', { evaluations: [{ id: 'a', loop: null }] });
+    expect(mergePaper(none, LOOPS, R).realism.interaction).toBeNull();
+    // Without the mapping (older callers), there is no interaction level.
+    expect(mergePaper(open, LOOPS, { robot: R.robot, human: R.human, environment: R.environment }).realism.interaction).toBeNull();
+  });
+  it('places the dot from the main entries only; secondary entries stay in the row', () => {
+    // Watch-And-Help and NOPA: the simulated, scripted evaluation is main; the user study is secondary.
+    const wah = P('wah', 'WAH', {
+      evaluations: [
+        { id: 'watch', loop: 'offline_replay', realism: { human: 'scripted', environment: 'simulator' }, action_space_complexity: 'medium' },
+        { id: 'help', loop: 'closed_scripted', realism: { human: 'scripted', environment: 'simulator' }, action_space_complexity: 'high' },
+        { id: 'study', loop: 'user_study_short', secondary: true, human_model: '12 participants', realism: { human: 'real_humans', environment: 'lab' }, action_space_complexity: 'very_high' },
+      ],
+    });
+    expect(mainEntries(wah.evaluations!).map((e) => e.id)).toEqual(['watch', 'help']);
+    const r = mergePaper(wah, LOOPS, R, undefined, ['low', 'medium', 'high', 'very_high']);
+    expect(r.realism).toEqual({ robot: null, human: 'scripted', environment: 'simulator', interaction: 'closed_loop' });
+    expect(r.actionSpaceComplexity).toBe('high');
+    // The protocols table still sees every entry.
+    expect(r.entries).toHaveLength(3);
+    expect(r.loops).toEqual(['offline_replay', 'closed_scripted', 'user_study_short']);
+    expect(r.humans).toEqual(['12 participants']);
+    const f = { loop: 'user_study_short', term: null, metric: null, dataset: null, metricTerms: () => [] };
+    expect(rowMatches(r, f)).toBe(true);
+    // A paper whose entries are all secondary has no dot levels.
+    const onlySecondary = P('s', 'S', { evaluations: [{ id: 'x', loop: 'user_study_short', secondary: true, realism: { human: 'real_humans' } }] });
+    expect(mergePaper(onlySecondary, LOOPS, R).realism).toEqual({ robot: null, human: null, environment: null, interaction: null });
   });
   const AS = ['low', 'medium', 'high', 'very_high'];
   it('takes the most complex action space level across entries, and null when no entry has one', () => {
@@ -192,6 +242,10 @@ describe('protocols table rows', () => {
     expect(actionSpaceFill('very_high', AS)).toBe('var(--action-space-4)');
     expect(actionSpaceFill(null, AS)).toBe('var(--action-space-none)');
     expect(actionSpaceFill('unknown', AS)).toBe('var(--action-space-none)');
+  });
+  it('wraps long axis labels at spaces', () => {
+    expect(wrapLabel('Generated behavior from crowdsourced data')).toEqual(['Generated behavior', 'from crowdsourced data']);
+    expect(wrapLabel('Open loop')).toEqual(['Open loop']);
   });
   it('matches filters when any entry matches', () => {
     const f = { loop: null, term: null, metric: null, dataset: null, metricTerms: (m: string) => (m === 'nas' ? ['dC_saved'] : ['dC_added']) };

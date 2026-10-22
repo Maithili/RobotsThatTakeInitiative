@@ -597,30 +597,55 @@ const ACTION_SPACE_FILL = {
 } as const;
 const ACTION_SPACE_LABEL: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', very_high: 'Very high' };
 
-test('13. the realism plot puts GAP at Simulator and Adaptive simulated user, and its card shows its action space complexity', async ({ page }) => {
+const INTERACTION_LABEL: Record<string, RegExp> = { open_loop: /^Open loop$/, closed_loop: /^Closed loop robot\s*actions$/, adaptive_humans: /^Adaptive humans$/ };
+const HUMAN_LABEL: Record<string, RegExp> = { scripted: /^Scripted behavior$/, crowdsourced: /^Generated behavior\s*from crowdsourced data$/, real_humans: /^Real humans$/ };
+
+/** Checks that a realism dot carries these levels and sits inside that column and row of the plot. */
+async function expectRealismCell(page: Page, id: string, x: string, y: string) {
+  const plot = page.getByTestId('realism-plot');
+  const dot = page.getByTestId(`realism-dot-${id}`);
+  await expect(dot, id).toHaveAttribute('data-interaction', x);
+  await expect(dot, id).toHaveAttribute('data-human', y);
+  const mid = (b: { x: number; y: number; width: number; height: number }) => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
+  const d = mid((await dot.locator('.realism__fill').boundingBox())!);
+  const xs = await Promise.all(Object.keys(INTERACTION_LABEL).map(async (k) => mid((await plot.getByTestId(`realism-x-${k}`).boundingBox())!).x));
+  const ys = await Promise.all(Object.keys(HUMAN_LABEL).map(async (k) => mid((await plot.getByTestId(`realism-y-${k}`).boundingBox())!).y));
+  const cx = xs[Object.keys(INTERACTION_LABEL).indexOf(x)];
+  const cy = ys[Object.keys(HUMAN_LABEL).indexOf(y)];
+  expect(Math.abs(d.x - cx), `${id} column`).toBeLessThan(Math.abs(xs[1] - xs[0]) / 2);
+  expect(Math.abs(d.y - cy), `${id} row`).toBeLessThan(Math.abs(ys[1] - ys[0]) / 2);
+}
+
+test('13. the realism plot places each paper by interaction and human behavior from its main evaluations; GAP has a ring and a card with every level', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/#/evaluations');
+  const section = page.locator('section.realism');
   const plot = page.getByTestId('realism-plot');
-  // Axes: setting (x) by people (y). Robot realism is not an axis.
-  await expect(plot.locator('[data-testid^="realism-x-"]')).toHaveText(['Simulator', 'VR', 'Lab', "Users' own homes"]);
-  await expect(plot.getByTestId('realism-y-recorded')).toHaveText('Recorded behavior');
-  await expect(plot.getByText('Task-specific policy')).toHaveCount(0);
-  await expect(plot.getByText(/^Robot:/)).toHaveCount(0);
+  await expect(section).toContainText('One dot per paper, from its main evaluation. Click a dot for details.');
+  // Axes: interaction (x, from the loop type) by human behavior (y). Setting and robot are not axes.
+  await expect(plot.locator('[data-testid^="realism-x-"]')).toHaveText(Object.values(INTERACTION_LABEL));
+  await expect(plot.locator('[data-testid^="realism-y-"]')).toHaveText(Object.values(HUMAN_LABEL));
+  for (const gone of ['Simulator', "Users' own homes", 'Task-specific policy', 'Recorded behavior', 'Real participants']) {
+    await expect(plot.getByText(gone)).toHaveCount(0);
+  }
+  await expect(plot.getByRole('img', { name: /^Target/ })).toHaveCount(1);
+  await expect(page.getByTestId('realism-ref-interaction-adaptive_humans')).toHaveText(/^Adaptive humans: see Zhang 2023/);
 
+  // Their simulated, scripted evaluations are main; their user studies do not move the dots.
+  await expectRealismCell(page, 'nopa', 'closed_loop', 'scripted');
+  await expectRealismCell(page, 'watch-and-help', 'closed_loop', 'scripted');
+
+  // GAP, wherever its main evaluations put it.
   const dot = page.getByTestId('realism-dot-gap');
-  await expect(dot).toHaveAttribute('data-human', 'adaptive_sim');
-  await expect(dot).toHaveAttribute('data-env', 'simulator');
-  // GAP's level, whatever it is; empty means not assessed.
+  const gx = (await dot.getAttribute('data-interaction')) ?? '';
+  const gy = (await dot.getAttribute('data-human')) ?? '';
+  expect(Object.keys(INTERACTION_LABEL)).toContain(gx);
+  expect(Object.keys(HUMAN_LABEL)).toContain(gy);
+  await expectRealismCell(page, 'gap', gx, gy);
+  // Its action space level, whatever it is; empty means not assessed.
   const level = (await dot.getAttribute('data-action-space')) ?? '';
   expect(['', ...Object.keys(ACTION_SPACE_LABEL)]).toContain(level);
   const key = (level || 'none') as keyof (typeof ACTION_SPACE_FILL)['light'];
-  // The dot sits in the Simulator column and the Adaptive simulated user row.
-  const box = (await dot.locator('.realism__fill').boundingBox())!;
-  const col = (await plot.getByTestId('realism-x-simulator').boundingBox())!;
-  const vr = (await plot.getByTestId('realism-x-vr').boundingBox())!;
-  const row = (await plot.getByTestId('realism-y-adaptive_sim').boundingBox())!;
-  expect(box.x + box.width / 2).toBeLessThan((col.x + col.width / 2 + vr.x + vr.width / 2) / 2);
-  expect(Math.abs(box.y + box.height / 2 - (row.y + row.height / 2))).toBeLessThan(28);
   // Fully opaque, filled with its level's ramp step, or gray with a dashed edge when not assessed. GAP keeps its ring.
   const fill = dot.locator('.realism__fill');
   await expect(fill).toHaveCSS('fill', ACTION_SPACE_FILL.light[key]);
@@ -646,21 +671,27 @@ test('13. the realism plot puts GAP at Simulator and Adaptive simulated user, an
   await expect(wah).toHaveAttribute('data-action-space', 'high');
   await expect(wah.locator('.realism__fill')).toHaveCSS('fill', ACTION_SPACE_FILL.light.high);
 
+  // The card lists interaction, human behavior, action space complexity, setting, and robot, in that order.
   await dot.hover();
   const card = page.getByTestId('realism-card');
   await expect(card).toBeVisible();
-  await expect(card.locator('dt', { hasText: 'Action space complexity' })).toHaveCount(1);
+  await expect(card.locator('dt')).toHaveText(['Interaction', 'Human behavior', 'Action space complexity', 'Setting', 'Robot', 'All loops', 'Data']);
+  await expect(card.getByTestId('realism-card-interaction')).toHaveText(INTERACTION_LABEL[gx]);
+  await expect(card.getByTestId('realism-card-human')).toHaveText(HUMAN_LABEL[gy]);
   await expect(card.getByTestId('realism-card-action-space')).toHaveText(level ? ACTION_SPACE_LABEL[level] : 'Not assessed');
-  await expect(card).toContainText('Task-specific policy');
+  await expect(card.getByTestId('realism-card-setting')).toHaveText('Simulator');
+  await expect(card.getByTestId('realism-card-robot')).toHaveText('Task-specific policy');
   const link = card.getByRole('link', { name: 'Paper ↗' });
   await expect(link).toHaveAttribute('href', 'https://arxiv.org/abs/2609.28910');
   await link.hover();
   await expect(card).toBeVisible();
   await expect(page.getByText('Organization adapted from')).toHaveCount(0);
 
-  // ProAct states no setting, so it is not placed and the note counts it.
-  await expect(page.getByTestId('realism-dot-proact')).toHaveCount(0);
-  await expect(page.getByTestId('realism-skipped')).toHaveText(/^1 paper .* is not plotted\.$/);
+  // Papers with no interaction or human behavior level are counted, not plotted. The table has 12 rows.
+  const placed = await page.locator('[data-testid^="realism-dot-"]').count();
+  const left = 12 - placed;
+  if (left > 0) await expect(page.getByTestId('realism-skipped')).toHaveText(new RegExp(`^${left} papers? with evaluations but no interaction or human behavior level (is|are) not plotted\\.$`));
+  else await expect(page.getByTestId('realism-skipped')).toHaveCount(0);
 });
 
 test('14. a tangential work renders at 60% opacity, and unchecking Show tangential works removes it, its edges, and its category label', async ({ page }) => {

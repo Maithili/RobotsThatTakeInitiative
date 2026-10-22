@@ -36,6 +36,6 @@ evaluations:
     provenance: "GLOBE §IV (STOT results taken from the SLaTe-PRO paper); Librarian Oct 2026, B-4 G1–G3"
     realism:
       robot: task_specific
-      human: recorded
+      human: crowdsourced  # HOMER+ routines. HOMER-Noise adds LLM-generated disturbances to them
       environment: simulator
     action_space_complexity: low  # tagged by Maithili, Oct 22 2026. 24 activity labels (HOMER+)

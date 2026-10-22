@@ -70,6 +70,6 @@ evaluations:
     provenance: "Librarian Oct 2026, A-2 Din A9–A11; Din §4.3, Tables 4.1–4.3. Scored against annotations, never executed"
     realism:
       robot: task_specific
-      human: recorded
+      human: null  # scored against annotator labels. No user behavior is observed (G2 note)
       environment: simulator
     action_space_complexity: null  # (action, object) subgoals from a fixed vocabulary of unstated size. No landing page

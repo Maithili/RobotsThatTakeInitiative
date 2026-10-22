@@ -271,44 +271,53 @@ metrics:                      # GAP paper §IV-A2. Add more as papers come in.
     direction: higher
     unit: fraction
 
-loop_types:                   # ordered
+loop_types:                   # ordered. `interaction` places each loop type on the x axis of the plot in §8.3.
   offline_replay:
     label: Offline replay
     definition: Scores each robot action against a fixed record of human behavior.
+    interaction: open_loop
   closed_scripted:
     label: Closed loop, scripted human
     definition: Robot actions change the state, and a scripted human continues its routine from that state.
+    interaction: closed_loop
   closed_adaptive:
     label: Closed loop, adaptive simulated human
     definition: A simulated human, such as an LLM proxy, adapts its actions to the robot.
     refs: [zhang-2023-llm-human-models]
+    interaction: adaptive_humans
   user_study_short:
     label: User study, short
     definition: Real users interact with the robot in one or a few sessions.
+    interaction: adaptive_humans   # real people adapt too
   user_study_longitudinal:
     label: User study, longitudinal
     definition: Real users live or work with the robot over weeks or longer.
+    interaction: adaptive_humans   # real people adapt too
 
 captures:                     # GAP paper Appendix I
   state_drift:     {label: State drift, definition: Robot errors shift the state, which compounds cost (Relaxation 1).}
   goal_adaptation: {label: Goal adaptation, definition: The user reallocates effort to new goals in response to the robot (Relaxation 2).}
   values: [yes, partial, no]
 
-realism:                      # the plot in §8.3: environment (x) by human (y). Robot shows only in the hover card. Levels ordered from far to close. Pending Maithili's review.
+realism:                      # the plot in §8.3: interaction (x) by human behavior (y), per Maithili, Oct 22 2026. Setting and robot show only in the hover card. Levels ordered from far to close.
   robot:
     label: "Robot: closer to the target robot"
     levels:
       wizard:            {label: Wizard or oracle, definition: A person or an oracle with ground truth chooses the robot's actions.}
       task_specific:     {label: Task-specific policy, definition: A policy learned for this task chooses the robot's actions.}
       generalist:        {label: Generalist policy, definition: A general-purpose policy, such as an LLM planner, chooses the robot's actions.}
-  human:
-    label: "People: closer to the target users"
+  human:                 # y axis: where the human behavior comes from
+    label: "Human behavior: closer to real humans"
     levels:
-      recorded:          {label: Recorded behavior, definition: Replayed human behavior that does not respond to the robot.}
-      scripted:          {label: Scripted simulated user, definition: A simulated user that follows fixed rules.}
-      adaptive_sim:      {label: Adaptive simulated user, definition: A simulated user that adapts to the robot, such as an LLM proxy., refs: [zhang-2023-llm-human-models]}
-      non_target:        {label: Real participants, definition: Real people who are not the target users, such as students.}
-      target_users:      {label: Target users, definition: The people the robot is meant to assist.}
+      scripted:          {label: Scripted behavior, definition: Behavior from a script, rules, or a planner.}
+      crowdsourced:      {label: Generated behavior from crowdsourced data, definition: Behavior generated from data people provided, such as crowdsourced routines.}
+      real_humans:       {label: Real humans, definition: Behavior of real people, live or recorded.}
+  interaction:           # x axis. Derived from each evaluation's loop type (loop_types.*.interaction), never filled by hand.
+    label: "Interaction: closer to humans who adapt"
+    levels:
+      open_loop:         {label: Open loop, definition: Robot outputs are scored against a fixed record and change nothing.}
+      closed_loop:       {label: Closed loop robot actions, definition: Robot actions change the state, and the human carries on without adapting to the robot.}
+      adaptive_humans:   {label: Adaptive humans, definition: The human, simulated or real, adapts to the robot's actions., refs: [zhang-2023-llm-human-models]}
   environment:
     label: "Setting: closer to the target setting"
     levels:
@@ -373,7 +382,7 @@ Evaluation entry:
 | `id` | kebab-case string | Unique across all papers. |
 | `environment` | id of a `simulator` entry, or null | |
 | `datasets` | dataset id[] | |
-| `loop` | loop type id or null | Null until someone reads the paper's evaluation. |
+| `loop` | loop type id or null | Null until someone reads the paper's evaluation. Its `interaction` sets the entry's x level in §8.3. |
 | `human_model` | string ≤ 60 or null | Such as "LLM (gpt-4o-mini)", "Scripted", "Real users (n=12)". |
 | `metrics` | metric id[] | |
 | `baselines` | paper id[] | Methods the paper compares against. Drives the dashed "benchmarks against" edges (§5.5). |
@@ -381,7 +390,8 @@ Evaluation entry:
 | `captures` | `{state_drift, goal_adaptation}`, each `yes`, `partial`, `no`, or null | |
 | `provenance` | string ≤ 140 | |
 | `results` | list of `{method, method_label?, metric, value, sd?}` | `method` is a paper id. Use `method_label` alone for a baseline with no paper. |
-| `realism` | `{robot, human, environment}`, each a level id from `realism` or null | Filled only from what the paper states about its evaluation. `human` and `environment` place the dot in the plot in §8.3; `robot` shows only in its hover card. |
+| `secondary` | boolean | Default false. Marks an entry that is not the paper's main evaluation, such as a user study beside the main simulated one (Watch-And-Help, NOPA). It stays in the protocols table and the drawer but does not place the paper's dot in §8.3. |
+| `realism` | `{robot, human, environment}`, each a level id from `realism` or null | Filled only from what the paper and dataset files record about the evaluation. `human` (where the human behavior comes from) is the y axis of the plot in §8.3. `environment` and `robot` show only in its hover card. The x axis, interaction, is never filled here: it comes from `loop` through `loop_types.*.interaction`. |
 | `action_space_complexity` | level id from `action_space_complexity` or null | The number of options the evaluated policy has at one decision point. Set it from a count the paper's own text states, from arithmetic on stated counts (the comment says "derived"), or from Maithili's tag (the comment says so). A comment gives the count and its source. Otherwise null. Colors the dot in §8.3. |
 
 Example:
@@ -633,15 +643,15 @@ A grouped bar chart built from `featured_comparison`. Each method's Offline bar 
 
 ### 8.3 Evaluation realism plot
 
-This plot shows how close each paper's evaluation is to the real target, on two axes from `realism` in the taxonomy, with action space complexity as color. The idea comes from a figure in a paper that is not yet public (§16).
+This plot shows how close each paper's evaluation is to the real target: how the robot's outputs interact with the human (x) and where the human behavior comes from (y), with action space complexity as color. The idea comes from a figure in a paper that is not yet public (§16).
 
-- **x axis**: environment realism, from Simulator on the left to Users' own homes on the right. **y axis**: human realism, far at the bottom. Each axis has one band per level, in taxonomy order, labeled with the level names.
-- **No robot axis.** Every evaluation in the database uses a task-specific policy, so robot realism would not separate papers (per Maithili, Oct 22 2026). `realism.robot` stays in the data and in the hover card.
+- **x axis**: interaction (`realism.interaction`), from Open loop on the left through Closed loop robot actions to Adaptive humans on the right. Each evaluation's level comes from its loop type (`loop_types.*.interaction`): offline replay is open loop, a closed loop with a scripted human is closed loop robot actions, and a closed loop with an adaptive simulated human or a user study of either length is adaptive humans, since real people adapt too. An evaluation with no loop type has no x level. **y axis**: human behavior realism (`realism.human`), from Scripted behavior at the bottom through Generated behavior from crowdsourced data to Real humans. Each axis has one band per level, in taxonomy order, labeled with the level names; long labels wrap onto two lines.
+- **Not axes.** Setting (`realism.environment`) and robot realism stay in the data and in the hover card (per Maithili, Oct 22 2026). Every evaluation in the database uses a task-specific policy.
 - **Color** is action space complexity (`action_space_complexity` in the taxonomy): the number of options the policy has at a given point in time, which stands in for the complexity of the policy. It uses one four-step sequential green ramp, light for low and dark for very high on the light theme, with its own steps on the dark theme so very high keeps the most contrast. Purple stays GAP's, and the ramp avoids the tangential-category hues. An evaluation with no level is pale gray with a dashed outline. Dots are fully opaque. A compact legend under the plot shows the ramp as one gradient pill with "Low" and "High" at its ends (every level and its definition on hover), then "Not assessed" and the framework-paper ring.
-- A dashed "target" circle with a star sits past the top-right corner, beyond the last band on both axes.
-- **One dot per paper.** A paper with several evaluation entries takes the closest level on each axis and the most complex action space level across its entries. A paper appears only when it has both a human and an environment level. A note under the plot counts the papers it leaves out.
+- A dashed "target" circle with a star sits past the top-right corner, beyond the last band on both axes (Adaptive humans × Real humans). The legend names Zhang 2023 beside Adaptive humans.
+- **One dot per paper, from its main evaluations.** An entry with `secondary: true` is not a main evaluation. A dot takes the closest level on each axis, and the most complex action space level, across the paper's other entries. Watch-And-Help and NOPA mark their user studies secondary, so they sit at Closed loop robot actions × Scripted behavior. Secondary entries still show in the protocols table and the drawer. The subtitle reads "One dot per paper, from its main evaluation. Click a dot for details." A paper appears only when it has both an x and a y level. A note under the plot counts the papers it leaves out.
 - Dots that share a cell pack into a small grid inside it, ordered by year, so they never overlap. GAP's dot has a ring in the framework-paper color, and its fill follows action space complexity like every other dot.
-- **Hover or focus** on a dot shows a card with short name, year, title, Paper ↗ and Code ↗ links, the people, setting, action space complexity, and robot levels in words, loop types, and datasets. The card stays open while the pointer moves into it, so its links can be clicked. Clicking a dot opens the drawer.
+- **Hover or focus** on a dot shows a card with short name, year, title, Paper ↗ and Code ↗ links, then the interaction, human behavior, action space complexity, setting, and robot levels in words, in that order, then every loop type the paper uses ("All loops") and its datasets. The card stays open while the pointer moves into it, so its links can be clicked. Clicking a dot opens the drawer.
 - Filters dim dots. Dots are keyboard-focusable in year order.
 - **Credit line.** When `realism.source_url` is set, the caption reads "Organization adapted from" with a link to that paper. It stays null until the paper is public.
 - The loop-type filter moves to the filter bar as a dropdown bound to `loop=`.
@@ -732,7 +742,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 
 **npm scripts**: `dev`, `build` (runs `build-data` first), `validate`, `test`, `e2e`, `new-paper`, `preview`.
 
-**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, an `evaluations_exclude` id that is not a paper, an unknown `action_space_complexity` level, an `action_space_complexity` scale with no levels or more than four, and an `opacity` on a realism level), the `evaluations_exclude` scope, the most complex action space level across a paper's entries and its ramp color, metric box rows (a group as one row, at its first member, dimmed only when no member measures the selected term, tagged ΔV or ΔC by the union of its members' terms), the category filter, `metric=` with a group id, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
+**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, an `evaluations_exclude` id that is not a paper, an unknown `action_space_complexity` level, an `action_space_complexity` scale with no levels or more than four, an `opacity` on a realism level, an old human level, a loop type with no or an unknown `interaction`, an `interaction` filled on an evaluation, and a non-boolean `secondary`), the `evaluations_exclude` scope, the loop type to interaction mapping, the realism dot taken from main entries only (secondary entries stay in the row), the most complex action space level across a paper's entries and its ramp color, metric box rows (a group as one row, at its first member, dimmed only when no member measures the selected term, tagged ΔV or ΔC by the union of its members' terms), the category filter, `metric=` with a group id, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
 
 **End-to-end tests (Playwright)** on the seed data:
 
@@ -748,7 +758,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 10. At 375 px wide, no page scrolls horizontally.
 11. On Methods, the STOT to SLaTe-PRO edge is solid. With "Show all citation lines" off, no dotted edge shows until a node is hovered. The fit button brings every node into view. No drawn edge, in the seed data or the synthetic fixture, passes within clearance of a node that isn't one of its ends. A unit test over the edge geometry checks this; it would catch Watch-And-Help to NOPA passing through ProAct.
 12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table's columns run paper, year, metric categories, environment and datasets, loop types, human models, baselines. It has 12 rows and exactly one GAP row, shaded and first, showing three loop-type pills and the categories Change in user actions and Object movement prediction, and it stays first after sorting by year, name, metric categories, and loop type.
-13. The realism plot's axes are setting (x) and people (y), with no robot axis. GAP's dot sits at Simulator and Adaptive simulated user, fully opaque, in its action-space-complexity color in both themes (gray with a dashed edge while not assessed), with its ring. The legend lists Low, Medium, High, Very high, and Not assessed. Hovering GAP's dot shows a card with a working Paper link and an action space complexity row with GAP's level or "Not assessed". ProAct, with no stated setting, has no dot, and the note under the plot counts it.
+13. The realism plot's axes are interaction (x: Open loop, Closed loop robot actions, Adaptive humans) and human behavior (y: Scripted behavior, Generated behavior from crowdsourced data, Real humans), with no setting or robot axis. NOPA and Watch-And-Help sit at Closed loop robot actions × Scripted behavior, so their user studies do not move them. GAP's dot sits in the cell its main evaluations give, fully opaque, in its action-space-complexity color in both themes (gray with a dashed edge while not assessed), with its ring. The legend shows the Low-to-High gradient and Not assessed. Hovering GAP's dot shows a card with a working Paper link and its interaction, human behavior, action space complexity, setting, and robot rows, in that order. The note under the plot counts the papers with no dot.
 14. With a fixture tangential paper, its graph node renders in its category's color at 60% opacity, and unchecking "Show tangential works" removes it and its edges.
 15. The protocols table shows category labels, one chip per category in category order, and no metric names. The metrics list has no tabs, and every category box is visible at once, in category order. The Task performance box shows "Goal precision, recall, and F1 ↑ fraction" as one row, with links to Watch-And-Help and NOPA and no hover card. Clicking a paper link opens the drawer. Clicking the row sets `metric=goal_prf` and filters the table to those two papers. Clicking a category chip in the table sets `category=`, filters the table, and scrolls to and highlights its box. `metric=speedup` marks its row and filters the table. PredictiveGraphs has no row and no realism dot but stays on the graph and the Subproblems page. ProAct has no closed-loop pill.
 16. A bare `#/evaluations` URL has no active filter chip, shows all 12 protocol rows, and dims no metric row. Bare `#/methods` and `#/subproblems` URLs also start with nothing selected or dimmed. Category headers show their ΔV and ΔC tags, collapsing a box hides its rows, and no "↕" appears on the page.
@@ -791,14 +801,16 @@ Placements decided by Maithili (Oct 21, 2026): SGM, FlowMaps, EvolvingNav, Dorba
 
 Confirmed by Maithili (Oct 22, 2026): the Koch van den Broek review sits under "User perceptions of proactivity". Purple is only for GAP, and papers that fit no category are gray. Every relevant paper appears on the Subproblems page, including the object search papers. Courteous Anticipation gets no "benchmarks against" line to Talukder 2025; its "Selfish A.P." baseline stays text in `other_baselines`.
 
-The three anticipatory planning papers (Anticipatory TAMP, Talukder 2025, Courteous Anticipation) are open loop, per Maithili: their task streams are fixed and never respond to the robot. Their entries use `offline_replay`, with the human side at `recorded`.
+The three anticipatory planning papers (Anticipatory TAMP, Talukder 2025, Courteous Anticipation) are open loop, per Maithili: their task streams are fixed and never respond to the robot. Their entries use `offline_replay`, so they sit at Open loop on the realism plot's x axis. Their human side was `recorded` on the old scale and has no human behavior level on the new one (see below).
 
-Realism plot axes, per Maithili (Oct 22, 2026): x is environment and y is human. Robot realism leaves the plot because every evaluation uses a task-specific policy; it stays in the data and the hover card. Environment no longer sets opacity. Color shows action space complexity, as a way to show policy complexity. Maithili's definition: "Action space combinatorial complexity is the number of options the policy has at a given point in time." Under 50 fixed options (such as activity labels) is low, up to 100 (such as 10 objects on any of 10 locations) is medium, more is high, and a generative, unbounded set is very high. This replaced an earlier three-level task complexity scale. Every placed paper currently sits in the Simulator column.
+Realism plot axes, per Maithili (Oct 22, 2026): x is environment and y is human. Robot realism leaves the plot because every evaluation uses a task-specific policy; it stays in the data and the hover card. Environment no longer sets opacity. Color shows action space complexity, as a way to show policy complexity. Maithili's definition: "Action space combinatorial complexity is the number of options the policy has at a given point in time." Under 50 fixed options (such as activity labels) is low, up to 100 (such as 10 objects on any of 10 locations) is medium, more is high, and a generative, unbounded set is very high. This replaced an earlier three-level task complexity scale.
+
+Realism plot axes, revised per Maithili (Oct 22, 2026): "the environment axis should be 'open loop', 'closed loop robot actions', 'adaptive humans'. and human axis should be about behavior realism of the human. 'scripted behavior', 'generated behavior from crowdsourced data' 'real humans'." The x axis is now interaction, derived from each evaluation's loop type, with user studies counted as adaptive humans. The y axis is human behavior realism, and its three levels replace recorded, scripted, adaptive simulated, real participants, and target users. Setting leaves the plot and stays in the card. Per Maithili, the main evaluations of NOPA and Watch-And-Help are their simulated humans with scripted behavior, so their user studies are marked `secondary` and sit at Closed loop robot actions × Scripted behavior. HOMER and HOMER+ count as generated behavior from crowdsourced data, which covers STOT, STREAK, SLaTe-PRO, GLOBE and GAP, including GAP's closed loops, whose LLM and scripted users act from HOMER+ routines. ProAct's videos count as real humans. Din 2025, Talukder 2025, Anticipatory TAMP and Courteous Anticipation have no human behavior level yet, so they have no dot. Outside the Evaluations page, real participants and target users became real humans, and the other old levels became null.
 
 Subproblems page, per Maithili (Oct 22, 2026): a subproblem lists only works that solve it, even toward a goal other than proactivity, and never works that assume it away or do not actually solve it. The page applies this as a display rule (§9). A tag counts only when it is `addresses` and names an approach from the taxonomy, so the "Other" group is gone. The seed mapped "partly", "implicitly", and "indirectly" to `addresses`, and those tags name no approach. The paper data is unchanged. The rule takes ten papers off the page: GAP (it names no approach on any subproblem), the five object search papers (SGM, FlowMaps, EvolvingNav, TAP, Mullen 2025), Din 2025, and the three anticipatory planning papers. This supersedes the Oct 22 note above that the object search papers appear on the page. In the same change, the relation tags became a full moon for direct and a half moon for adjacent.
 
 
-1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them.
+1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them. Open: a human behavior level for Din 2025 (scored against annotator labels, no user behavior observed) and for the three anticipatory planning papers (no human, tasks drawn from a fixed distribution). Whether a fixed task distribution counts as scripted behavior is her call.
 2. **Action space complexity.** Levels set on Oct 22, 2026. STOT, STREAK, SLaTe-PRO, GAP and NOPA are high, derived from counts the papers state (HOMER's 108 objects; HOMER+'s 59 dynamic objects × 93 entities; NOPA uses Watch-And-Help's action space of 167 actions per step on average). Watch-And-Help's help and user-study entries are high from that stated count. Maithili tagged the rest: GLOBE low, ProAct low, the Watch-And-Help watch stage medium, and Talukder 2025, Anticipatory TAMP and Courteous Anticipation high. Din 2025 and the SLaTe-PRO query setting stay null.
 3. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.
 4. **Tangential works.** Maithili lists them. Candidates from the GAP paper references that fit the two tangent types: Peng et al. 2019 [16] (a CHI design and evaluation of service-robot proactivity), and the works that ask questions [17] and [18]. Both left the database earlier. ADAPT [19] stays on the Subproblems page only and is not tangential, per Maithili.

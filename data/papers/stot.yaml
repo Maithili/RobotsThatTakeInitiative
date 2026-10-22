@@ -63,6 +63,6 @@ evaluations:
     provenance: GAP paper §IV; STOT §5–7.2, Table 1, Fig. 4–5; Librarian Oct 2026, B-1 S1–S2
     realism:
       robot: task_specific
-      human: recorded
+      human: crowdsourced  # generated HOMER routines. HOMER: crowdsourced schedules and action scripts (homer.yaml)
       environment: simulator
     action_space_complexity: high  # derived: 108 objects per household, and objects also serve as locations, so choosing the object alone exceeds 100 (STOT App. A p.12, §3; Librarian, Oct 22 2026)

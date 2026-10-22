@@ -14,7 +14,7 @@ const realTaxonomy = yaml.load(readFileSync(join(__dirname, '../data/taxonomy.ya
 function bareTaxonomy() {
   const t = structuredClone(realTaxonomy);
   delete t.loop_types.closed_adaptive.refs;
-  delete t.realism.human.levels.adaptive_sim.refs;
+  delete t.realism.interaction.levels.adaptive_humans.refs;
   t.featured_comparison.methods = [];
   t.featured_comparison.columns = [];
   t.evaluations_exclude = [];
@@ -501,8 +501,40 @@ describe('datasets, setups, and realism', () => {
     expectError(run([], { datasets: [sim, ds, { ...setup, loops: ['vibes'] }] }), /unknown loop type "vibes"/);
     expectError(run([], { datasets: [sim, ds, { ...setup, environment: 'ds' }] }), /is not a simulator/);
   });
-  it('rejects unknown realism levels', () => {
+  it('rejects unknown realism levels, including the old human levels', () => {
     expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', realism: { robot: 'telepathy' } }] })]), /realism.robot level "telepathy"/);
+    for (const old of ['recorded', 'adaptive_sim', 'non_target', 'target_users']) {
+      expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', realism: { human: old } }] })]), new RegExp(`realism.human level "${old}"`));
+    }
+    expect(Object.keys(bareTaxonomy().realism.human.levels)).toEqual(['scripted', 'crowdsourced', 'real_humans']);
+    expect(Object.keys(bareTaxonomy().realism.interaction.levels)).toEqual(['open_loop', 'closed_loop', 'adaptive_humans']);
+  });
+  it('maps every loop type to an interaction level; user studies count as adaptive humans', () => {
+    const t = bareTaxonomy();
+    const map = Object.fromEntries(Object.entries(t.loop_types).map(([id, lt]) => [id, (lt as { interaction: string }).interaction]));
+    expect(map).toEqual({
+      offline_replay: 'open_loop',
+      closed_scripted: 'closed_loop',
+      closed_adaptive: 'adaptive_humans',
+      user_study_short: 'adaptive_humans',
+      user_study_longitudinal: 'adaptive_humans',
+    });
+    expect(run([], { taxonomy: t }).errors).toEqual([]);
+  });
+  it('rejects a loop type with no interaction level or an unknown one', () => {
+    const missing = bareTaxonomy();
+    delete missing.loop_types.closed_scripted.interaction;
+    expectError(run([], { taxonomy: missing }), /loop_types\.closed_scripted\.interaction: needs an interaction level/);
+    const unknown = bareTaxonomy();
+    unknown.loop_types.closed_scripted.interaction = 'telepathy';
+    expectError(run([], { taxonomy: unknown }), /loop_types\.closed_scripted\.interaction "telepathy" is not a realism\.interaction level/);
+  });
+  it('never takes interaction from an evaluation, only from its loop type', () => {
+    expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', realism: { interaction: 'open_loop' } }] })]), /Unrecognized key.*interaction/);
+  });
+  it('accepts a boolean secondary flag and rejects anything else', () => {
+    expect(run([base('a', { evaluations: [{ id: 'e', loop: 'user_study_short', secondary: true }] })]).errors).toEqual([]);
+    expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'user_study_short', secondary: 'yes' }] })]), /secondary/);
   });
   it('rejects an opacity on a realism level; environment no longer drives opacity', () => {
     const t = bareTaxonomy();

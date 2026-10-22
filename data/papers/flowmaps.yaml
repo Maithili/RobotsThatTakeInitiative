@@ -67,7 +67,7 @@ evaluations:
     provenance: "Librarian Oct 2026, A-3 FlowMaps A9–A11; FlowMaps §5, Table 1, App. C.1. Unnamed generated data"
     realism:
       robot: task_specific
-      human: recorded
+      human: null  # was recorded on the old scale, which does not fix the new level
       environment: simulator
   - id: flowmaps-objnav
     environment: procthor
@@ -92,5 +92,5 @@ evaluations:
     provenance: "Librarian Oct 2026, A-3 FlowMaps A9–A11; FlowMaps §5, Table 2, App. C.2. Robot moves, objects follow the schedule"
     realism:
       robot: task_specific
-      human: scripted
+      human: null  # was scripted on the old scale, which does not fix the new level
       environment: simulator

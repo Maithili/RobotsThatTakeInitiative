@@ -71,7 +71,7 @@ evaluations:
     provenance: GAP paper Table II
     realism:
       robot: task_specific
-      human: recorded
+      human: crowdsourced  # recorded HOMER+ behavior
       environment: simulator
     action_space_complexity: high  # derived: HOMER+ placements, 59 dynamic objects × 93 entities = 5,487 (SLaTe-PRO App. A.3). Planner candidate count not stated (GAP App. IV-A; Librarian, Oct 22 2026)
     results:
@@ -104,7 +104,7 @@ evaluations:
     provenance: GAP paper §IV-A, Table II, App. I-C
     realism:
       robot: task_specific
-      human: adaptive_sim
+      human: crowdsourced  # LLM user acting from HOMER+ routines (the setup uses HOMER+)
       environment: simulator
     action_space_complexity: high  # derived: as gap-offline, HOMER+ placements 59 × 93 = 5,487
     results:
@@ -137,7 +137,7 @@ evaluations:
     provenance: GAP paper §IV-A, Table II
     realism:
       robot: task_specific
-      human: scripted
+      human: crowdsourced  # scripted human continuing its HOMER+ routine (the setup uses HOMER+)
       environment: simulator
     action_space_complexity: high  # derived: as gap-offline, HOMER+ placements 59 × 93 = 5,487
     results:

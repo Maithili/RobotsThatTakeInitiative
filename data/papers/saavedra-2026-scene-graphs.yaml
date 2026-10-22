@@ -62,7 +62,7 @@ evaluations:
     provenance: "Librarian Oct 2026, B-5 P1; PredictiveGraphs §VI-A, Table I. Scores the persistence estimator against the true state"
     realism:
       robot: task_specific
-      human: recorded
+      human: null  # was recorded on the old scale, which does not fix the new level
       environment: simulator
   - id: saavedra-2026-scene-graphs-sim-nav
     environment: procthor
@@ -83,7 +83,7 @@ evaluations:
     provenance: "Librarian Oct 2026, B-5 P2; PredictiveGraphs §VI-B, Fig. 5, Table IV. STOT is the \"HOMER [22]\" baseline"
     realism:
       robot: generalist
-      human: scripted
+      human: null  # was scripted on the old scale, which does not fix the new level
       environment: simulator
   - id: saavedra-2026-scene-graphs-adaptive-nav
     environment: procthor
@@ -103,7 +103,7 @@ evaluations:
     provenance: "Librarian Oct 2026, B-5 P3; PredictiveGraphs §VI-B, Fig. 6, Table III. The robot never moves objects"
     realism:
       robot: generalist
-      human: scripted
+      human: null  # was scripted on the old scale, which does not fix the new level
       environment: simulator
   - id: saavedra-2026-scene-graphs-real
     environment: null
@@ -121,5 +121,5 @@ evaluations:
     provenance: "Librarian Oct 2026, B-5 P4; PredictiveGraphs §VI-B5, Table V. Loop left null since live or replayed runs are not stated"
     realism:
       robot: generalist
-      human: scripted
+      human: null  # was scripted on the old scale, which does not fix the new level
       environment: lab

@@ -57,7 +57,7 @@ evaluations:
     provenance: GAP paper §IV; WAH §5.3 (the watch stage scores goal inference offline); Librarian Oct 2026, B-7
     realism:
       robot: task_specific
-      human: recorded
+      human: scripted  # recorded demonstrations in VirtualHome. WAH simulation entries are scripted per Maithili, Oct 22 2026
       environment: simulator
     action_space_complexity: medium  # tagged by Maithili, Oct 22 2026. Goal inference over 30 predicate types, 2-8 predicates per goal (WAH §3)
   - id: watch-and-help-help
@@ -71,10 +71,11 @@ evaluations:
     provenance: WAH §3–5 (Alice replans each step from her latest observation); Librarian Oct 2026, B-7
     realism:
       robot: task_specific
-      human: scripted
+      human: scripted  # built-in planner agent (Alice)
       environment: simulator
     action_space_complexity: high  # "167 different actions per step" on average, > 100 (WAH arXiv 2010.09890 App. A.2.4)
   - id: watch-and-help-human
+    secondary: true  # user study. The main evaluation is the simulated one, per Maithili, Oct 22 2026
     environment: virtualhome
     loop: user_study_short
     human_model: 12 participants
@@ -88,6 +89,6 @@ evaluations:
     provenance: "WAH §6, Experiment 2, App. D; Librarian Oct 2026, B-7"
     realism:
       robot: task_specific
-      human: non_target
+      human: real_humans  # 12 participants
       environment: simulator
     action_space_complexity: high  # same helper and action space: "167 different actions per step" on average (WAH App. A.2.4)

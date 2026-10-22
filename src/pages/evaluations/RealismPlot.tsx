@@ -1,5 +1,6 @@
-// Evaluation realism plot (SPEC §8.3): environment realism (x) by human realism (y), action space complexity as color,
-// one dot per paper, a target past the top-right corner. Robot realism shows only in the hover card.
+// Evaluation realism plot (SPEC §8.3): interaction (x, from each evaluation's loop type) by human behavior realism (y),
+// action space complexity as color, one dot per paper from its main evaluations, a target past the top-right corner.
+// Setting and robot realism show only in the hover card.
 import { useEffect, useRef, useState } from 'react';
 import { datasetById, FRAMEWORK_PAPER, paperLabel, tx } from '../../data.ts';
 import { useUrl } from '../../state/url.ts';
@@ -8,12 +9,13 @@ import { yearAfterName } from '../../lib/year.ts';
 
 const R = 7;
 const STEP = 2 * R + 5;
-const CELL_W = 150;
-const CELL_H = 54;
-const LEFT = 150;
+const CELL_W = 170;
+const CELL_H = 58;
+const LEFT = 170;
 const TOP = 56;
-const BOTTOM = 52;
+const BOTTOM = 64;
 const TARGET = 70;
+const TICK_CHARS = 22;
 
 /** CSS fill for an action-space-complexity level: one ramp step per level, in taxonomy order, gray when not assessed. */
 export function actionSpaceFill(id: string | null, order: string[]): string {
@@ -21,13 +23,26 @@ export function actionSpaceFill(id: string | null, order: string[]): string {
   return i >= 0 ? `var(--action-space-${i + 1})` : 'var(--action-space-none)';
 }
 
+/** Splits a tick label into lines of at most `max` characters, at spaces. */
+export function wrapLabel(s: string, max = TICK_CHARS): string[] {
+  const lines: string[] = [];
+  for (const w of s.split(' ')) {
+    const last = lines[lines.length - 1];
+    if (last !== undefined && (last + ' ' + w).length <= max) lines[lines.length - 1] = `${last} ${w}`;
+    else lines.push(w);
+  }
+  return lines;
+}
+
+type Axis = 'robot' | 'human' | 'environment' | 'interaction';
+
 export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: Set<string> }) {
   const url = useUrl();
-  const RX = Object.keys(tx.realism.environment.levels);
+  const RX = Object.keys(tx.realism.interaction.levels);
   const RY = Object.keys(tx.realism.human.levels);
   const AS = tx.action_space_complexity;
   const AS_ORDER = Object.keys(AS.levels);
-  const placed = rows.filter((r) => r.realism.environment && r.realism.human);
+  const placed = rows.filter((r) => r.realism.interaction && r.realism.human);
   const skipped = rows.length - placed.length;
   const [card, setCard] = useState<{ row: PaperEvalRow; x: number; y: number } | null>(null);
   const closeTimer = useRef<number | null>(null);
@@ -41,7 +56,7 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
   // Pack dots per cell in year order.
   const byCell = new Map<string, PaperEvalRow[]>();
   for (const r of [...placed].sort((a, b) => a.paper.year - b.paper.year || a.paper.short_name.localeCompare(b.paper.short_name))) {
-    const k = `${r.realism.environment}|${r.realism.human}`;
+    const k = `${r.realism.interaction}|${r.realism.human}`;
     byCell.set(k, [...(byCell.get(k) ?? []), r]);
   }
   const perRow = Math.max(1, Math.floor((CELL_W - 12) / STEP));
@@ -68,14 +83,19 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
     const scale = svg ? svg.getBoundingClientRect().width / W : 1;
     setCard({ row, x: x * scale, y: y * scale });
   };
-  const levelLabel = (axis: 'robot' | 'human' | 'environment', id: string | null) => (id ? tx.realism[axis].levels[id]?.label ?? id : 'Not stated');
+  const levelLabel = (axis: Axis, id: string | null) => (id ? tx.realism[axis].levels[id]?.label ?? id : 'Not stated');
   const actionSpaceLabel = (id: string | null) => (id ? AS.levels[id]?.label ?? id : 'Not assessed');
+  const refLevels = (['interaction', 'human'] as const).flatMap((axis) =>
+    Object.entries(tx.realism[axis].levels)
+      .filter(([, l]) => (l.refs ?? []).length)
+      .map(([id, l]) => ({ key: `${axis}-${id}`, label: l.label, refs: l.refs! })),
+  );
 
   return (
     <section className="card realism" aria-labelledby="realism-title">
       <div className="section-title">
         <h2 id="realism-title">How close to the real target is each evaluation?</h2>
-        <span className="small muted">One dot per paper, at the closest level it reaches on each axis. Click a dot for details.</span>
+        <span className="small muted">One dot per paper, from its main evaluation. Click a dot for details.</span>
       </div>
       <div className="realism__wrap" ref={wrap} onMouseLeave={scheduleClose}>
         <svg viewBox={`0 0 ${W} ${H}`} className="realism__svg" role="group" aria-label="Evaluation realism plot" data-testid="realism-plot">
@@ -86,22 +106,40 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
           {/* axes */}
           {RX.map((rx, i) => (
             <text key={rx} x={cellX(i) + CELL_W / 2} y={TOP + RY.length * CELL_H + 18} textAnchor="middle" className="realism__tick" data-testid={`realism-x-${rx}`}>
-              {tx.realism.environment.levels[rx].label}
+              {wrapLabel(tx.realism.interaction.levels[rx].label).map((line, n) => (
+                <tspan key={n} x={cellX(i) + CELL_W / 2} dy={n ? 13 : 0}>
+                  {line}
+                </tspan>
+              ))}
             </text>
           ))}
-          {RY.map((ry, j) => (
-            <text key={ry} x={LEFT - 8} y={cellY(j) + CELL_H / 2 + 4} textAnchor="end" className="realism__tick" data-testid={`realism-y-${ry}`}>
-              {tx.realism.human.levels[ry].label}
-            </text>
-          ))}
+          {RY.map((ry, j) => {
+            const lines = wrapLabel(tx.realism.human.levels[ry].label);
+            return (
+              <text
+                key={ry}
+                x={LEFT - 8}
+                y={cellY(j) + CELL_H / 2 + 4 - ((lines.length - 1) * 13) / 2}
+                textAnchor="end"
+                className="realism__tick"
+                data-testid={`realism-y-${ry}`}
+              >
+                {lines.map((line, n) => (
+                  <tspan key={n} x={LEFT - 8} dy={n ? 13 : 0}>
+                    {line}
+                  </tspan>
+                ))}
+              </text>
+            );
+          })}
           <text x={LEFT + (RX.length * CELL_W) / 2} y={H - 8} textAnchor="middle" className="realism__axis">
-            {tx.realism.environment.label} →
+            {tx.realism.interaction.label} →
           </text>
           <text x={14} y={TOP + (RY.length * CELL_H) / 2} textAnchor="middle" className="realism__axis" transform={`rotate(-90 14 ${TOP + (RY.length * CELL_H) / 2})`}>
             {tx.realism.human.label} →
           </text>
           {/* target past the top-right corner */}
-          <g className="realism__target" aria-label="Target: target users in their own setting" role="img">
+          <g className="realism__target" aria-label="Target: real humans who adapt to the robot" role="img">
             <circle cx={LEFT + RX.length * CELL_W + TARGET / 2} cy={TOP - 22} r={22} />
             <text x={LEFT + RX.length * CELL_W + TARGET / 2} y={TOP - 15} textAnchor="middle" className="realism__star">
               ★
@@ -121,13 +159,14 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
                 className={`realism__dot${dim ? ' is-dim' : ''}${framework ? ' is-framework' : ''}${assessed ? '' : ' is-unassessed'}`}
                 tabIndex={0}
                 role="button"
-                aria-label={`${r.paper.short_name}, ${r.paper.year}: ${levelLabel('human', r.realism.human)}, ${levelLabel('environment', r.realism.environment)}, ${
+                aria-label={`${r.paper.short_name}, ${r.paper.year}: ${levelLabel('interaction', r.realism.interaction)}, ${levelLabel('human', r.realism.human)}, ${
                   assessed ? `action space complexity ${actionSpaceLabel(r.actionSpaceComplexity)}` : 'action space complexity not assessed'
                 }`}
                 data-testid={`realism-dot-${r.paper.id}`}
-                data-robot={r.realism.robot ?? ''}
+                data-interaction={r.realism.interaction ?? ''}
                 data-human={r.realism.human ?? ''}
                 data-env={r.realism.environment ?? ''}
+                data-robot={r.realism.robot ?? ''}
                 data-action-space={r.actionSpaceComplexity ?? ''}
                 onMouseEnter={() => open(r, x, y)}
                 onMouseLeave={scheduleClose}
@@ -173,11 +212,11 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
                 </a>
               )}
             </div>
-            <dl className="realism__levels small">
-              <dt>People</dt>
-              <dd>{levelLabel('human', card.row.realism.human)}</dd>
-              <dt>Setting</dt>
-              <dd>{levelLabel('environment', card.row.realism.environment)}</dd>
+            <dl className="realism__levels small" data-testid="realism-card-levels">
+              <dt>Interaction</dt>
+              <dd data-testid="realism-card-interaction">{levelLabel('interaction', card.row.realism.interaction)}</dd>
+              <dt>Human behavior</dt>
+              <dd data-testid="realism-card-human">{levelLabel('human', card.row.realism.human)}</dd>
               <dt>{AS.label}</dt>
               <dd data-testid="realism-card-action-space" title={card.row.actionSpaceComplexity ? AS.levels[card.row.actionSpaceComplexity]?.definition : undefined}>
                 <svg width="10" height="10" aria-hidden="true" className="realism__swatch">
@@ -185,9 +224,11 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
                 </svg>
                 {actionSpaceLabel(card.row.actionSpaceComplexity)}
               </dd>
+              <dt>Setting</dt>
+              <dd data-testid="realism-card-setting">{levelLabel('environment', card.row.realism.environment)}</dd>
               <dt>Robot</dt>
-              <dd>{levelLabel('robot', card.row.realism.robot)}</dd>
-              <dt>Loops</dt>
+              <dd data-testid="realism-card-robot">{levelLabel('robot', card.row.realism.robot)}</dd>
+              <dt>All loops</dt>
               <dd>{card.row.loops.map((l) => tx.loop_types[l]?.label ?? l).join('; ') || '—'}</dd>
               <dt>Data</dt>
               <dd>{[...card.row.environments, ...card.row.datasets].map((d) => datasetById.get(d)?.name ?? d).join(', ') || '—'}</dd>
@@ -228,22 +269,20 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
           </svg>
           Framework paper
         </li>
-        {Object.entries(tx.realism.human.levels)
-          .filter(([, l]) => (l.refs ?? []).length)
-          .map(([id, l]) => (
-            <li key={id}>
-              {l.label}: see{' '}
-              {l.refs!.map((r) => (
-                <button key={r} type="button" className="linkish" onClick={() => url.openPaper(r)}>
-                  {paperLabel(r)}
-                </button>
-              ))}
-            </li>
-          ))}
+        {refLevels.map((l) => (
+          <li key={l.key} data-testid={`realism-ref-${l.key}`}>
+            {l.label}: see{' '}
+            {l.refs.map((r) => (
+              <button key={r} type="button" className="linkish" onClick={() => url.openPaper(r)}>
+                {paperLabel(r)}
+              </button>
+            ))}
+          </li>
+        ))}
       </ul>
       {skipped > 0 && (
         <p className="small muted" data-testid="realism-skipped">
-          {skipped} paper{skipped === 1 ? '' : 's'} with evaluations but no stated people or setting level {skipped === 1 ? 'is' : 'are'} not plotted.
+          {skipped} paper{skipped === 1 ? '' : 's'} with evaluations but no interaction or human behavior level {skipped === 1 ? 'is' : 'are'} not plotted.
         </p>
       )}
       {tx.realism.source_url && (

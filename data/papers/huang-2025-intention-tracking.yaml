@@ -30,5 +30,5 @@ evaluations:
     provenance: HIT §V–VI (UR5e in a shared assembly workspace)
     realism:
       robot: task_specific
-      human: non_target
+      human: real_humans  # was non_target on the old scale
       environment: lab

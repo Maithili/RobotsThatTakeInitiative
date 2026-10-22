@@ -19,11 +19,21 @@ export interface PaperEvalRow {
   otherBaselines: string[];
   drift: Cap | null;
   adapt: Cap | null;
-  /** Closest level per realism axis across the entries, by taxonomy order. */
-  realism: { robot: string | null; human: string | null; environment: string | null };
-  /** Most complex `action_space_complexity` level across the entries, by taxonomy order (SPEC §8.3). Null when no
-   *  entry has one. */
+  /** Closest level per realism axis across the paper's main (non-secondary) entries, by taxonomy order (SPEC §8.3).
+   *  `interaction` comes from each entry's loop type. */
+  realism: { robot: string | null; human: string | null; environment: string | null; interaction: string | null };
+  /** Most complex `action_space_complexity` level across the main entries, by taxonomy order (SPEC §8.3). Null when
+   *  no main entry has one. */
   actionSpaceComplexity: string | null;
+}
+
+/** Orders for the realism axes, plus the loop-type → interaction mapping from the taxonomy (`loop_types.*.interaction`). */
+export interface RealismOrder {
+  robot: string[];
+  human: string[];
+  environment: string[];
+  interaction?: string[];
+  interactionOf?: (loop: string) => string | null | undefined;
 }
 
 const uniq = <T,>(xs: T[]) => [...new Set(xs)];
@@ -46,6 +56,16 @@ export function mostComplex(values: (string | null | undefined)[], order: string
   return closest(values, order);
 }
 
+/** A paper's main evaluations: every entry not marked `secondary`. Only these place its realism dot (SPEC §8.3). */
+export function mainEntries(es: readonly Evaluation[]): Evaluation[] {
+  return es.filter((e) => !e.secondary);
+}
+
+/** An evaluation's interaction level, from its loop type. Null when it has no loop type or the type has no mapping. */
+export function interactionOf(e: Pick<Evaluation, 'loop'>, loopTypes: Record<string, { interaction?: string }>): string | null {
+  return (e.loop && loopTypes[e.loop]?.interaction) || null;
+}
+
 /** Distinct categories of `metrics`, in `order`. Metrics with no category add none. */
 export function categoriesOf(metrics: string[], order: string[], categoryOf: (m: string) => string | null | undefined): string[] {
   const used = new Set(metrics.map(categoryOf));
@@ -55,12 +75,13 @@ export function categoriesOf(metrics: string[], order: string[], categoryOf: (m:
 export function mergePaper(
   paper: DbPaper,
   loopOrder: string[],
-  realismOrder: { robot: string[]; human: string[]; environment: string[] },
+  realismOrder: RealismOrder,
   categories: { order: string[]; of: (m: string) => string | null | undefined } = { order: [], of: () => null },
   /** `action_space_complexity` level ids, from low to high. */
   actionSpaceOrder: string[] = [],
 ): PaperEvalRow {
   const es = paper.evaluations ?? [];
+  const main = mainEntries(es);
   const metrics = uniq(es.flatMap((e) => e.metrics ?? []));
   return {
     paper,
@@ -76,11 +97,15 @@ export function mergePaper(
     drift: strongest(es.map((e) => e.captures?.state_drift)),
     adapt: strongest(es.map((e) => e.captures?.goal_adaptation)),
     realism: {
-      robot: closest(es.map((e) => e.realism?.robot), realismOrder.robot),
-      human: closest(es.map((e) => e.realism?.human), realismOrder.human),
-      environment: closest(es.map((e) => e.realism?.environment), realismOrder.environment),
+      robot: closest(main.map((e) => e.realism?.robot), realismOrder.robot),
+      human: closest(main.map((e) => e.realism?.human), realismOrder.human),
+      environment: closest(main.map((e) => e.realism?.environment), realismOrder.environment),
+      interaction: closest(
+        main.map((e) => (e.loop ? realismOrder.interactionOf?.(e.loop) : null)),
+        realismOrder.interaction ?? [],
+      ),
     },
-    actionSpaceComplexity: mostComplex(es.map((e) => e.action_space_complexity), actionSpaceOrder),
+    actionSpaceComplexity: mostComplex(main.map((e) => e.action_space_complexity), actionSpaceOrder),
   };
 }
 

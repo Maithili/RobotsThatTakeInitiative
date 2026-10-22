@@ -145,7 +145,13 @@ export const TaxonomySchema = z.object({
     }),
   ),
   loop_types: z.record(
-    z.object({ label: z.string(), definition: z.string(), refs: z.array(z.string()).optional() }),
+    z.object({
+      label: z.string(),
+      definition: z.string(),
+      refs: z.array(z.string()).optional(),
+      /** A `realism.interaction` level: where an evaluation with this loop type sits on the realism plot's x axis (SPEC §8.3). */
+      interaction: z.string({ required_error: 'needs an interaction level from realism.interaction' }),
+    }),
   ),
   captures: z.object({
     state_drift: defn,
@@ -154,8 +160,11 @@ export const TaxonomySchema = z.object({
   }),
   realism: z.object({
     robot: realismAxis,
+    /** The realism plot's y axis: where the human behavior comes from (SPEC §8.3). */
     human: realismAxis,
     environment: realismAxis,
+    /** The realism plot's x axis. Evaluations never name it; it comes from their loop type (`loop_types.*.interaction`). */
+    interaction: realismAxis,
     source_url: url.nullable(),
   }),
   /** Ordered from low to high. Colors the realism plot's dots (SPEC §8.3), one ramp step per level. */
@@ -220,6 +229,9 @@ export const EvaluationSchema = z
       .nullable()
       .optional(),
     provenance: capped('provenance').optional(),
+    /** Not the paper's main evaluation, such as a user study beside a simulated one. It stays in the protocols table and
+     *  the drawer but does not place the paper's realism dot (SPEC §8.3). */
+    secondary: z.boolean().optional(),
     realism: z
       .object({ robot: z.string().nullable().optional(), human: z.string().nullable().optional(), environment: z.string().nullable().optional() })
       .strict()

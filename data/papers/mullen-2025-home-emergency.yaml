@@ -68,7 +68,7 @@ evaluations:
     provenance: "Librarian Oct 2026, A-5 Mullen A8–A11; Mullen §III, §V, Tables II–III. Hand-built planner. Only the robot's pose changes"
     realism:
       robot: task_specific
-      human: scripted
+      human: null  # was scripted on the old scale, which does not fix the new level
       environment: simulator
   - id: mullen-2025-home-emergency-real
     environment: null

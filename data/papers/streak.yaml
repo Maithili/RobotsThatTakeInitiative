@@ -64,6 +64,6 @@ evaluations:
     provenance: "GAP paper §I, §IV; STREAK §V–VI (baselines are the STOT model, fine-tuned and jointly trained); Librarian Oct 2026, B-3"
     realism:
       robot: task_specific
-      human: recorded
+      human: crowdsourced  # recorded HOMER routines (crowdsourced, homer.yaml)
       environment: simulator
     action_space_complexity: high  # derived: same HOMER households as STOT, 108 objects each (STOT App. A; STREAK §V; Librarian, Oct 22 2026)

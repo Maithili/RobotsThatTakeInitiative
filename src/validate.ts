@@ -297,12 +297,15 @@ export function buildDb(input: BuildInput): BuildResult {
     else hueOwner.set(tt.color, tid);
   }
   for (const [lid, lt] of Object.entries(t.loop_types)) {
+    if (!inSet(t.realism.interaction.levels, lt.interaction)) {
+      errors.push(`taxonomy.yaml: loop_types.${lid}.interaction "${lt.interaction}" is not a realism.interaction level`);
+    }
     for (const r of lt.refs ?? []) {
       referenced.add(r);
       if (!paperById.has(r)) errors.push(`taxonomy.yaml: loop_types.${lid}.refs "${r}" does not exist`);
     }
   }
-  for (const axis of ['robot', 'human', 'environment'] as const) {
+  for (const axis of ['robot', 'human', 'environment', 'interaction'] as const) {
     for (const [lid, lv] of Object.entries(t.realism[axis].levels)) {
       for (const r of lv.refs ?? []) {
         referenced.add(r);

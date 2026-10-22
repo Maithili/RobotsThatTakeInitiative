@@ -86,7 +86,7 @@ evaluations:
     provenance: "Librarian Oct 2026, A-4 EvolvingNav A9–A11; EvolvingNav Tables 1, 2, 11, 12, 15, App. B.6. Robot never moves objects"
     realism:
       robot: generalist
-      human: scripted
+      human: null  # was scripted on the old scale, which does not fix the new level
       environment: simulator
   - id: evolvingnav-prediction
     environment: habitat
@@ -117,7 +117,7 @@ evaluations:
     provenance: "Librarian Oct 2026, A-4 EvolvingNav A9–A11; EvolvingNav Tables 5, 10, App. A.5, A.7, B.6"
     realism:
       robot: task_specific
-      human: recorded
+      human: null  # was recorded on the old scale, which does not fix the new level
       environment: simulator
   - id: evolvingnav-real-robot
     environment: null

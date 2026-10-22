@@ -32,7 +32,7 @@ evaluations:
     provenance: "Nemlekar §5, §7 (in-person model-airplane assembly with a robot)"
     realism:
       robot: task_specific
-      human: non_target
+      human: real_humans  # was non_target on the old scale
       environment: lab
   - id: nemlekar-2023-transfer-offline
     loop: offline_replay
@@ -40,5 +40,5 @@ evaluations:
     provenance: Nemlekar §6 (ablations replay the §5 recordings)
     realism:
       robot: task_specific
-      human: recorded
+      human: null  # was recorded on the old scale, which does not fix the new level
       environment: lab

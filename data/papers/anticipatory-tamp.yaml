@@ -68,7 +68,7 @@ evaluations:
     provenance: "Librarian Oct 2026, A-7 A9–A11; Dhakal §V-A–D, Table I, Fig. 6. Each task starts from the last one's end state"
     realism:
       robot: task_specific
-      human: recorded
+      human: null  # no human. Tasks sampled from a fixed P(τ)
       environment: simulator
     action_space_complexity: high  # tagged by Maithili, Oct 22 2026. 100 (NAMO) / 200 (cabinet) sampled candidate plans per task, continuous poses
   - id: anticipatory-tamp-fetch
@@ -84,6 +84,6 @@ evaluations:
     provenance: "Librarian Oct 2026, A-7 A9–A10; Dhakal §V-E, Fig. 8. One demonstration on a Fetch robot. Lab or home is not stated"
     realism:
       robot: task_specific
-      human: recorded
+      human: null  # no human. A fixed two-task sequence
       environment: null
     action_space_complexity: high  # tagged by Maithili, Oct 22 2026

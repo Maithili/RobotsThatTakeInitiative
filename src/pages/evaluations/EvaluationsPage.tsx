@@ -21,17 +21,19 @@ import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
 import { DatasetTable } from './DatasetTable.tsx';
 import { FeaturedChart } from './FeaturedChart.tsx';
-import { furthestLoop, mergePaper, rowMatches, type PaperEvalRow } from './merge.ts';
+import { furthestLoop, interactionOf, mergePaper, rowMatches, type PaperEvalRow, type RealismOrder } from './merge.ts';
 import { RealismPlot } from './RealismPlot.tsx';
 
 const TERMS = Object.keys(tx.net_value.terms);
 const LOOPS = Object.keys(tx.loop_types);
 const METRICS = Object.keys(tx.metrics);
 const CATEGORIES = Object.keys(tx.metric_categories);
-const REALISM_ORDER = {
+const REALISM_ORDER: RealismOrder = {
   robot: Object.keys(tx.realism.robot.levels),
   human: Object.keys(tx.realism.human.levels),
   environment: Object.keys(tx.realism.environment.levels),
+  interaction: Object.keys(tx.realism.interaction.levels),
+  interactionOf: (loop) => interactionOf({ loop }, tx.loop_types),
 };
 const ACTION_SPACE_ORDER = Object.keys(tx.action_space_complexity.levels);
 
