@@ -96,22 +96,6 @@ function LevelCard({ level, count }: { level: LevelId; count: number }) {
   );
 }
 
-/** L0 is a baseline description: no paper count, no timeline row, no click action (SPEC §7.1). */
-function BaselineCard({ level }: { level: LevelId }) {
-  const L = tx.levels[level];
-  return (
-    <div className={`levelcard levelcard--${level} levelcard--baseline`} data-testid={`levelcard-${level}`}>
-      <span className="levelcard__top">
-        <span className={`level-chip level-chip--${level}`}>{level}</span>
-        <strong>{L.name}</strong>
-      </span>
-      <KnownsChips knowns={L.knowns} />
-      <span className="levelcard__def">{L.definition}</span>
-      {L.note && <span className="levelcard__note">{L.note}</span>}
-    </div>
-  );
-}
-
 function TimelineRow({
   level,
   papers,
@@ -290,9 +274,6 @@ export function TopBand({
           </div>
         </div>
       ))}
-      <div className="mtop__card mtop__card--L0">
-        <BaselineCard level="L0" />
-      </div>
       <div className="mtop__axis" ref={ref}>
         <TimelineAxis bands={bands} width={width} />
       </div>

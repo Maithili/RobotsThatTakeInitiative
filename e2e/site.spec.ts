@@ -503,7 +503,7 @@ test('11. the STOT to SLaTe-PRO edge is solid; cites show only on hover until "S
   await expect.poll(() => page.locator('[data-type="cites"]').count()).toBeGreaterThan(50);
 });
 
-test('selecting a level card highlights its timeline row only; L0 is a baseline card', async ({ page }) => {
+test('selecting a level card highlights its timeline row only; there is no L0 card', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
   const nodes = page.locator('[data-testid^="node-"]');
   const count = await nodes.count();
@@ -520,13 +520,9 @@ test('selecting a level card highlights its timeline row only; L0 is a baseline 
   await expect.poll(() => params(page).get('level')).toBeNull();
   await expect(page.getByTestId('timeline-L1')).toHaveAttribute('data-selected', 'false');
 
-  // L0: name, knowns, and definition, with no count, no timeline row, and no click action.
-  const l0 = page.getByTestId('levelcard-L0');
-  await expect(l0).toBeVisible();
-  await expect(l0).toContainText('Reactive assistance');
-  await expect(l0).toContainText('industrial manufacturing');
-  await expect(l0).not.toHaveRole('button');
-  await expect(l0.locator('.levelcard__count')).toHaveCount(0);
+  // No L0 card and no L0 timeline row.
+  await expect(page.getByTestId('levelcard-L0')).toHaveCount(0);
+  await expect(page.locator('.mtop')).not.toContainText('L0');
   await expect(page.getByTestId('timeline-L0')).toHaveCount(0);
   await expect(page.getByTestId('levelcard-L2').locator('.levelcard__count')).toBeVisible();
   await expect(page.getByTestId('levelcard-L1').locator('.levelcard__count')).toBeVisible();
@@ -845,6 +841,8 @@ test('the legend sits in the graph panel directly above the graph; the top band 
   expect(gb.y - (lb.y + lb.height)).toBeLessThan(4);
   // The timeline takes the width the legend left.
   const band = (await page.locator('.mtop').boundingBox())!;
+  // The graph comes first; the band with the level cards and timeline sits below it.
+  expect(band.y).toBeGreaterThanOrEqual(gb.y + gb.height);
   const axis = (await page.locator('.mtop__axis').boundingBox())!;
   expect(band.x + band.width - (axis.x + axis.width)).toBeLessThan(20);
 

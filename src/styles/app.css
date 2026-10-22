@@ -2194,7 +2194,7 @@ tr.clickable:hover td {
   grid-template-areas:
     'c2 t2'
     'c1 t1'
-    'c0 ax';
+    '. ax';
   gap: 8px 14px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -2204,7 +2204,6 @@ tr.clickable:hover td {
 }
 .mtop__card--L2 { grid-area: c2; }
 .mtop__card--L1 { grid-area: c1; }
-.mtop__card--L0 { grid-area: c0; }
 .mtop__tl--L2 { grid-area: t2; }
 .mtop__tl--L1 { grid-area: t1; }
 .mtop__axis { grid-area: ax; min-width: 0; align-self: start; }
@@ -2929,7 +2928,7 @@ label.lgd__item {
 @media (max-width: 639px) {
   .mtop {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: 'c2' 't2' 'c1' 't1' 'ax' 'c0';
+    grid-template-areas: 'c2' 't2' 'c1' 't1' 'ax';
   }
   .mtop__card .levelcard__def,
   .mtop__card .levelcard__note {

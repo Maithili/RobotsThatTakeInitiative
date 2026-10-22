@@ -176,8 +176,6 @@ export function MethodsPage() {
         </p>
       </div>
 
-      <TopBand papers={bandPapers} hoverId={hoverId} setHover={setHover} />
-
       <FilterBar
         controls={['family', 'action', 'input', 'theme']}
         years={yearSpan}
@@ -206,6 +204,8 @@ export function MethodsPage() {
       ) : (
         <MethodsList papers={methods} tangential={tangential} />
       )}
+
+      <TopBand papers={bandPapers} hoverId={hoverId} setHover={setHover} />
     </div>
   );
 }

@@ -572,13 +572,13 @@ Every list, graph, and panel has an empty state that says what is missing and li
 
 ## 7. Methods page
 
-The page has two parts. A top band holds the level cards and a condensed timeline. Below it, the main graphic is an interconnected literature graph, with its legend directly above it.
+The page has two parts. The main graphic comes first: an interconnected literature graph, with its legend directly above it. Below the graph, a band holds the level cards and a condensed timeline (per Maithili, Oct 22 2026; the section keeps the name "top band").
 
 ### 7.1 Top band
 
 Left to right: level cards, then the condensed timeline across the remaining width. The legend sits with the graph (§7.2), not in the top band.
 
-- **Level cards.** Three stacked cards, L2 on top, then L1, then L0. The L2 and L1 cards show name, knowns chips, one-line definition, and paper count. The L0 card is a baseline description: name, knowns chips, and definition, with no paper count, no timeline row, and no click action. Clicking the L2 or L1 card selects that level and sets `level=`. Clicking it again clears the selection. No toggle bar for g and π^h.
+- **Level cards.** Two stacked cards, L2 on top, then L1. Each shows name, knowns chips, one-line definition, and paper count. There is no L0 card: Maithili removed it on Oct 22, 2026 so it is not confusing. L0 stays defined in the taxonomy. Clicking the L2 or L1 card selects that level and sets `level=`. Clicking it again clears the selection. No toggle bar for g and π^h.
 - **Condensed timeline.** One row beside the L2 card and one beside the L1 card, holding that level's papers with no breakdown by family. The two rows share one year axis. From 2021 on, each year gets one equal-width band. All earlier papers share one narrow band at the left labeled "Before 2021", in year order, with each paper's year in small text and an axis break mark before 2021. One constant holds the cutoff (`TIMELINE_START = 2021`). Papers show as compact chips with the short name, stacked when they share a year.
   - Hovering a chip highlights the same paper in the graph, and hovering a graph node highlights its chip.
   - Clicking a chip opens the drawer and, if the paper is in the graph, focuses its node.
@@ -802,6 +802,8 @@ Placements decided by Maithili (Oct 21, 2026): SGM, FlowMaps, EvolvingNav, Dorba
 Confirmed by Maithili (Oct 22, 2026): the Koch van den Broek review sits under "User perceptions of proactivity". Purple is only for GAP, and papers that fit no category are gray. Every relevant paper appears on the Subproblems page, including the object search papers. Courteous Anticipation gets no "benchmarks against" line to Talukder 2025; its "Selfish A.P." baseline stays text in `other_baselines`.
 
 The three anticipatory planning papers (Anticipatory TAMP, Talukder 2025, Courteous Anticipation) are open loop, per Maithili: their task streams are fixed and never respond to the robot. Their entries use `offline_replay`, so they sit at Open loop on the realism plot's x axis. Their human side was `recorded` on the old scale and has no human behavior level on the new one (see below).
+
+Methods layout, per Maithili (Oct 22, 2026): the literature graph comes first, and the band with the L2 and L1 level cards and the timeline sits below it. The L0 card is removed so it is not confusing.
 
 Realism plot axes, per Maithili (Oct 22, 2026): x is environment and y is human. Robot realism leaves the plot because every evaluation uses a task-specific policy; it stays in the data and the hover card. Environment no longer sets opacity. Color shows action space complexity, as a way to show policy complexity. Maithili's definition: "Action space combinatorial complexity is the number of options the policy has at a given point in time." Under 50 fixed options (such as activity labels) is low, up to 100 (such as 10 objects on any of 10 locations) is medium, more is high, and a generative, unbounded set is very high. This replaced an earlier three-level task complexity scale.
 
