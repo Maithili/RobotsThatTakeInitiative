@@ -57,7 +57,9 @@ sup {
   font-size: 0.7em;
   line-height: 0;
 }
-table {
+/* Tabular figures only in number cells: in names and titles they space out hyphens ("HOMER - Noise"). */
+table .num,
+td.num {
   font-variant-numeric: tabular-nums;
 }
 .sr-only {
@@ -2717,14 +2719,6 @@ tr.clickable:hover td {
 /* A tag in a family or category card keeps its own width rather than stretching across the card. */
 .litg .hovercard > .tag {
   align-self: flex-start;
-}
-
-/* Methods list: tabular numerals only in the number cells; in names and titles they space out hyphens. */
-.methods-table {
-  font-variant-numeric: normal;
-}
-.methods-table .num {
-  font-variant-numeric: tabular-nums;
 }
 
 /* legend: a compact row directly above the graph, inside its panel, that wraps on narrow screens (SPEC §7.2) */
