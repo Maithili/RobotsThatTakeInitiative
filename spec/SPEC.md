@@ -382,7 +382,7 @@ Evaluation entry:
 | `provenance` | string ≤ 140 | |
 | `results` | list of `{method, method_label?, metric, value, sd?}` | `method` is a paper id. Use `method_label` alone for a baseline with no paper. |
 | `realism` | `{robot, human, environment}`, each a level id from `realism` or null | Filled only from what the paper states about its evaluation. `human` and `environment` place the dot in the plot in §8.3; `robot` shows only in its hover card. |
-| `action_space_complexity` | level id from `action_space_complexity` or null | The number of options the evaluated policy has at one decision point. Set it only when the paper's own text (its file, a dataset file, or its landing or full-text page) states that count, or states that the set is generative. A comment gives the count and its source. Otherwise null. Colors the dot in §8.3. |
+| `action_space_complexity` | level id from `action_space_complexity` or null | The number of options the evaluated policy has at one decision point. Set it from a count the paper's own text states, from arithmetic on stated counts (the comment says "derived"), or from Maithili's tag (the comment says so). A comment gives the count and its source. Otherwise null. Colors the dot in §8.3. |
 
 Example:
 
@@ -797,6 +797,6 @@ Realism plot axes, per Maithili (Oct 22, 2026): x is environment and y is human.
 
 
 1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them.
-2. **Action space complexity.** A level is set only where the paper's own text gives the option count at one decision point. So far that is Watch-And-Help's help and user-study entries ("167 different actions per step" on average, App. A.2.4). Every other entry is null, with what the text does state and what is missing in a comment beside it, pending the librarian.
+2. **Action space complexity.** Levels set on Oct 22, 2026. STOT, STREAK, SLaTe-PRO, GAP and NOPA are high, derived from counts the papers state (HOMER's 108 objects; HOMER+'s 59 dynamic objects × 93 entities; NOPA uses Watch-And-Help's action space of 167 actions per step on average). Watch-And-Help's help and user-study entries are high from that stated count. Maithili tagged the rest: GLOBE low, ProAct low, the Watch-And-Help watch stage medium, and Talukder 2025, Anticipatory TAMP and Courteous Anticipation high. Din 2025 and the SLaTe-PRO query setting stay null.
 3. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.
 4. **Tangential works.** Maithili lists them. Candidates from the GAP paper references that fit the two tangent types: Peng et al. 2019 [16] (a CHI design and evaluation of service-robot proactivity), and the works that ask questions [17] and [18]. Both left the database earlier. ADAPT [19] stays on the Subproblems page only and is not tangential, per Maithili.

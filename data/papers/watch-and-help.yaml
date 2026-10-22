@@ -59,7 +59,7 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    action_space_complexity: null  # goal inference, no robot action. 30 predicate types, 2-8 predicates per goal (WAH arXiv 2010.09890 §3)
+    action_space_complexity: medium  # tagged by Maithili, Oct 22 2026. Goal inference over 30 predicate types, 2-8 predicates per goal (WAH §3)
   - id: watch-and-help-help
     environment: virtualhome
     loop: closed_scripted

@@ -73,7 +73,7 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    action_space_complexity: null  # per-step count not stated. Plain LLM schema lists 61 objects, destinations truncated (GAP arXiv 2609.28910 App. IV-B)
+    action_space_complexity: high  # derived: HOMER+ placements, 59 dynamic objects × 93 entities = 5,487 (SLaTe-PRO App. A.3). Planner candidate count not stated (GAP App. IV-A; Librarian, Oct 22 2026)
     results:
       - method: slate-pro
         metric: f1
@@ -106,7 +106,7 @@ evaluations:
       robot: task_specific
       human: adaptive_sim
       environment: simulator
-    action_space_complexity: null  # per-step count not stated. Plain LLM schema lists 61 objects, destinations truncated (GAP arXiv 2609.28910 App. IV-B)
+    action_space_complexity: high  # derived: as gap-offline, HOMER+ placements 59 × 93 = 5,487
     results:
       - method: slate-pro
         metric: f1
@@ -139,7 +139,7 @@ evaluations:
       robot: task_specific
       human: scripted
       environment: simulator
-    action_space_complexity: null  # per-step count not stated. Plain LLM schema lists 61 objects, destinations truncated (GAP arXiv 2609.28910 App. IV-B)
+    action_space_complexity: high  # derived: as gap-offline, HOMER+ placements 59 × 93 = 5,487
     results:
       - method: slate-pro
         metric: f1

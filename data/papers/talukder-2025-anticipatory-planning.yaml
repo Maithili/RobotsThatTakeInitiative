@@ -67,4 +67,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    action_space_complexity: null  # 1,633 objects in 108 categories (§V-B), but no per-state action count or N in Alg. 1 (arXiv 2411.12837)
+    action_space_complexity: high  # tagged by Maithili, Oct 22 2026

@@ -38,4 +38,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    action_space_complexity: null  # 24 activities (HOMER+ notes), but objects come from O(a_t), size not stated (GLOBE arXiv 2606.08458 §III-A)
+    action_space_complexity: low  # tagged by Maithili, Oct 22 2026. 24 activity labels (HOMER+)

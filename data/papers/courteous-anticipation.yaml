@@ -69,4 +69,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    action_space_complexity: null  # no object, location, action or candidate-plan count (arXiv 2607.20289 §V-VI)
+    action_space_complexity: high  # tagged by Maithili, Oct 22 2026, as Talukder 2025 (same first author and focused-sampling planner)

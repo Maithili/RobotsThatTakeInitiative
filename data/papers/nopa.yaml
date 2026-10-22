@@ -66,7 +66,7 @@ evaluations:
       robot: task_specific
       human: scripted
       environment: simulator
-    action_space_complexity: null  # "same action space in [2]" (NOPA arXiv 2301.05223 §IV), no count. K=20 goal proposals (§V-A)
+    action_space_complexity: high  # "We adopt the same action space in [2]", [2] = Watch-And-Help (NOPA §IV-A), which has "167 different actions per step" on average (WAH App. A.2.4; Librarian, Oct 22 2026)
   - id: nopa-user-study
     environment: virtualhome
     loop: user_study_short
@@ -82,4 +82,4 @@ evaluations:
       robot: task_specific
       human: non_target
       environment: simulator
-    action_space_complexity: null  # as nopa-simulation: action space size not stated (NOPA §IV)
+    action_space_complexity: high  # as nopa-simulation

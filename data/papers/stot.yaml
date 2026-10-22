@@ -65,4 +65,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    action_space_complexity: null  # 108 objects per household (HOMER notes), location count not stated (STOT arXiv 2211.15501)
+    action_space_complexity: high  # derived: 108 objects per household, and objects also serve as locations, so choosing the object alone exceeds 100 (STOT App. A p.12, §3; Librarian, Oct 22 2026)

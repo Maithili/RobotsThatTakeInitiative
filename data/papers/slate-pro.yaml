@@ -60,7 +60,7 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
-    action_space_complexity: null  # 93 entities, objects and locations together, split not stated (HOMER+ notes; SLaTe-PRO arXiv 2309.06252 §6)
+    action_space_complexity: high  # derived: 59 dynamic objects × 93 entities = 5,487 placements ("93 entities, which all serve as potential locations for the 59 dynamic objects", App. A.3 p.14; Librarian, Oct 22 2026)
   - id: slate-pro-queries
     datasets:
       - homer-plus
@@ -75,4 +75,4 @@ evaluations:
       robot: task_specific
       human: scripted
       environment: simulator
-    action_space_complexity: null  # as slate-pro-original. Query candidates not counted (SLaTe-PRO §5.2)
+    action_space_complexity: null  # at most 60 candidate queries (1 activity + 59 objects, derived), count not stated (SLaTe-PRO §5.2; Librarian, Oct 22 2026)

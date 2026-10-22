@@ -78,4 +78,4 @@ evaluations:
       robot: null
       human: recorded
       environment: null
-    action_space_complexity: null  # 2 trigger classes, 75 tasks (ProAct arXiv 2602.03430 App. B.4, §1). Step and robot-action counts not stated
+    action_space_complexity: low  # tagged by Maithili, Oct 22 2026. Legal next steps plus WAIT
