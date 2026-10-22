@@ -2268,7 +2268,8 @@ tr.clickable:hover td {
 /* Family hues, each a ramp from a light stop (oldest) to a dark stop (newest), plus an ink for text on the page.
    0 teal (Goal Inference), 1 coral (Temporal Imitation), 2 blue and 3 green for new families, framework (purple) for
    GAP, and none (gray) for papers that fit no category. Tangential categories take their own hue slots (the taxonomy's
-   `color`: amber, magenta, sky, or brown), each a dot color and an ink, distinct from the family hues (SPEC §7.2). */
+   `color`: amber, magenta, sky, brown, or fern), each a dot color and an ink, distinct from the family hues in use
+   (SPEC §7.2). Fern (OKLCH hue 136) is the only green on the Methods page; it sits near the unused fourth-family green. */
 :root {
   --graph-bg: var(--surface);
   --edge: #a1a6b0;
@@ -2299,6 +2300,8 @@ tr.clickable:hover td {
   --tan-sky-ink: #0f6887;
   --tan-brown: #8a6040;
   --tan-brown-ink: #725038;
+  --tan-fern: #468021;
+  --tan-fern-ink: #366618;
   --tan-none: #7a7e88;
   --tan-none-ink: #5d606a;
   --hull-opacity: 0.075;
@@ -2333,6 +2336,8 @@ tr.clickable:hover td {
     --tan-sky-ink: #8ad2f0;
     --tan-brown: #b48a66;
     --tan-brown-ink: #d8b896;
+    --tan-fern: #94ce78;
+    --tan-fern-ink: #b4e3a0;
     --tan-none: #8a8e98;
     --tan-none-ink: #b9bcc6;
     --hull-opacity: 0.12;
@@ -2367,6 +2372,8 @@ tr.clickable:hover td {
   --tan-sky-ink: #8ad2f0;
   --tan-brown: #b48a66;
   --tan-brown-ink: #d8b896;
+  --tan-fern: #94ce78;
+  --tan-fern-ink: #b4e3a0;
   --tan-none: #8a8e98;
   --tan-none-ink: #b9bcc6;
   --hull-opacity: 0.12;
@@ -2403,7 +2410,8 @@ tr.clickable:hover td {
   vector-effect: non-scaling-stroke;
   transition: opacity 150ms;
 }
-/* semi-tangential families: hull, name, dots, labels, and edges at 75% until hovered (SPEC §7.2) */
+/* semi-tangential families: hull, name, dots, labels, and edges at 75% until hovered (SPEC §7.2). No real family is
+   semi-tangential since Oct 22 2026; the synthetic fixture's family D keeps this treatment tested. */
 .litg__hull.is-semi,
 .litg__hull-label.is-semi {
   opacity: 0.75;
@@ -2455,6 +2463,7 @@ tr.clickable:hover td {
 .tan-ink--magenta { fill: var(--tan-magenta-ink); }
 .tan-ink--sky { fill: var(--tan-sky-ink); }
 .tan-ink--brown { fill: var(--tan-brown-ink); }
+.tan-ink--fern { fill: var(--tan-fern-ink); }
 .tan-ink--none { fill: var(--tan-none-ink); }
 
 /* edges: thin gray curves; builds solid, benchmarks dashed, cites dotted and lighter (SPEC §5.5).
@@ -2825,6 +2834,7 @@ label.lgd__item {
 .tan-dot--magenta { background: var(--tan-magenta); }
 .tan-dot--sky { background: var(--tan-sky); }
 .tan-dot--brown { background: var(--tan-brown); }
+.tan-dot--fern { background: var(--tan-fern); }
 .tan-dot--none { background: var(--tan-none); }
 .tag--tangent {
   display: inline-flex;

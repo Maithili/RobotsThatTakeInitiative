@@ -207,10 +207,10 @@ All new facts in this pass come from the librarian's answers of Oct 21, 2026, wh
 | `evolvingnav` | EvolvingNav | Tangential, type search |
 | `tap` | TAP | Tangential, type search (Dorbala et al., Transit-Aware Planning) |
 | `mullen-2025-home-emergency` | Mullen 2025 | Tangential, type search (HomeEmergency names the task and dataset, not the method) |
-| `anticipatory-tamp` | Anticipatory TAMP | L2, no family (Dhakal et al., RA-L 2026, one paper with arXiv 2407.13694) |
-| `talukder-2025-anticipatory-planning` | Talukder 2025 | L2, no family |
-| `courteous-anticipation` | Courteous Anticipation | L2, no family (Talukder et al. 2026) |
-| `din-2025-proactivity` | Din 2025 | L2, Implicit Cues |
+| `anticipatory-tamp` | Anticipatory TAMP | L2, tangential, type planning since Oct 22, 2026, before that no family (Dhakal et al., RA-L 2026, one paper with arXiv 2407.13694) |
+| `talukder-2025-anticipatory-planning` | Talukder 2025 | L2, tangential, type planning since Oct 22, 2026, before that no family |
+| `courteous-anticipation` | Courteous Anticipation | L2, tangential, type planning since Oct 22, 2026, before that no family (Talukder et al. 2026) |
+| `din-2025-proactivity` | Din 2025 | L2, tangential, type implicit_cues since Oct 22, 2026, before that the Implicit Cues family |
 
 The three anticipatory planning papers have goal and human policy unknown because their preparation step acts before any task is given. Each later task is given one at a time. All three carry `action_types: [act]` and no inputs, since their planners read the full symbolic state, which fits no observation modality. Din 2025 carries `[act]` and `[video]` (egocentric RGB).
 

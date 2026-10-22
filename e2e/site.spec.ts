@@ -567,6 +567,15 @@ test('selecting a level card highlights its timeline row only; there is no L0 ca
   await expect(page.getByTestId('timeline-L0')).toHaveCount(0);
   await expect(page.getByTestId('levelcard-L2').locator('.levelcard__count')).toBeVisible();
   await expect(page.getByTestId('levelcard-L1').locator('.levelcard__count')).toBeVisible();
+
+  // Tangential works stay out of the timeline, so the L2 lane holds only the core: Goal Inference, Temporal
+  // Imitation, and GAP (per Maithili, Oct 22 2026). The anticipatory planning papers and Din 2025 left it.
+  await expect(page.getByTestId('levelcard-L2').locator('.levelcard__count')).toHaveText('9');
+  await expect(page.getByTestId('timeline-L2').locator('[data-testid^="tchip-"]')).toHaveCount(9);
+  await expect(page.getByTestId('tchip-gap')).toHaveCount(1);
+  for (const id of ['anticipatory-tamp', 'talukder-2025-anticipatory-planning', 'courteous-anticipation', 'din-2025-proactivity']) {
+    await expect(page.getByTestId(`tchip-${id}`), id).toHaveCount(0);
+  }
 });
 
 test('no subproblem codes appear as visible text', async ({ page }) => {
@@ -963,7 +972,7 @@ test('the legend sits in the graph panel directly above the graph; the top band 
   // Edge styles with their checkboxes, the framework ring, dot size and darkness, and Show tangential works.
   // No group titles, and no family, tangential-category, or no-category rows: the graph names those itself.
   for (const t of ['builds', 'benchmarks', 'cites']) await expect(legend.getByTestId(`edges-${t}`)).toHaveCount(1);
-  for (const gone of ['Edges', 'Families', 'Tangential', 'Dots', 'No category', 'Goal Inference', 'Temporal Imitation', 'semi-tangential', 'Dynamic mapping']) {
+  for (const gone of ['Edges', 'Families', 'Tangential', 'Dots', 'No category', 'Goal Inference', 'Temporal Imitation', 'semi-tangential', 'Dynamic mapping', 'Anticipatory task planning', 'Implicit cues']) {
     await expect(legend).not.toContainText(gone);
   }
   await expect(legend.locator('[data-testid^="legend-family-"], [data-testid^="legend-tangent-"], [data-testid="legend-none"]')).toHaveCount(0);
@@ -984,7 +993,7 @@ test('the legend sits in the graph panel directly above the graph; the top band 
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
 });
 
-test('tangential categories draw in their own colors with a label each and no hull; papers with no category are gray', async ({ page }) => {
+test('tangential categories draw in their own colors with a label each and no hull; no seed paper is gray, and works of an unknown type are', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
   await settleGraph(page);
   // A visible label in the category's color, and no hull element for the category.
@@ -992,8 +1001,13 @@ test('tangential categories draw in their own colors with a label each and no hu
   await expect(label).toBeVisible();
   await expect(label).toHaveText('Dynamic mapping and object search');
   await expect(page.getByTestId('cat-label-hri')).toHaveText('User perceptions of proactivity');
-  await expect(page.locator('[data-testid="hull-search"], [data-testid="hull-hri"]')).toHaveCount(0);
-  await expect(page.locator('path[data-testid^="hull-"]')).toHaveCount(3);
+  await expect(page.getByTestId('cat-label-planning')).toHaveText('Anticipatory task planning');
+  await expect(page.getByTestId('cat-label-implicit_cues')).toHaveText('Implicit cues');
+  for (const c of ['hri', 'search', 'planning', 'implicit_cues']) await expect(page.getByTestId(`cat-label-${c}`)).toBeVisible();
+  await expect(page.locator('[data-testid="hull-search"], [data-testid="hull-hri"], [data-testid="hull-planning"], [data-testid="hull-implicit_cues"]')).toHaveCount(0);
+  // Only the two families draw hulls; Implicit Cues is no longer a family (per Maithili, Oct 22 2026).
+  await expect(page.locator('path[data-testid^="hull-"]')).toHaveCount(2);
+  await expect(page.locator('[data-testid="hull-goal_inference"], [data-testid="hull-temporal_imitation"]')).toHaveCount(2);
   const resolved = (v: string) =>
     page.evaluate((c) => {
       const el = document.createElement('span');
@@ -1004,14 +1018,26 @@ test('tangential categories draw in their own colors with a label each and no hu
       return out;
     }, v);
   expect(await label.evaluate((el) => getComputedStyle(el).fill)).toBe(await resolved('var(--tan-amber-ink)'));
-  // Its papers: dots in the category's color at 60% opacity.
-  for (const id of ['sgm', 'flowmaps', 'evolvingnav', 'tap', 'mullen-2025-home-emergency']) {
-    const n = page.getByTestId(`node-${id}`);
-    await expect(n).toHaveAttribute('data-tangent', 'search');
-    await expect(n).toHaveCSS('opacity', '0.6');
-    await expect(n.locator('.litg__dot')).toHaveCSS('fill', await resolved('var(--tan-amber)'));
+  // Each category's papers: dots in the category's color at 60% opacity, under a label in the category's ink.
+  const categories = {
+    search: { hue: 'amber', ids: ['sgm', 'flowmaps', 'evolvingnav', 'tap', 'mullen-2025-home-emergency'] },
+    hri: { hue: 'magenta', ids: ['koch-2024-proactive-hri-review'] },
+    planning: { hue: 'brown', ids: ['anticipatory-tamp', 'talukder-2025-anticipatory-planning', 'courteous-anticipation'] },
+    implicit_cues: { hue: 'fern', ids: ['din-2025-proactivity'] },
+  };
+  for (const [cat, { hue, ids }] of Object.entries(categories)) {
+    expect(await page.getByTestId(`cat-label-${cat}`).evaluate((el) => getComputedStyle(el).fill), cat).toBe(await resolved(`var(--tan-${hue}-ink)`));
+    for (const id of ids) {
+      const n = page.getByTestId(`node-${id}`);
+      await expect(n).toHaveAttribute('data-tangent', cat);
+      await expect(n).toHaveCSS('opacity', '0.6');
+      await expect(n.locator('.litg__dot')).toHaveCSS('fill', await resolved(`var(--tan-${hue})`));
+    }
   }
-  await expect(page.getByTestId('node-koch-2024-proactive-hri-review').locator('.litg__dot')).toHaveCSS('fill', await resolved('var(--tan-magenta)'));
+  // The new hues resolve to their tokens in this (light) theme.
+  expect(await resolved('var(--tan-brown)')).toBe('rgb(138, 96, 64)');
+  expect(await resolved('var(--tan-fern)')).toBe('rgb(70, 128, 33)');
+  expect(await resolved('var(--tan-fern-ink)')).toBe('rgb(54, 102, 24)');
   // Each label sits next to its papers and covers none of the dots or paper labels.
   const geo = await page.evaluate(() => {
     const hit = (a: DOMRect, b: DOMRect) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
@@ -1027,15 +1053,23 @@ test('tangential categories draw in their own colors with a label each and no hu
     }
     return out;
   });
-  expect(Object.keys(geo).sort()).toEqual(['hri', 'search']);
+  expect(Object.keys(geo).sort()).toEqual(['hri', 'implicit_cues', 'planning', 'search']);
   for (const [cat, g] of Object.entries(geo)) {
     expect(g.covered, `${cat} label covers`).toEqual([]);
     expect(g.nearest, `${cat} label distance to its papers`).toBeLessThan(40);
   }
-  // Core papers with no family are gray; GAP keeps purple with its ring.
-  for (const id of ['anticipatory-tamp', 'talukder-2025-anticipatory-planning', 'courteous-anticipation']) {
-    await expect(page.getByTestId(`node-${id}`).locator('.litg__dot')).toHaveAttribute('style', /var\(--fam-none-dark\)/);
-  }
+  // As drawn at the fitted zoom, no dot, paper label, or category label overlaps another.
+  const drawn = await graphOverlaps(page);
+  expect(drawn.overlaps).toEqual([]);
+  expect(drawn.cats).toBe(4);
+
+  // No seed paper is gray: every node is in one of the two families, is GAP (purple, with its ring), or is tangential.
+  const fills = await page.locator('.litg__node').evaluateAll((els) =>
+    els.map((n) => ({ id: n.getAttribute('data-id')!, tangent: n.getAttribute('data-tangent'), style: n.querySelector('.litg__dot')!.getAttribute('style') ?? '' })),
+  );
+  expect(fills.filter((n) => /--fam-none|--tan-none/.test(n.style)).map((n) => n.id)).toEqual([]);
+  const core = fills.filter((n) => !n.tangent);
+  expect(core.filter((n) => !/var\(--fam-[01]-dark\)/.test(n.style) && n.id !== 'gap').map((n) => n.id)).toEqual([]);
   await expect(page.getByTestId('node-gap').locator('.litg__dot')).toHaveAttribute('style', /var\(--fam-framework-dark\)/);
   await expect(page.getByTestId('node-gap').locator('.litg__ring')).toHaveCSS('stroke', await resolved('var(--fam-framework-dark)'));
 
@@ -1044,9 +1078,33 @@ test('tangential categories draw in their own colors with a label each and no hu
   await expect(page.locator('.hovercard')).toContainText('Dynamic mapping and object search');
   await page.getByTestId('node-koch-2024-proactive-hri-review').hover();
   await expect(page.locator('.hovercard')).toContainText('User perceptions of proactivity');
+  await page.getByTestId('node-anticipatory-tamp').hover();
+  await expect(page.locator('.hovercard')).toContainText('Anticipatory task planning');
+  await expect(page.getByTestId('node-anticipatory-tamp')).toHaveCSS('opacity', '1');
+  await page.getByTestId('node-din-2025-proactivity').hover();
+  await expect(page.locator('.hovercard')).toContainText('Implicit cues');
   await page.goto('/#/methods?paper=sgm');
   await expect(page.getByTestId('drawer').getByTestId('tangent-tag')).toContainText('Dynamic mapping and object search');
   await expect(page.getByTestId('drawer-tangent')).toContainText('Models how homes change over time');
+  await page.goto('/#/methods?paper=courteous-anticipation');
+  await expect(page.getByTestId('drawer-tangent')).toContainText('Anticipatory task planning');
+  await expect(page.getByTestId('drawer-tangent')).toContainText("Plans the robot's current task while preparing for likely future tasks.");
+  await page.goto('/#/methods?paper=din-2025-proactivity');
+  await expect(page.getByTestId('drawer-tangent')).toContainText('Implicit cues');
+  await expect(page.getByTestId('drawer-tangent')).toContainText('Reacts to implicit cues in the scene or from people, without a stated goal.');
+  await expect(page.getByTestId('drawer').locator('.tan-dot--fern')).toHaveCSS('background-color', 'rgb(70, 128, 33)');
+
+  // In the dark theme the new categories take their own dark-theme stops, still at 60% opacity.
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/#/methods?view=graph');
+  await settleGraph(page);
+  for (const [id, fill] of [['din-2025-proactivity', 'rgb(148, 206, 120)'], ['courteous-anticipation', 'rgb(180, 138, 102)']] as const) {
+    await expect(page.getByTestId(`node-${id}`).locator('.litg__dot')).toHaveCSS('fill', fill);
+    await expect(page.getByTestId(`node-${id}`)).toHaveCSS('opacity', '0.6');
+  }
+  await expect(page.getByTestId('cat-label-implicit_cues')).toHaveCSS('fill', 'rgb(180, 227, 160)');
+  await expect(page.getByTestId('cat-label-planning')).toHaveCSS('fill', 'rgb(216, 184, 150)');
+  await page.emulateMedia({ colorScheme: 'light' });
 
   // The fixture exercises several groups: three labeled categories, and gray works of an unknown type with no label.
   await page.goto('/#/methods?view=graph&synthetic=1');
@@ -1059,16 +1117,41 @@ test('tangential categories draw in their own colors with a label each and no hu
   await expect(unknown.first()).toHaveAttribute('style', /var\(--tan-none\)/);
 });
 
+test('the anticipatory planning papers, now tangential, keep their protocol rows and realism dots; Din 2025 stays off the Evaluations page', async ({ page }) => {
+  // They keep their knowns and L2 level (per Maithili, Oct 22 2026), which is what puts a paper on this page.
+  await page.goto('/#/evaluations');
+  const planning = ['anticipatory-tamp', 'talukder-2025-anticipatory-planning', 'courteous-anticipation'];
+  for (const id of planning) {
+    await expect(page.getByTestId(`protocol-${id}`), id).toHaveCount(1);
+    await expect(page.getByTestId(`realism-dot-${id}`), id).toHaveCount(1);
+  }
+  await expect(page.getByTestId('protocol-din-2025-proactivity')).toHaveCount(0);
+  await expect(page.getByTestId('realism-dot-din-2025-proactivity')).toHaveCount(0);
+  // The Subproblems page lists none of the four: none names an approach from the taxonomy (SPEC §9).
+  await page.goto('/#/subproblems?view=matrix');
+  await expect(page.getByTestId('matrix')).toBeVisible();
+  for (const id of [...planning, 'din-2025-proactivity']) await expect(page.getByTestId('matrix').locator(`[data-locate="${id}"]`), id).toHaveCount(0);
+});
+
 test('the list view ends with tangential works grouped by category, in taxonomy order', async ({ page }) => {
   await page.goto('/#/methods?view=list');
   await expect(page.getByTestId('methods-list')).toBeVisible();
   const ids = await page.locator('[data-testid^="list-group-"]').evaluateAll((els) => els.map((e) => e.getAttribute('data-testid')!));
   const first = ids.findIndex((id) => id.startsWith('list-group-tangent:'));
   expect(first).toBeGreaterThan(0);
-  expect(ids.slice(first)).toEqual(['list-group-tangent:hri', 'list-group-tangent:search']);
+  expect(ids.slice(first)).toEqual(['list-group-tangent:hri', 'list-group-tangent:search', 'list-group-tangent:planning', 'list-group-tangent:implicit_cues']);
   await expect(page.getByTestId('list-group-tangent:hri')).toContainText('Koch van den Broek 2024');
   await expect(page.getByTestId('list-group-tangent:hri').getByTestId('tangent-tag')).toContainText('User perceptions of proactivity');
   await expect(page.getByTestId('list-group-tangent:search').getByTestId('tangent-tag')).toContainText('Dynamic mapping and object search');
+  await expect(page.getByTestId('list-group-tangent:planning').getByTestId('tangent-tag')).toContainText('Anticipatory task planning');
+  await expect(page.getByTestId('list-group-tangent:planning').locator('tr[data-locate]')).toHaveCount(3);
+  await expect(page.getByTestId('list-group-tangent:implicit_cues').getByTestId('tangent-tag')).toContainText('Implicit cues');
+  await expect(page.getByTestId('list-group-tangent:implicit_cues')).toContainText('Din 2025');
+  // The core groups are the two families and GAP; Implicit Cues is no longer a family, and only GAP has none.
+  const core = ids.slice(0, first);
+  expect(core).not.toContain('list-group-L2:implicit_cues');
+  await expect(page.getByTestId('list-group-L2:none').locator('tr[data-locate]')).toHaveCount(1);
+  await expect(page.getByTestId('list-group-L2:none').locator('tr[data-locate="gap"]')).toHaveCount(1);
 });
 
 test('a semi-tangential family draws at 75% opacity (dots, hull, name, label, edges) until hovered, and the legend says so', async ({ page }) => {

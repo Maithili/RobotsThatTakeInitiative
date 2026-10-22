@@ -35,8 +35,10 @@ const known = z.enum(['known', 'unknown']);
 // ---------- taxonomy ----------
 
 /** Hue slots for tangential categories in the literature graph (SPEC §7.2), each with CSS tokens for both themes.
- *  They are distinct from the family hues, which go by family order. */
-export const TANGENT_HUES = ['amber', 'magenta', 'sky', 'brown'] as const;
+ *  They are distinct from the family hues in use (teal and coral), from GAP's purple, from the gray for papers with
+ *  no category, and from each other. Fern sits near the unused fourth-family green, so a fourth family would need
+ *  a new hue for one of them. */
+export const TANGENT_HUES = ['amber', 'magenta', 'sky', 'brown', 'fern'] as const;
 export type TangentHue = (typeof TANGENT_HUES)[number];
 /** Names of the family hues and the gray for papers with no category. A tangential category never takes one. */
 export const RESERVED_HUES = ['teal', 'coral', 'blue', 'green', 'purple', 'gray', 'grey'] as const;
@@ -93,7 +95,8 @@ export const TaxonomySchema = z.object({
       strength: z.string().optional(),
       limitations: z.array(z.string()).optional(),
       note: z.string().optional(),
-      /** Drawn part-way transparent in the literature graph (SPEC §7.2). Its papers count as L2 everywhere else. */
+      /** Drawn part-way transparent in the literature graph (SPEC §7.2). Its papers count as L2 everywhere else.
+       *  No family in data/taxonomy.yaml sets it since Oct 22 2026; the synthetic fixture's family D still does. */
       semi_tangential: z.boolean().optional(),
     }),
   ),
@@ -102,8 +105,9 @@ export const TaxonomySchema = z.object({
   stages: z.record(z.object({ name: z.string(), definition: z.string() })),
   subproblems: z.object(Object.fromEntries(SUBPROBLEM_IDS.map((s) => [s, subproblemDef])) as Record<SubproblemId, typeof subproblemDef>),
   themes: z.record(defn),
-  /** Each tangential category has its own hue slot (SPEC §7.2); no two share one. */
-  tangent_types: z.record(defn.extend({ color: tangentHue })),
+  /** Each tangential category has its own hue slot (SPEC §7.2); no two share one. Strict, so an unquoted comma in a
+   *  flow-style definition (which YAML reads as a second key) fails instead of cutting the definition short. */
+  tangent_types: z.record(defn.extend({ color: tangentHue }).strict()),
   statuses: z.record(z.object({ glyph: z.string(), label: z.string() })),
   relations: z.record(defn),
   net_value: z.object({

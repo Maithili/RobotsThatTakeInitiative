@@ -10,11 +10,13 @@ year: 2025
 links:
   paper: null
 provenance: Librarian Oct 2026, A-2 Din A1–A12. Implicit Cues per Maithili, Oct 21 2026. The thesis prints no landing page
+# A tangential work per Maithili, Oct 22 2026, in the category that replaced the Implicit Cues family. Its knowns stay.
+# It stays off the Evaluations page through taxonomy.yaml evaluations_exclude.
+tangent: implicit_cues
 method:
   knowns:
     goal: unknown
     human_policy: unknown
-  family: implicit_cues
   action_types:
     - act
   inputs:

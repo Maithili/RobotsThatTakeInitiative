@@ -17,6 +17,8 @@ links:
 ids:
   arxiv: "2607.20289"
 provenance: "Librarian Oct 2026, A-8b. L2 per Maithili: a free robot prepares the space before any task is given to it"
+# A tangential work per Maithili, Oct 22 2026. Its knowns and level stay, so it stays on the Evaluations page.
+tangent: planning
 method:
   knowns:
     goal: unknown

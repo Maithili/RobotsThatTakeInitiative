@@ -16,6 +16,8 @@ links:
 ids:
   doi: "10.1109/ICRA55743.2025.11128153"
 provenance: "Librarian Oct 2026, A-8a. L2 per Maithili: preparation rearranges the home before any task is given"
+# A tangential work per Maithili, Oct 22 2026. Its knowns and level stay, so it stays on the Evaluations page.
+tangent: planning
 method:
   knowns:
     goal: unknown

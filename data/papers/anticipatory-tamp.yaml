@@ -19,6 +19,8 @@ ids:
   doi: "10.1109/LRA.2025.3631357"
   arxiv: "2407.13694"
 provenance: "Librarian Oct 2026, A-7. L2 per Maithili: preparation acts before any task is given. One paper with arXiv 2407.13694"
+# A tangential work per Maithili, Oct 22 2026. Its knowns and level stay, so it stays on the Evaluations page.
+tangent: planning
 method:
   knowns:
     goal: unknown

@@ -28,10 +28,7 @@ families:                     # L2 only, from GAP paper §III-B. Graph hues foll
     strength: Predicts minutes to hours ahead, with no need for close collaboration.
     limitations:
       - Discards the intentional structure of behavior that a goal-level model can exploit.
-  implicit_cues:
-    name: Implicit Cues
-    definition: Reacts to implicit cues in the scene or from people, without a stated goal.
-    semi_tangential: true     # per Maithili, Oct 21 2026. Drawn part-way transparent (SPEC §7.2).
+  # Implicit Cues left the families on Oct 22 2026: Din 2025, its only paper, is now a tangential work (tangent_types.implicit_cues).
 
 action_types:                 # GAP paper §II
   act:      {label: Acts, definition: Executes actions that serve anticipated needs.}
@@ -121,10 +118,12 @@ themes:                       # cross-cutting, GAP paper §III-A
   continual_learning: {label: Continual learning, definition: Adapting to drifting needs without forgetting.}
   user_interaction:   {label: User interaction, definition: Resolving uncertainty and answering user queries.}
 
-tangent_types:                # works next to the algorithmic core. Maithili adds more. color: one of amber, magenta, sky, brown, a different one per category (SPEC §7.2)
+tangent_types:                # works next to the algorithmic core. Maithili adds more. color: one of amber, magenta, sky, brown, fern, a different one per category (SPEC §7.2)
   hri:            {label: User perceptions of proactivity, color: magenta, definition: User studies and reviews of how people see and define proactive robots.}
   conversational: {label: Conversational proactivity, color: sky, definition: Proactivity in conversational settings.}
   search:         {label: Dynamic mapping and object search, color: amber, definition: "Models how homes change over time and finds objects or people in them, given what to find."}
+  planning:       {label: Anticipatory task planning, color: brown, definition: Plans the robot's current task while preparing for likely future tasks.}   # per Maithili, Oct 22 2026
+  implicit_cues:  {label: Implicit cues, color: fern, definition: "Reacts to implicit cues in the scene or from people, without a stated goal."}   # the former Implicit Cues family, per Maithili, Oct 22 2026
 
 statuses:
   addresses: {glyph: "●", label: Addresses}

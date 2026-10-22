@@ -26,9 +26,10 @@
   --level-none: #9a9ca5;
 
   /* Action space complexity on the realism plot (SPEC §8.3): one sequential leaf-green ramp (OKLCH hue 140), light (low)
-     to dark (very high), most contrast at the very-high end in both themes. Purple is GAP's; amber, magenta, sky and brown
-     are the tangential categories; teal, coral and blue are the families in use. The hue sits apart from the ΔV term's
-     sea green. Not assessed is a pale gray with a dashed edge. */
+     to dark (very high), most contrast at the very-high end in both themes. Purple is GAP's; amber, magenta, sky, brown
+     and fern are the tangential categories; teal and coral are the families in use. Tangential hues never color realism
+     dots. Fern (Implicit cues, hue 136) is close to the ramp, but its one paper, Din 2025, is excluded from the page.
+     The hue sits apart from the ΔV term's sea green. Not assessed is a pale gray with a dashed edge. */
   --action-space-1: #7eba71;
   --action-space-2: #559647;
   --action-space-3: #377029;

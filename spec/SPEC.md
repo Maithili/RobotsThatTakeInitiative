@@ -112,10 +112,8 @@ families:                     # L2 only, from GAP paper §III-B
     strength: Predicts minutes to hours ahead, with no need for close collaboration.
     limitations:
       - Discards the intentional structure of behavior that a goal-level model can exploit.
-  implicit_cues:
-    name: Implicit Cues
-    definition: Reacts to implicit cues in the scene or from people, without a stated goal.
-    semi_tangential: true     # per Maithili, Oct 21 2026. Drawn part-way transparent (§7.2).
+  # Implicit Cues left the families on Oct 22 2026 and became a tangent type (see tangent_types and §16).
+  # A family may still set `semi_tangential: true` (§7.2). None does now.
 
 action_types:                 # GAP paper §II
   act:      {label: Acts, definition: Executes actions that serve anticipated needs.}
@@ -199,10 +197,12 @@ subproblems:                  # GAP paper Table I and §III-A. input/output are 
     depends_on: [P1, A1, A2, A3]   # A2 -> P2 pending confirmation (see §15)
     approaches: {cirl: Cooperative inverse RL, proactive_communication: Proactive communication, hedging: Hedging under uncertainty}
 
-tangent_types:                # works next to the algorithmic core. Maithili adds more.
-  hri:            {label: User perceptions of proactivity, definition: User studies and reviews of how people see and define proactive robots.}
-  conversational: {label: Conversational proactivity, definition: Proactivity in conversational settings.}
-  search:         {label: Dynamic mapping and object search, definition: Models how homes change over time and finds objects or people in them, given what to find.}
+tangent_types:                # works next to the algorithmic core. Maithili adds more. Each takes its own hue slot (§7.2).
+  hri:            {label: User perceptions of proactivity, color: magenta, definition: User studies and reviews of how people see and define proactive robots.}
+  conversational: {label: Conversational proactivity, color: sky, definition: Proactivity in conversational settings.}
+  search:         {label: Dynamic mapping and object search, color: amber, definition: Models how homes change over time and finds objects or people in them, given what to find.}
+  planning:       {label: Anticipatory task planning, color: brown, definition: Plans the robot's current task while preparing for likely future tasks.}   # per Maithili, Oct 22 2026
+  implicit_cues:  {label: Implicit cues, color: fern, definition: Reacts to implicit cues in the scene or from people, without a stated goal.}   # the former Implicit Cues family, per Maithili, Oct 22 2026
 
 themes:                       # cross-cutting, GAP paper §III-A
   joint_optimization: {label: Joint optimization, definition: Optimizing across subproblems instead of solving each alone.}
@@ -370,7 +370,7 @@ featured_comparison:          # drives the chart in §8.2
 | `method.core_strength` | string ≤ 120 | no | One line. |
 | `method.builds_on` | paper id[] | no | Solid "builds on" edges (§5.5). This paper extends those papers. Only Maithili adds these. |
 | `themes` | theme id[] | no | Kept in the data. No page filters or shows them since the theme filter was removed (§16). |
-| `tangent` | tangent type id | no | Marks a tangential work. It needs no method block and shows in the literature graph in its category's color at 60% opacity (§7.2). |
+| `tangent` | tangent type id | no | Marks a tangential work. It needs no method block and shows in the literature graph in its category's color at 60% opacity (§7.2). A tangential work may keep a method block. Its level then still counts on the Evaluations and Subproblems pages (§6.2). |
 | `subproblems` | map from G1…P2 to `{status, relation, approach?, note}` | no | `note` ≤ 140 says what part of the subproblem the work solves. `approach` must be one of that subproblem's approaches. |
 | `evaluations` | list of evaluation entries | no | Their presence puts the paper on the Evaluations page. |
 
@@ -530,8 +530,9 @@ Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, th
 Rules.
 
 - **Level scope.** One constant holds the focus levels (`FOCUS_LEVELS = ['L2']`).
-  - Methods top band (§7.1): L2 and L1 papers.
+  - Methods top band (§7.1): L2 and L1 papers. Tangential works never appear there, whatever their level.
   - Methods bottom half (graph and list) and the whole Evaluations page (protocols table, realism plot, dataset "used by" counts): only papers at a focus level. Papers with no level stay out, with one exception: tangential works stay in the graph and list (§7.2).
+  - A tangential work with a level counts at that level on the Evaluations and Subproblems pages. The three anticipatory planning papers are L2 tangential works, so they stay on the Evaluations page and the realism plot.
   - Subproblems page (lists, counts, matrix): papers at a focus level plus papers with no level, such as related works from other fields. Never L1 papers.
   - L1 papers otherwise appear only in the drawer, when opened from the L1 timeline row or from search.
 - Global filters apply on Methods and Subproblems. A paper with no method block fails the `input` filter.
@@ -586,8 +587,8 @@ Left to right: level cards, then the condensed timeline across the remaining wid
 
 ### 7.2 Literature graph
 
-- **Scope.** The core of the graph is algorithmic: every paper at a level in `FOCUS_LEVELS` (L2) with a method block and no `tangent`. L1 papers appear only in the top band (§6.2 Level scope).
-- **Semi-tangential families.** A family with `semi_tangential: true` (Implicit Cues to start) gets its own cluster like any family, drawn at 75% opacity: dots, hull, label, and its edges. Hover brings it to full opacity. Its papers count as L2 everywhere else.
+- **Scope.** The core of the graph is algorithmic: every paper at a level in `FOCUS_LEVELS` (L2) with a method block and no `tangent`. L1 papers appear only in the top band (§6.2 Level scope). Per Maithili (Oct 22, 2026), the core holds only the Goal Inference family, the Temporal Imitation family, and GAP. Every other paper in the graph is a tangential work.
+- **Semi-tangential families.** A family with `semi_tangential: true` gets its own cluster like any family, drawn at 75% opacity: dots, hull, label, and its edges. Hover brings it to full opacity. Its papers count as L2 everywhere else. No family in the taxonomy sets it since Implicit Cues became a tangent type on Oct 22, 2026. The code stays, because the synthetic fixture's family D still uses it and its tests still run.
 - **Title.** The graph panel opens with the heading "Literature that addresses and is tangentially related to Unprompted Proactivity" (per Maithili, Oct 22 2026). The page itself has no lede under its h1.
 - **Legend**, directly above the graph inside the graph panel (a compact row that wraps on narrow screens), per Maithili. It shows:
   - the three edge styles with checkboxes bound to `edges=` (builds on and benchmarks on by default, "Show all citation lines" off)
@@ -597,16 +598,16 @@ Left to right: level cards, then the condensed timeline across the remaining wid
 
   It has no group titles ("Edges", "Dots") and no rows for families, tangential categories, or "No category": those are named on the graph itself (per Maithili, Oct 22 2026). It has no action-type or level groups. The top band keeps only the level cards and the timeline.
 - **Tangential works.** Papers with a `tangent` also show in the graph, along with the edges that touch them. They don't appear in the timeline, and they sit outside the cluster hulls.
-  - Each tangential category (each `tangent_types` entry) has its own color, set by a `color` slot in the taxonomy.
+  - Each tangential category (each `tangent_types` entry) has its own color, set by a `color` slot in the taxonomy. The five slots are amber (search), magenta (hri), sky (conversational, no papers yet), brown (planning), and fern (implicit_cues), each with a dot token and an ink token for both themes. Fern joined on Oct 22, 2026. It differs clearly from the family hues in use, GAP's purple, the other slots, and the gray, and it sits near the unused fourth-family green.
   - Its papers are dots in that color at 60% opacity, with no hull or background shading.
-  - Each category has a text label in its color near its papers, such as "Dynamic mapping and object search" or "User perceptions of proactivity".
+  - Each category has a text label in its color near its papers, such as "Dynamic mapping and object search", "User perceptions of proactivity", "Anticipatory task planning", or "Implicit cues".
   - Hover or focus brings a tangential node and its edges to full opacity, and its hover card names its category.
-- **Clusters.** One cluster per L2 family, so Goal Inference and Temporal Imitation to start. Each cluster draws as a soft tinted hull behind its nodes, labeled with the family name, with the scope line, strength, and limitations on hover. Papers with no family sit outside the hulls, in the space between the clusters. GAP is one of these.
+- **Clusters.** One cluster per L2 family, so Goal Inference and Temporal Imitation, the only two hulls. Each cluster draws as a soft tinted hull behind its nodes, labeled with the family name, with the scope line, strength, and limitations on hover. Papers with no family sit outside the hulls, in the space between the clusters. GAP is the only one in the seed data.
 - **Layout.** Computed once at build time in `scripts/build-data.ts` and stored as x, y per paper in `db.json`, so the graph loads instantly and papers keep their positions between visits. `d3-force` runs a fixed number of ticks from seeded positions. Cluster centers sit evenly spaced on a circle, which puts two clusters left and right. Each node pulls toward its cluster center, and nodes with no family pull toward the point between clusters. Tangential works pull toward an anchor for their own category, placed in the band just outside the clusters, so each category forms a loose labeled group, never far off. The layout is spring-style, to keep edges from crossing nodes and each other. Every edge type (builds on, benchmarks, cites) acts as a spring that pulls its two papers together, all nodes repel each other, and a collision force keeps dots and their labels apart. An extra force pushes each node away from edges it is not part of. After the simulation settles, a deterministic clean-up pass nudges nodes within their cluster to remove remaining edge–node overlaps and reduce edge crossings. Filters dim nodes and never move them.
 - **Growth.** Adding papers or a new family needs no layout code change. A new family gets its own cluster. The graph stays readable and responsive with a synthetic fixture of 300 papers in 4 clusters plus 30 tangential works: pan and zoom stay smooth, and hover responds within 50 ms.
 - **Nodes** are dots, in the style of ResearchRabbit, matching the mock Maithili approved:
   - Radius grows with the number of database papers the node connects to by any edge type, from 7 px to a capped maximum.
-  - Fill hue is the family: teal for Goal Inference, coral for Temporal Imitation, and further hues for new families. Papers that fit no category, meaning core papers with no family and tangential works with no known type, stay gray. GAP (`FRAMEWORK_PAPER`) keeps purple, with a purple ring.
+  - Fill hue is the family: teal for Goal Inference, coral for Temporal Imitation, and further hues for new families. Papers that fit no category, meaning core papers with no family and tangential works with no known type, stay gray. GAP (`FRAMEWORK_PAPER`) keeps purple, with a purple ring. Since Oct 22, 2026 no seed paper is gray. The gray stays in the code for tangential works of an unknown type, which the synthetic fixture draws.
   - Darker fill means a newer paper, from the year's position in the visible range.
   - Every dot has a thin outline in the page background color.
   - Tangential works are slightly smaller dots in their category's color at 60% opacity (see Tangential works above).
@@ -646,7 +647,7 @@ This plot shows how close each paper's evaluation is to the real target: how the
 
 - **x axis**: interaction (`realism.interaction`), from Open loop on the left through Closed loop robot actions to Adaptive humans on the right. Each evaluation's level comes from its loop type (`loop_types.*.interaction`): offline replay is open loop, a closed loop with a scripted human is closed loop robot actions, and a closed loop with an adaptive simulated human or a user study of either length is adaptive humans, since real people adapt too. An evaluation with no loop type has no x level. **y axis**: human behavior realism (`realism.human`), from Scripted behavior at the bottom through Generated behavior from crowdsourced data to Real humans. Each axis has one band per level, in taxonomy order, labeled with the level names; long labels wrap onto two lines.
 - **Not axes.** Setting (`realism.environment`) and robot realism stay in the data and in the hover card (per Maithili, Oct 22 2026). Every evaluation in the database uses a task-specific policy.
-- **Color** is action space complexity (`action_space_complexity` in the taxonomy): the number of options the policy has at a given point in time, which stands in for the complexity of the policy. It uses one four-step sequential green ramp, light for low and dark for very high on the light theme, with its own steps on the dark theme so very high keeps the most contrast. Purple stays GAP's, and the ramp avoids the tangential-category hues. An evaluation with no level is pale gray with a dashed outline. Dots are fully opaque. A compact legend under the plot shows the ramp as one gradient pill with "Low" and "High" at its ends (every level and its definition on hover), then "Not assessed" and the framework-paper ring.
+- **Color** is action space complexity (`action_space_complexity` in the taxonomy): the number of options the policy has at a given point in time, which stands in for the complexity of the policy. It uses one four-step sequential green ramp, light for low and dark for very high on the light theme, with its own steps on the dark theme so very high keeps the most contrast. Purple stays GAP's, and the ramp avoids the tangential-category hues of papers on this page. Fern (Implicit cues) sits near the ramp, but Din 2025, its only paper, stays off this page, and no tangential hue colors a dot here. An evaluation with no level is pale gray with a dashed outline. Dots are fully opaque. A compact legend under the plot shows the ramp as one gradient pill with "Low" and "High" at its ends (every level and its definition on hover), then "Not assessed" and the framework-paper ring.
 - A dashed "target" circle with a star sits past the top-right corner, beyond the last band on both axes (Adaptive humans × Real humans). The legend names Zhang 2023 beside Adaptive humans.
 - **One dot per paper, from its main evaluations.** An entry with `secondary: true` is not a main evaluation. A dot takes the closest level on each axis, and the most complex action space level, across the paper's other entries. Watch-And-Help and NOPA mark their user studies secondary, so they sit at Closed loop robot actions × Scripted behavior. Secondary entries still show in the protocols table and the drawer. The subtitle reads "One dot per paper, from its main evaluation. Click a dot for details." A paper appears only when it has both an x and a y level. A note under the plot counts the papers it leaves out.
 - Dots that share a cell pack into a small grid centered in it, ordered by action space complexity (low first, not assessed last) and then by year, so they never overlap. GAP's dot has a ring in the framework-paper color, and its fill follows action space complexity like every other dot.
@@ -793,7 +794,9 @@ Maithili can reverse any of these.
 
 ## 16. Open items for Maithili
 
-Placements decided by Maithili (Oct 21, 2026): SGM, FlowMaps, EvolvingNav, Dorbala (TAP), and Mullen (HomeEmergency) are tangential works of type `search`. Dhakal 2026 and both Talukder papers are L2 with no family, between the clusters like GAP. Din 2025 is L2 in the semi-tangential Implicit Cues family. COIN appears only as a tangential dataset, with no node anywhere. GLOBE joins Temporal Imitation as proposed earlier (no objection raised).
+Placements decided by Maithili (Oct 21, 2026): SGM, FlowMaps, EvolvingNav, Dorbala (TAP), and Mullen (HomeEmergency) are tangential works of type `search`. COIN appears only as a tangential dataset, with no node anywhere. GLOBE joins Temporal Imitation as proposed earlier (no objection raised).
+
+Core and tangential works, per Maithili (Oct 22, 2026): "the grey ones anticipatory tamp etc are not L2" … "they're just tangential" … "you don't have to mark L2, since they're either that or tangential.. just mark the non temporal imitation and goal inference and GAP as tangential". The core of the Methods graph is now the Goal Inference family, the Temporal Imitation family, and GAP. Every other paper in the graph is a tangential work, and no paper in the graph is gray. Anticipatory TAMP (Dhakal 2026), Talukder 2025, and Courteous Anticipation are tangential works of the new type `planning` ("Anticipatory task planning", brown). They keep their knowns and their L2 level, so they stay on the Evaluations page and the realism plot. Din 2025 is a tangential work of the new type `implicit_cues` ("Implicit cues"), which takes the old family's definition and a new fifth hue slot, fern. The Implicit Cues family is gone, so the hulls are only the two families. Din 2025 stays off the Evaluations page through `evaluations_exclude`. Tangential works never sit in the timeline, so the L2 lane lost these four papers and holds nine. This replaces the Oct 21 placements of Dhakal 2026 and both Talukder papers as L2 with no family, between the clusters like GAP, and of Din 2025 in the semi-tangential Implicit Cues family. The semi-tangential treatment stays in the code for the synthetic fixture (§7.2).
 
 Confirmed by Maithili (Oct 22, 2026): the Koch van den Broek review sits under "User perceptions of proactivity". Purple is only for GAP, and papers that fit no category are gray. Every relevant paper appears on the Subproblems page, including the object search papers. Courteous Anticipation gets no "benchmarks against" line to Talukder 2025; its "Selfish A.P." baseline stays text in `other_baselines`.
 

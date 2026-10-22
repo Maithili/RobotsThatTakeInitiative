@@ -156,17 +156,21 @@ describe('validator', () => {
       return run([], { datasets: [], taxonomy: t });
     };
     const cat = (color?: unknown) => ({ label: 'L', definition: 'D', ...(color === undefined ? {} : { color }) });
-    // The real taxonomy gives every category a hue slot, each a different one.
-    expect(Object.values(realTaxonomy.tangent_types).map((x: any) => x.color).sort()).toEqual(['amber', 'magenta', 'sky']);
-    expect(withTangents({ a: cat('amber'), b: cat('magenta'), c: cat('sky'), d: cat('brown') }).errors).toEqual([]);
+    // The real taxonomy gives every category a hue slot, each a different one: all five slots are taken.
+    expect(Object.values(realTaxonomy.tangent_types).map((x: any) => x.color).sort()).toEqual(['amber', 'brown', 'fern', 'magenta', 'sky']);
+    expect(withTangents({ a: cat('amber'), b: cat('magenta'), c: cat('sky'), d: cat('brown'), e: cat('fern') }).errors).toEqual([]);
     // Missing, unknown, or a family's hue (or the gray for uncategorized papers) is rejected, naming the slots.
-    expectError(withTangents({ a: cat() }), /tangent_types\.a\.color: needs a color, one of amber, magenta, sky, brown/);
+    expectError(withTangents({ a: cat() }), /tangent_types\.a\.color: needs a color, one of amber, magenta, sky, brown, fern/);
+    expectError(withTangents({ a: cat('green') }), /tangent_types\.a\.color: "green" is reserved for families/);
     expectError(withTangents({ a: cat('chartreuse') }), /tangent_types\.a\.color: unknown hue "chartreuse"/);
     expectError(withTangents({ a: cat('teal') }), /tangent_types\.a\.color: "teal" is reserved for families/);
     expectError(withTangents({ a: cat('gray') }), /"gray" is reserved/);
     expectError(withTangents({ a: cat(2) }), /tangent_types\.a\.color: needs a color/);
     // Two categories never share a color.
     expectError(withTangents({ a: cat('amber'), b: cat('amber') }), /tangent_types\.b\.color "amber" is already the color of a/);
+    // An unquoted comma in a flow-style definition becomes a stray key, which fails instead of cutting the definition.
+    const cut = yaml.load('{label: L, color: fern, definition: Reacts to cues, without a goal.}') as Record<string, unknown>;
+    expectError(withTangents({ a: cut }), /tangent_types\.a: Unrecognized key/);
   });
 
   it('rejects a method block without knowns', () => {
@@ -360,29 +364,56 @@ describe('hand-curated citations (data/citations-manual.yaml)', () => {
   });
 });
 
-describe('taxonomy additions: semi-tangential families, search tangents, metric direction and unit', () => {
-  it('ships Implicit Cues as semi-tangential, the search tangent type, and direction and unit on every metric', () => {
+describe('taxonomy additions: tangent types, semi-tangential families, metric direction and unit', () => {
+  it('ships two families and no semi-tangential one, the five tangent types, and direction and unit on every metric', () => {
     const r = run([], { datasets: [] });
     expect(r.errors).toEqual([]);
     const t = r.db!.taxonomy;
-    expect(t.families.implicit_cues).toMatchObject({ name: 'Implicit Cues', semi_tangential: true });
-    expect(t.families.goal_inference.semi_tangential).toBeUndefined();
+    // Per Maithili, Oct 22 2026: the core is Goal Inference, Temporal Imitation, and GAP. Implicit Cues became a tangent type.
+    expect(Object.keys(t.families)).toEqual(['goal_inference', 'temporal_imitation']);
+    expect(Object.values(t.families).filter((f) => f.semi_tangential)).toEqual([]);
+    expect(Object.keys(t.tangent_types)).toEqual(['hri', 'conversational', 'search', 'planning', 'implicit_cues']);
     expect(t.tangent_types.search).toMatchObject({ label: 'Dynamic mapping and object search', color: 'amber' });
     expect(t.tangent_types.hri).toMatchObject({ label: 'User perceptions of proactivity', color: 'magenta' });
+    expect(t.tangent_types.conversational).toMatchObject({ label: 'Conversational proactivity', color: 'sky' });
+    expect(t.tangent_types.planning).toEqual({
+      label: 'Anticipatory task planning',
+      color: 'brown',
+      definition: "Plans the robot's current task while preparing for likely future tasks.",
+    });
+    expect(t.tangent_types.implicit_cues).toEqual({
+      label: 'Implicit cues',
+      color: 'fern',
+      definition: 'Reacts to implicit cues in the scene or from people, without a stated goal.',
+    });
     expect(t.metrics.net_actions_saved).toMatchObject({ direction: 'higher', unit: '%' });
     expect(t.metrics.perturbed_actions).toMatchObject({ direction: 'lower', unit: '%' });
     expect(t.metrics.f1).toMatchObject({ direction: 'higher', unit: 'fraction' });
   });
 
-  it('accepts papers in a semi-tangential family and search tangents', () => {
-    const r = run([base('a', { method: { ...L2K, family: 'implicit_cues' } }), base('b', { tangent: 'search' })]);
+  it('rejects the retired implicit_cues family, and accepts the implicit_cues and planning tangents', () => {
+    expectError(run([base('a', { method: { ...L2K, family: 'implicit_cues' } })]), /unknown family "implicit_cues"/);
+    const r = run([base('a', { method: L2K, tangent: 'implicit_cues' }), base('b', { method: L2K, tangent: 'planning' }), base('c', { tangent: 'search' })]);
     expect(r.errors).toEqual([]);
+    // A tangential work keeps the level its knowns give.
+    expect(r.db!.papers.find((p) => p.id === 'b')!.level).toBe('L2');
+  });
+
+  // No real family is semi-tangential any more; the schema keeps the flag for the synthetic fixture's family D.
+  const withSemi = (semi: unknown) => {
+    const t = bareTaxonomy();
+    t.families.semi = { name: 'Semi', definition: 'A semi-tangential test family.', semi_tangential: semi };
+    return t;
+  };
+
+  it('accepts papers in a semi-tangential family', () => {
+    const r = run([base('a', { method: { ...L2K, family: 'semi' } })], { taxonomy: withSemi(true) });
+    expect(r.errors).toEqual([]);
+    expect(r.db!.taxonomy.families.semi.semi_tangential).toBe(true);
   });
 
   it('rejects a non-boolean semi_tangential', () => {
-    const t = bareTaxonomy();
-    t.families.implicit_cues.semi_tangential = 'yes';
-    expectError(run([], { taxonomy: t, datasets: [] }), /taxonomy.yaml: families.implicit_cues.semi_tangential/);
+    expectError(run([], { taxonomy: withSemi('yes'), datasets: [] }), /taxonomy.yaml: families.semi.semi_tangential/);
   });
 
   it('rejects a metric without direction or unit, with a bad direction, or with a long mapping_note', () => {
