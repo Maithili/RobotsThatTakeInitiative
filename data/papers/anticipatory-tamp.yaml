@@ -63,7 +63,6 @@ evaluations:
     metrics:
       - avg_task_cost
       - cost_reduction
-      - planning_time
     other_baselines:
       - Myopic (TAMP solver, no cost estimator)
     provenance: "Librarian Oct 2026, A-7 A9–A11; Dhakal §V-A–D, Table I, Fig. 6. Each task starts from the last one's end state"

@@ -145,6 +145,34 @@ net_value:                    # RTI §II-A
     dC_added: {label: "ΔC↑ · human cost added", tex: '\Delta C_h\uparrow',   definition: An incorrect robot action forces the user to undo or redo actions.}
     Cr:       {label: "C_r · robot cost",       tex: 'C_r',             definition: Physical wear and charge consumption, often assumed zero.}
 
+metric_categories:            # per Maithili, Oct 22 2026. Ordered. Each metric has a `category` (or none, see SPEC §8.6) and an optional `group`.
+  change_in_user_actions:     {label: Change in user actions}
+  object_movement_prediction: {label: Object movement prediction}
+  activity_label_prediction:  {label: Activity label prediction}
+  task_performance:           {label: Task performance}
+  end_user_perceptions:       {label: End-user perceptions}
+  implicit_need_detection:    {label: Implicit need detection}
+  coordination_fluency:       {label: Coordination fluency}
+
+metric_groups:                # metrics listed as one item in the metrics section, with one short definition (≤ 140). Members share a category.
+  used_unused_objects:
+    label: "Used and unused objects: correct, wrong, missed"
+    definition: Shares of used and unused objects in the window whose predicted placement is correct, wrong, or missed.
+  task_match_accuracy:
+    label: Exact-match and subgoal accuracy
+    definition: Share of predicted subgoal sequences, and of single subgoals, that match the annotated proactive task.
+  goal_prf:
+    label: Goal precision, recall, and F1
+    definition: Precision, recall, and F1 of the predicted goal predicates against the user's true goal.
+  step_detection:
+    label: Trigger, task, and step detection (accuracy and F1, micro and macro)
+    definition: Accuracy and F1 of trigger, task, and step detection on video, micro-averaged and macro-averaged.
+  ooi_detection:
+    label: Object-of-interest detection (precision, recall, F1, accuracy)
+    definition: Precision, recall, F1, and accuracy of flagging frames that hold an object of interest.
+
+evaluations_exclude: [saavedra-2026-scene-graphs]   # object search papers stay off the Evaluations page (Maithili, Oct 22 2026)
+
 metric_kinds:                 # each metric also carries direction (higher or lower is better), unit, and a one-line `mapping_note` on why it serves its terms
   direct:    Measures one or more terms.
   proxy:     Mixes terms or measures them indirectly.
@@ -153,6 +181,7 @@ metric_kinds:                 # each metric also carries direction (higher or lo
 metrics:                      # RTI §IV-A2. Add more as papers come in.
   net_actions_saved:
     label: Net actions saved
+    category: change_in_user_actions
     definition: Skipped user actions minus undo actions, as a percentage of baseline user actions.
     terms: [dC_saved, dC_added]
     kind: direct
@@ -160,6 +189,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     unit: "%"
   perturbed_actions:
     label: Perturbed actions
+    category: change_in_user_actions
     definition: User actions corrected because of a wrong robot action, as a percentage of baseline user actions.
     terms: [dC_added]
     kind: direct
@@ -167,6 +197,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     unit: "%"
   f1:
     label: F1
+    category: object_movement_prediction
     definition: Skipped actions as true positives, undo and corrected as false positives, done as-is as false negatives.
     terms: [dC_saved, dC_added]
     kind: proxy
@@ -176,51 +207,10 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
   # ---- Added Oct 21, 2026 from the librarian's answers. Terms and kinds are proposals for Maithili's
   # ---- review (data/METRIC_MAPPING_REVIEW.md). Grouped by the papers that use them.
 
-  # Object relocation prediction, offline (STOT, STREAK)
-  used_correct:
-    label: Used objects, correct
-    definition: Objects the user moved in the window whose predicted move goes to the right place, as a share of used objects.
-    terms: [dC_saved]
-    kind: proxy
-    direction: higher
-    unit: "%"
-    mapping_note: A correct move would spare the user that relocation, but it is scored offline and assumes the robot acts.
-  used_wrong:
-    label: Used objects, wrong
-    definition: Objects the user moved in the window that are predicted to move to the wrong place, as a share of used objects.
-    terms: [dC_added]
-    kind: proxy
-    direction: lower
-    unit: "%"
-    mapping_note: A wrong move would make the user fetch the object back. Scored offline, so later drift is not counted.
-  used_missed:
-    label: Used objects, missed
-    definition: Objects the user moved in the window that are predicted to stay put, as a share of used objects.
-    terms: [dC_saved]
-    kind: proxy
-    direction: lower
-    unit: "%"
-    mapping_note: Counts savings the robot forgoes, the shortfall in ΔC↓. A miss adds no cost.
-  unused_correct:
-    label: Unused objects, correct
-    definition: Objects the user did not use in the window that are predicted to stay put, as a share of unused objects.
-    terms: [dC_added]
-    kind: proxy
-    direction: higher
-    unit: "%"
-    mapping_note: Leaving unneeded objects alone avoids added cost. It is the complement of unused objects moved.
-  unused_wrong:
-    label: Unused objects, wrong
-    definition: Objects the user did not use in the window that are predicted to move, as a share of unused objects.
-    terms: [dC_added]
-    kind: proxy
-    direction: lower
-    unit: "%"
-    mapping_note: Moving an object nobody needs may make the user put it back. Scored offline.
-
   # Activity and object prediction, offline (GLOBE)
   activity_f1:
     label: Activity F1
+    category: activity_label_prediction
     definition: F1 of the predicted activity against the true activity at each time step.
     terms: []
     kind: unrelated
@@ -229,6 +219,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Scores an anticipated activity, an intermediate step that triggers no robot action.
   object_f1:
     label: Object F1
+    category: object_movement_prediction
     definition: F1 of the predicted object against the true object at each time step.
     terms: [dC_saved, dC_added]
     kind: proxy
@@ -237,6 +228,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: A right object could be brought to spare the user and a wrong one adds cost. Scored offline.
   joint_mean_f1:
     label: Mean F1 (activity-object)
+    category: activity_label_prediction
     definition: F1 averaged across all joint activity-object labels.
     terms: [dC_saved, dC_added]
     kind: proxy
@@ -244,43 +236,62 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     unit: fraction
     mapping_note: Carries object F1's link to cost but mixes in activity prediction, which maps to no term.
 
-  # Computing cost (STREAK, GLOBE, Anticipatory TAMP)
-  training_time:
-    label: Training time
-    definition: Wall-clock time to train the model, per learning session or in total.
-    terms: []
-    kind: unrelated
+  # Object relocation prediction, offline (STOT, STREAK)
+  used_correct:
+    label: Used objects, correct
+    category: object_movement_prediction
+    group: used_unused_objects
+    definition: Objects the user moved in the window whose predicted move goes to the right place, as a share of used objects.
+    terms: [dC_saved]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: A correct move would spare the user that relocation, but it is scored offline and assumes the robot acts.
+  used_wrong:
+    label: Used objects, wrong
+    category: object_movement_prediction
+    group: used_unused_objects
+    definition: Objects the user moved in the window that are predicted to move to the wrong place, as a share of used objects.
+    terms: [dC_added]
+    kind: proxy
     direction: lower
-    unit: min or s
-    mapping_note: Computing cost of building the model, not a cost to the user or to the robot's body.
-  training_samples:
-    label: Training samples kept
-    definition: Number of training samples stored per learning session and in total.
-    terms: []
-    kind: unrelated
+    unit: "%"
+    mapping_note: A wrong move would make the user fetch the object back. Scored offline, so later drift is not counted.
+  used_missed:
+    label: Used objects, missed
+    category: object_movement_prediction
+    group: used_unused_objects
+    definition: Objects the user moved in the window that are predicted to stay put, as a share of used objects.
+    terms: [dC_saved]
+    kind: proxy
     direction: lower
-    unit: samples
-    mapping_note: Memory cost of continual learning. Maps to no term.
-  inference_time:
-    label: Inference time
-    definition: Wall-clock time to produce predictions. What it is summed over is not stated.
-    terms: []
-    kind: unrelated
+    unit: "%"
+    mapping_note: Counts savings the robot forgoes, the shortfall in ΔC↓. A miss adds no cost.
+  unused_correct:
+    label: Unused objects, correct
+    category: object_movement_prediction
+    group: used_unused_objects
+    definition: Objects the user did not use in the window that are predicted to stay put, as a share of unused objects.
+    terms: [dC_added]
+    kind: proxy
+    direction: higher
+    unit: "%"
+    mapping_note: Leaving unneeded objects alone avoids added cost. It is the complement of unused objects moved.
+  unused_wrong:
+    label: Unused objects, wrong
+    category: object_movement_prediction
+    group: used_unused_objects
+    definition: Objects the user did not use in the window that are predicted to move, as a share of unused objects.
+    terms: [dC_added]
+    kind: proxy
     direction: lower
-    unit: s
-    mapping_note: Computing cost. Slow inference could delay help, but no delay is measured.
-  planning_time:
-    label: Planning time
-    definition: Time the planner takes per task or for a given number of plan samples.
-    terms: []
-    kind: unrelated
-    direction: lower
-    unit: s
-    mapping_note: Computing cost of choosing a plan, not a cost to the user or to the robot's body.
+    unit: "%"
+    mapping_note: Moving an object nobody needs may make the user put it back. Scored offline.
 
   # Goal inference and helping (NOPA, Watch-And-Help)
   speedup:
     label: Speedup
+    category: task_performance
     definition: Episode length with the user alone divided by episode length with the helper, minus 1.
     terms: [dC_saved, dC_added]
     kind: proxy
@@ -289,6 +300,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Net change in the time to finish the user's goal. Savings and interference are not separated.
   task_success_rate:
     label: Task success rate
+    category: task_performance
     definition: Share of episodes where every predicate of the user's goal holds before the step limit.
     terms: [dV]
     kind: proxy
@@ -297,22 +309,17 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Goals finished in time come close to ΔV, but the user alone also finishes most goals.
   cumulative_reward:
     label: Cumulative reward
+    category: task_performance
     definition: Per-step reward summed over the episode, from −1 (failure) to 1 (goal reached in zero steps).
     terms: [dV, dC_saved]
     kind: proxy
     direction: higher
     unit: score
     mapping_note: Rewards finishing and finishing sooner, so it mixes completion with time saved.
-  goal_predicate_f1:
-    label: Goal F1
-    definition: F1 of the predicted goal predicates against the user's true goal.
-    terms: []
-    kind: unrelated
-    direction: higher
-    unit: fraction
-    mapping_note: Scores goal inference, an intermediate step. No robot action is counted.
   goal_predicate_precision:
     label: Goal precision
+    category: task_performance
+    group: goal_prf
     definition: Precision of the predicted goal predicates against the user's true goal.
     terms: []
     kind: unrelated
@@ -321,14 +328,27 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Scores goal recognition from a demonstration. No robot action is counted.
   goal_predicate_recall:
     label: Goal recall
+    category: task_performance
+    group: goal_prf
     definition: Recall of the predicted goal predicates against the user's true goal.
     terms: []
     kind: unrelated
     direction: higher
     unit: fraction
     mapping_note: Scores goal recognition from a demonstration. No robot action is counted.
+  goal_predicate_f1:
+    label: Goal F1
+    category: task_performance
+    group: goal_prf
+    definition: F1 of the predicted goal predicates against the user's true goal.
+    terms: []
+    kind: unrelated
+    direction: higher
+    unit: fraction
+    mapping_note: Scores goal inference, an intermediate step. No robot action is counted.
   rated_goal_knowledge:
     label: Rated goal knowledge
+    category: end_user_perceptions
     definition: User rating from 1 to 7 of how much the agent knew about the true goal.
     terms: []
     kind: unrelated
@@ -337,6 +357,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Perceived goal understanding. Maps to no term.
   rated_helpfulness:
     label: Rated helpfulness
+    category: end_user_perceptions
     definition: User rating from 1 to 7 of how helpful the agent was (1 hurting, 4 neutral, 7 very helpful).
     terms: [dV, dC_saved, dC_added]
     kind: proxy
@@ -345,6 +366,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Users judge net help, which spans every human term, but only as a perception.
   rated_trust:
     label: Rated trust
+    category: end_user_perceptions
     definition: User rating from 1 to 7 of whether they would trust the agent to do its job.
     terms: []
     kind: unrelated
@@ -352,9 +374,11 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     unit: 1–7 rating
     mapping_note: Trust maps to no term.
 
-  # Video perception and task-graph rollouts (ProAct)
+  # Video perception and task threads (ProAct)
   detection_accuracy:
     label: Detection accuracy
+    category: implicit_need_detection
+    group: step_detection
     definition: Micro-averaged accuracy of trigger, task, and step detection on video.
     terms: []
     kind: unrelated
@@ -363,6 +387,8 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Scores perception of when and what to help with. No robot action is counted.
   detection_f1:
     label: Detection F1
+    category: implicit_need_detection
+    group: step_detection
     definition: Micro-averaged F1 of trigger, task, and step detection on video.
     terms: []
     kind: unrelated
@@ -371,6 +397,8 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Scores perception of when and what to help with. No robot action is counted.
   detection_macro_accuracy:
     label: Detection mAcc
+    category: implicit_need_detection
+    group: step_detection
     definition: Accuracy averaged over classes (macro) for trigger, task, and step detection.
     terms: []
     kind: unrelated
@@ -379,6 +407,8 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Same as detection accuracy, weighted toward rare classes. No robot action is counted.
   detection_macro_f1:
     label: Detection mF1
+    category: implicit_need_detection
+    group: step_detection
     definition: F1 averaged over classes (macro) for trigger, task, and step detection.
     terms: []
     kind: unrelated
@@ -387,30 +417,16 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Same as detection F1, weighted toward rare classes. No robot action is counted.
   future_action_edit_distance:
     label: Future action edit distance
+    category: activity_label_prediction
     definition: Edit distance between the predicted and true sequences of future user actions.
     terms: []
     kind: unrelated
     direction: lower
     unit: not stated
     mapping_note: Scores anticipation of the user's next actions. No robot action is counted.
-  saved_steps_rate:
-    label: Saved steps (one step)
-    definition: Share of decision points where the robot's action is one of the user's true upcoming steps (Terminate excluded).
-    terms: [dC_saved]
-    kind: proxy
-    direction: higher
-    unit: fraction
-    mapping_note: A matching action could take over a user step, but it is scored offline, one decision at a time.
-  saved_steps:
-    label: Saved steps (rollout)
-    definition: Steps in the annotated user trajectory minus the steps the user still executes alongside the robot, averaged over videos.
-    terms: [dC_saved]
-    kind: direct
-    direction: higher
-    unit: steps
-    mapping_note: Counts user steps the robot takes over in closed loop. The task graph blocks wrong actions, so ΔC↑ goes unmeasured.
   parallel_actions:
     label: Parallel actions
+    category: coordination_fluency
     definition: Share of effective robot actions on a different thread from the user's previous action.
     terms: []
     kind: unrelated
@@ -419,6 +435,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Measures how often robot and user work apart. It may relate to interference but counts no cost.
   thread_mixing_entropy:
     label: Thread mixing entropy
+    category: coordination_fluency
     definition: Entropy of how user and robot actions mix across task threads, WAIT excluded.
     terms: []
     kind: unrelated
@@ -427,6 +444,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Describes how work is split. Maps to no term.
   robot_thread_entropy:
     label: Robot thread entropy
+    category: coordination_fluency
     definition: Entropy of the robot's actions across task threads, WAIT excluded.
     terms: []
     kind: unrelated
@@ -485,6 +503,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: More steps mean more robot effort. The user's waiting time is not measured.
   task_time:
     label: Task time
+    category: task_performance
     definition: Wall-clock time the robot takes to finish the episode or the task sequence.
     terms: [Cr]
     kind: proxy
@@ -751,6 +770,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
   # Anticipatory planning with no user in the loop (Anticipatory TAMP, Talukder 2025, Courteous Anticipation)
   avg_task_cost:
     label: Average cost per task
+    category: task_performance
     definition: Robot plan cost per task, averaged over task sequences, from fixed action costs plus distance.
     terms: [Cr]
     kind: proxy
@@ -759,6 +779,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Time-like robot execution cost. With no user in the loop, no human term applies.
   cost_reduction:
     label: Cost reduction
+    category: task_performance
     definition: Percent reduction in task cost relative to a baseline planner, such as a myopic one.
     terms: [Cr]
     kind: proxy
@@ -767,6 +788,7 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Relative form of average cost per task. Robot cost only.
   robot_action_count:
     label: Robot actions
+    category: task_performance
     definition: Number of actions the robot executes to finish the tasks.
     terms: [Cr]
     kind: proxy
@@ -777,6 +799,8 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
   # Proactive task prediction from egocentric images, offline (Din 2025)
   ooi_precision:
     label: OID precision
+    category: implicit_need_detection
+    group: ooi_detection
     definition: Share of frames flagged as holding an object of interest that do hold one.
     terms: []
     kind: unrelated
@@ -785,6 +809,8 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Scores the per-frame trigger to act. No action is executed or costed.
   ooi_recall:
     label: OID recall
+    category: implicit_need_detection
+    group: ooi_detection
     definition: Share of frames holding an object of interest that are flagged.
     terms: []
     kind: unrelated
@@ -793,6 +819,8 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Scores the per-frame trigger to act. No action is executed or costed.
   ooi_f1:
     label: OID F1
+    category: implicit_need_detection
+    group: ooi_detection
     definition: Harmonic mean of object-of-interest precision and recall.
     terms: []
     kind: unrelated
@@ -801,6 +829,8 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Scores the per-frame trigger to act. No action is executed or costed.
   ooi_accuracy:
     label: OID accuracy
+    category: implicit_need_detection
+    group: ooi_detection
     definition: Share of frames correctly classified as holding an object of interest or not.
     terms: []
     kind: unrelated
@@ -817,6 +847,8 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: Scores scene perception. Maps to no term.
   exact_match_accuracy:
     label: Exact-match accuracy
+    category: activity_label_prediction
+    group: task_match_accuracy
     definition: Share of predicted subgoal sequences that exactly match the annotated proactive task.
     terms: [dC_saved, dC_added]
     kind: proxy
@@ -825,6 +857,8 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     mapping_note: A match would do the help annotators chose, and a mismatch may add cost. Scored offline against labels.
   subgoal_accuracy:
     label: Subgoal accuracy
+    category: activity_label_prediction
+    group: task_match_accuracy
     definition: Share of individual predicted subgoals that match the subgoals in the annotated sequence.
     terms: [dC_saved, dC_added]
     kind: proxy

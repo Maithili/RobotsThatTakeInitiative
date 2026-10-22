@@ -17,6 +17,7 @@ function bareTaxonomy() {
   delete t.realism.human.levels.adaptive_sim.refs;
   t.featured_comparison.methods = [];
   t.featured_comparison.columns = [];
+  t.evaluations_exclude = [];
   return t;
 }
 
@@ -369,6 +370,79 @@ describe('taxonomy additions: semi-tangential families, search tangents, metric 
   it('shows direction and unit in metric chip tooltips', () => {
     expect(metricTooltip({ definition: 'D.', kind: 'direct', direction: 'lower', unit: '%' })).toBe('D. (direct) · ↓ lower is better · unit: %');
     expect(metricTooltip({ definition: 'D.', kind: 'proxy', direction: 'higher', unit: 'fraction' })).toContain('↑ higher is better');
+  });
+});
+
+describe('metric categories, metric groups, and evaluations_exclude', () => {
+  const taxonomyWith = (edit: (t: Record<string, any>) => void) => {
+    const t = bareTaxonomy();
+    edit(t);
+    return t;
+  };
+
+  it('ships the categories in order, the groups, and no computational or saved-steps metrics', () => {
+    const r = run([], { datasets: [] });
+    expect(r.errors).toEqual([]);
+    const t = r.db!.taxonomy;
+    expect(Object.keys(t.metric_categories)).toEqual([
+      'change_in_user_actions',
+      'object_movement_prediction',
+      'activity_label_prediction',
+      'task_performance',
+      'end_user_perceptions',
+      'implicit_need_detection',
+      'coordination_fluency',
+    ]);
+    expect(t.metric_groups.goal_prf.label).toBe('Goal precision, recall, and F1');
+    expect(Object.keys(t.metrics).filter((m) => t.metrics[m].group === 'goal_prf')).toEqual(['goal_predicate_precision', 'goal_predicate_recall', 'goal_predicate_f1']);
+    expect(t.metrics.goal_predicate_f1.category).toBe('task_performance');
+    expect(t.metrics.relation_accuracy.category).toBeUndefined();
+    expect(t.metrics.search_success_rate.category).toBeUndefined();
+    for (const m of ['training_time', 'training_samples', 'inference_time', 'planning_time', 'saved_steps_rate', 'saved_steps']) expect(t.metrics[m]).toBeUndefined();
+    expect(realTaxonomy.evaluations_exclude).toEqual(['saavedra-2026-scene-graphs']);
+  });
+
+  it('rejects a metric with an unknown category or group', () => {
+    expectError(run([], { taxonomy: taxonomyWith((t) => (t.metrics.f1.category = 'vibes')), datasets: [] }), /metrics.f1 has unknown category "vibes"/);
+    expectError(run([], { taxonomy: taxonomyWith((t) => (t.metrics.f1.group = 'vibes')), datasets: [] }), /metrics.f1 has unknown group "vibes"/);
+  });
+
+  it('rejects a group whose members span categories, including a member with no category', () => {
+    expectError(
+      run([], { taxonomy: taxonomyWith((t) => (t.metrics.goal_predicate_f1.category = 'end_user_perceptions')), datasets: [] }),
+      /metric group "goal_prf" spans categories \(goal_predicate_precision, goal_predicate_recall in "task_performance"; goal_predicate_f1 in "end_user_perceptions"\)/,
+    );
+    expectError(run([], { taxonomy: taxonomyWith((t) => delete t.metrics.goal_predicate_f1.category), datasets: [] }), /metric group "goal_prf" spans categories .*in no category/);
+  });
+
+  it('rejects an evaluations_exclude id that is not a paper, and accepts one that is', () => {
+    expectError(run([], { taxonomy: taxonomyWith((t) => (t.evaluations_exclude = ['ghost'])), datasets: [] }), /evaluations_exclude "ghost" does not exist/);
+    const ok = run([base('a')], { taxonomy: taxonomyWith((t) => (t.evaluations_exclude = ['a'])) });
+    expect(ok.errors).toEqual([]);
+    // Excluding a paper references it, so it is not reported as lonely.
+    expect(ok.warnings.join('\n')).not.toMatch(/a.yaml: no method/);
+  });
+
+  it('rejects a group definition over 140 characters and unknown keys', () => {
+    expectError(run([], { taxonomy: taxonomyWith((t) => (t.metric_groups.goal_prf.definition = 'x'.repeat(141))), datasets: [] }), /group_definition exceeds 140/);
+    expectError(run([], { taxonomy: taxonomyWith((t) => (t.metric_categories.task_performance.color = 'red')), datasets: [] }), /metric_categories.task_performance: Unrecognized key/);
+  });
+
+  it('treats empty categories, groups, and exclusions as none', () => {
+    const t = taxonomyWith((t) => {
+      t.metric_categories = null;
+      t.metric_groups = null;
+      t.evaluations_exclude = null;
+      for (const m of Object.values<Record<string, unknown>>(t.metrics)) {
+        delete m.category;
+        delete m.group;
+      }
+    });
+    const r = run([], { taxonomy: t, datasets: [] });
+    expect(r.errors).toEqual([]);
+    expect(r.db!.taxonomy.metric_categories).toEqual({});
+    expect(r.db!.taxonomy.metric_groups).toEqual({});
+    expect(r.db!.taxonomy.evaluations_exclude).toEqual([]);
   });
 });
 

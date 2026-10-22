@@ -13,6 +13,8 @@ export interface PaperEvalRow {
   loops: string[];
   humans: string[];
   metrics: string[];
+  /** Distinct categories among the paper's metrics, in category order (SPEC §8.4). */
+  categories: string[];
   baselines: string[];
   otherBaselines: string[];
   drift: Cap | null;
@@ -36,12 +38,20 @@ export function closest(values: (string | null | undefined)[], order: string[]):
   return best >= 0 ? order[best] : null;
 }
 
+/** Distinct categories of `metrics`, in `order`. Metrics with no category add none. */
+export function categoriesOf(metrics: string[], order: string[], categoryOf: (m: string) => string | null | undefined): string[] {
+  const used = new Set(metrics.map(categoryOf));
+  return order.filter((c) => used.has(c));
+}
+
 export function mergePaper(
   paper: DbPaper,
   loopOrder: string[],
   realismOrder: { robot: string[]; human: string[]; environment: string[] },
+  categories: { order: string[]; of: (m: string) => string | null | undefined } = { order: [], of: () => null },
 ): PaperEvalRow {
   const es = paper.evaluations ?? [];
+  const metrics = uniq(es.flatMap((e) => e.metrics ?? []));
   return {
     paper,
     entries: es,
@@ -49,7 +59,8 @@ export function mergePaper(
     datasets: uniq(es.flatMap((e) => e.datasets ?? [])),
     loops: loopOrder.filter((l) => es.some((e) => e.loop === l)),
     humans: uniq(es.map((e) => e.human_model).filter((x): x is string => !!x)),
-    metrics: uniq(es.flatMap((e) => e.metrics ?? [])),
+    metrics,
+    categories: categoriesOf(metrics, categories.order, categories.of),
     baselines: uniq(es.flatMap((e) => e.baselines ?? [])),
     otherBaselines: uniq(es.flatMap((e) => e.other_baselines ?? [])),
     drift: strongest(es.map((e) => e.captures?.state_drift)),
@@ -72,7 +83,10 @@ export interface RowFilters {
   term: string | null;
   metric: string | null;
   dataset: string | null;
+  /** A metric category id (SPEC §8.4). Needs `metricCategory`. */
+  category?: string | null;
   metricTerms: (m: string) => string[];
+  metricCategory?: (m: string) => string | null | undefined;
 }
 
 /** A paper matches when any of its entries does. */
@@ -82,6 +96,7 @@ export function rowMatches(r: PaperEvalRow, f: RowFilters): boolean {
       (!f.loop || e.loop === f.loop) &&
       (!f.term || (e.metrics ?? []).some((m) => f.metricTerms(m).includes(f.term!))) &&
       (!f.metric || (e.metrics ?? []).includes(f.metric)) &&
+      (!f.category || (e.metrics ?? []).some((m) => f.metricCategory?.(m) === f.category)) &&
       (!f.dataset || e.environment === f.dataset || (e.datasets ?? []).includes(f.dataset)),
   );
 }

@@ -59,8 +59,6 @@ evaluations:
       - used_missed
       - unused_correct
       - unused_wrong
-      - training_time
-      - training_samples
     baselines:
       - stot
     provenance: "RTI §I, §IV; STREAK §V–VI (baselines are the STOT model, fine-tuned and jointly trained); Librarian Oct 2026, B-3"

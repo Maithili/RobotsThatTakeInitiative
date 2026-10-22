@@ -504,6 +504,7 @@ Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, th
 | `focus` | Methods | `slate-pro` | Ancestry focus |
 | `term` | Evaluations | `dC_added` | Net value term |
 | `loop` | Evaluations | `closed_scripted,closed_adaptive` | Loop type filter |
+| `category` | Evaluations | `task_performance` | Metric category: selects its metrics tab and filters the protocols table |
 | `metric` | Evaluations | `f1` | Metric filter |
 | `sub` | Subproblems | `A2` | Selected subproblem |
 | `gaps` | Subproblems | `1` | Gaps mode in the matrix |
@@ -710,7 +711,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 
 **npm scripts**: `dev`, `build` (runs `build-data` first), `validate`, `test`, `e2e`, `new-paper`, `preview`.
 
-**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
+**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, and an `evaluations_exclude` id that is not a paper), the `evaluations_exclude` scope, metric tab items (a group as one item, at its first member) and the category filter, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
 
 **End-to-end tests (Playwright)** on the seed data:
 
@@ -718,16 +719,17 @@ Filter chips for the four themes, bound to the global `theme=`.
 2. Setting the Goal Inference family filter on Methods and switching to Subproblems keeps the filter. Back restores the previous view. No L1 paper appears in the graph, the list view, the protocols table, the realism plot, or the Subproblems page.
 3. `?paper=gap` opens the drawer, and Esc closes it.
 4. Hovering a timeline chip highlights the same node in the graph. GAP's node sits outside both cluster hulls.
-5. Clicking ΔC↑ leaves net actions saved, perturbed actions, and F1 in the metrics list.
+5. ΔC↑ counts 12 metrics, all categorized. Clicking it hides the Implicit need detection and Coordination fluency tabs and the rows of papers with no ΔC↑ metric, such as ProAct and Anticipatory TAMP. The Change in user actions tab keeps net actions saved and perturbed actions, and the Object movement prediction tab keeps F1.
 6. The featured chart shows 2 bars, then 6 after the toggle.
 7. Selecting A2 lists NOPA, highlights G1, G2, and A1 upstream, and highlights P2 downstream.
 8. In matrix view, clicking a filled cell opens the drawer. Selecting goal inference does not list SLaTe-PRO, which skips it.
 9. Pinning two papers puts both ids in `compare=`.
 10. At 375 px wide, no page scrolls horizontally.
 11. On Methods, the STOT to SLaTe-PRO edge is solid. With "Show all citation lines" off, no dotted edge shows until a node is hovered. The fit button brings every node into view. No drawn edge, in the seed data or the synthetic fixture, passes within clearance of a node that isn't one of its ends. A unit test over the edge geometry checks this; it would catch Watch-And-Help to NOPA passing through ProAct.
-12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table has exactly one GAP row, shaded and first, showing three loop-type pills, and it stays first after sorting by year.
+12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table has 12 rows and exactly one GAP row, shaded and first, showing three loop-type pills and the categories Change in user actions and Object movement prediction, and it stays first after sorting by year, name, metric categories, and loop type.
 13. The realism plot shows GAP's dot at task-specific policy and adaptive simulated user, at simulator opacity. Hovering it shows a card with a working Paper link.
 14. With a fixture tangential paper, its graph node renders at half opacity, and unchecking "Show tangential works" removes it and its edges.
+15. The protocols table shows category labels, one chip per category in category order, and no metric names. The Task performance tab lists "Goal precision, recall, and F1" as one item with its three member names, and selecting the tab sets `category=` and filters the table. A category chip in the table selects its tab, and `metric=speedup` opens the Task performance tab and filters the table. PredictiveGraphs has no row and no realism dot but stays on the graph and the Subproblems page. ProAct has no closed-loop pill.
 
 **CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes: `npm ci`, validate, typecheck, unit tests, build, end-to-end tests.
 

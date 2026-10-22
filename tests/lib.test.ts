@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { matchesGlobal, matchesQuery, parseYears, readGlobalFilters } from '../src/lib/filters.ts';
 import { ancestry, subproblemFlow } from '../src/lib/graph.ts';
 import { scorePaper, search } from '../src/lib/search.ts';
-import { closest, furthestLoop, mergePaper, rowMatches, strongest } from '../src/pages/evaluations/merge.ts';
+import { categoryItems, itemSummary } from '../src/lib/metrics.ts';
+import { categoriesOf, closest, furthestLoop, mergePaper, rowMatches, strongest } from '../src/pages/evaluations/merge.ts';
 import { applyParams, toggleInList } from '../src/state/url.ts';
 import type { DbPaper } from '../src/schema.ts';
 
@@ -170,5 +171,59 @@ describe('protocols table rows', () => {
     expect(rowMatches(row, { ...f, dataset: 'sim' })).toBe(true);
     // Both conditions must hold in the same entry.
     expect(rowMatches(row, { ...f, loop: 'offline_replay', metric: 'nas' })).toBe(false);
+  });
+
+  const CATS = ['user_actions', 'object_movement', 'task'];
+  const CAT_OF: Record<string, string> = { f1: 'object_movement', nas: 'user_actions' };
+  const catOf = (m: string): string | undefined => CAT_OF[m];
+  it('lists the distinct categories of its metrics in category order, never uncategorized metrics', () => {
+    expect(mergePaper(paper, LOOPS, R, { order: CATS, of: catOf }).categories).toEqual(['user_actions', 'object_movement']);
+    expect(categoriesOf(['f1', 'relation_accuracy'], CATS, catOf)).toEqual(['object_movement']);
+    expect(categoriesOf(['relation_accuracy'], CATS, catOf)).toEqual([]);
+    expect(row.categories).toEqual([]);
+  });
+  it('matches a category when any entry has a metric in it', () => {
+    const f = { loop: null, term: null, metric: null, dataset: null, metricTerms: () => [], metricCategory: catOf };
+    expect(rowMatches(row, { ...f, category: 'user_actions' })).toBe(true);
+    expect(rowMatches(row, { ...f, category: 'task' })).toBe(false);
+    expect(rowMatches(row, { ...f, category: 'user_actions', loop: 'offline_replay' })).toBe(false);
+  });
+});
+
+describe('metric tabs', () => {
+  const M = (category: string | undefined, group: string | undefined, terms: string[], direction: 'higher' | 'lower' = 'higher', unit = '%') => ({
+    category,
+    group,
+    terms,
+    direction,
+    unit,
+  });
+  const metrics = {
+    f1: M('obj', undefined, ['dC_saved', 'dC_added'], 'higher', 'fraction'),
+    used_correct: M('obj', 'used', ['dC_saved']),
+    other: M('task', undefined, []),
+    object_f1: M('obj', undefined, ['dC_added'], 'higher', 'fraction'),
+    used_wrong: M('obj', 'used', ['dC_added'], 'lower'),
+    relation_accuracy: M(undefined, undefined, []),
+  };
+  it('lists a category in taxonomy order, with a group as one item at its first member', () => {
+    expect(categoryItems('obj', metrics)).toEqual([
+      { id: 'f1', group: null, members: ['f1'] },
+      { id: 'used', group: 'used', members: ['used_correct', 'used_wrong'] },
+      { id: 'object_f1', group: null, members: ['object_f1'] },
+    ]);
+    expect(categoryItems('task', metrics).map((i) => i.id)).toEqual(['other']);
+    expect(categoryItems('none', metrics)).toEqual([]);
+  });
+  it('drops metrics that fail `keep`, and a group with no member left', () => {
+    // The group moves to its first kept member.
+    expect(categoryItems('obj', metrics, (m) => m !== 'used_correct').map((i) => i.members)).toEqual([['f1'], ['object_f1'], ['used_wrong']]);
+    expect(categoryItems('obj', metrics, (m) => !m.startsWith('used')).map((i) => i.id)).toEqual(['f1', 'object_f1']);
+  });
+  it("summarizes an item's terms, direction, and units", () => {
+    const TERMS = ['dV', 'dC_saved', 'dC_added', 'Cr'];
+    const [f1, used] = categoryItems('obj', metrics);
+    expect(itemSummary(f1, metrics, TERMS)).toEqual({ terms: ['dC_saved', 'dC_added'], direction: 'higher', units: ['fraction'] });
+    expect(itemSummary(used, metrics, TERMS)).toEqual({ terms: ['dC_saved', 'dC_added'], direction: null, units: ['%'] });
   });
 });

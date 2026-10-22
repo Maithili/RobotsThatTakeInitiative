@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { atFocusLevel, BAND_LEVELS, FOCUS_LEVELS, inEvaluations, inMethodsGraph, inMethodsTopBand, inSubproblems } from '../src/lib/scope.ts';
+import { atFocusLevel, BAND_LEVELS, evaluationsScope, FOCUS_LEVELS, inEvaluations, inMethodsGraph, inMethodsTopBand, inSubproblems } from '../src/lib/scope.ts';
 import type { DbPaper } from '../src/schema.ts';
 
 // Level scope (SPEC §6.2): which papers each part of the site shows.
@@ -33,6 +33,15 @@ describe('level scope', () => {
 
   it('shows only focus-level papers on Evaluations, never papers with no level', () => {
     expect(ids(inEvaluations)).toEqual(['l2']);
+  });
+
+  it('keeps papers in evaluations_exclude off Evaluations, and only there', () => {
+    const search = P('search', { level: 'L2', method });
+    const keep = evaluationsScope(['search']);
+    expect([...all, search].filter(keep).map((p) => p.id)).toEqual(['l2']);
+    expect(evaluationsScope([])(search)).toBe(true);
+    expect(inMethodsGraph(search)).toBe(true);
+    expect(inSubproblems(search)).toBe(true);
   });
 
   it('shows focus-level papers and papers with no level on Subproblems, never L1', () => {

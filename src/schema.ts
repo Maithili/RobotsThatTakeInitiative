@@ -20,6 +20,7 @@ export const CAPS = {
   span: 40,
   notes: 140,
   mapping_note: 160,
+  group_definition: 140,
 } as const;
 
 const capped = (field: keyof typeof CAPS) =>
@@ -85,10 +86,29 @@ export const TaxonomySchema = z.object({
     counterfactual: z.string(),
     terms: z.record(z.object({ label: z.string(), tex: z.string(), definition: z.string() })),
   }),
+  /** Ordered. The Evaluations page shows one tab per category and hides metrics with none (SPEC §8.6). */
+  metric_categories: z
+    .record(z.object({ label: z.string() }).strict())
+    .nullish()
+    .transform((v) => v ?? {}),
+  /** Metrics listed as one item in the metrics section. Members share a category. */
+  metric_groups: z
+    .record(z.object({ label: z.string(), definition: capped('group_definition') }).strict())
+    .nullish()
+    .transform((v) => v ?? {}),
+  /** Paper ids kept off the Evaluations page, such as object search papers (SPEC §8.4). */
+  evaluations_exclude: z
+    .array(z.string())
+    .nullish()
+    .transform((v) => v ?? []),
   metric_kinds: z.record(z.string()),
   metrics: z.record(
     z.object({
       label: z.string(),
+      /** A `metric_categories` id. Metrics with none never show on the Evaluations page. */
+      category: z.string().optional(),
+      /** A `metric_groups` id. */
+      group: z.string().optional(),
       definition: z.string(),
       terms: z.array(z.string()),
       kind: z.string(),

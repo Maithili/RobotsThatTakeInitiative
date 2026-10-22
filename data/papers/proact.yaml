@@ -60,7 +60,6 @@ evaluations:
       - detection_macro_accuracy
       - detection_macro_f1
       - future_action_edit_distance
-      - saved_steps_rate
       - parallel_actions
     other_baselines:
       - Qwen3-VL-30B-A3B-Instruct
@@ -77,23 +76,3 @@ evaluations:
       robot: null
       human: recorded
       environment: null
-  - id: proact-rollout
-    loop: closed_scripted
-    human_model: Scripted replay of annotated trajectories
-    metrics:
-      - saved_steps
-      - thread_mixing_entropy
-      - robot_thread_entropy
-      - parallel_actions
-    other_baselines:
-      - GPT-4o
-      - Gemini-2.5-Flash
-      - Gemini-2.5-Pro
-      - DeepSeek-v3.2
-      - Qwen3-Max
-      - Greedy
-    provenance: "Librarian Oct 2026, B-8 Z2; ProAct §6.4, Table 3, App. A. Text-only task-graph simulator under ground-truth labels"
-    realism:
-      robot: null
-      human: scripted
-      environment: simulator

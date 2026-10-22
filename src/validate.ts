@@ -301,9 +301,32 @@ export function buildDb(input: BuildInput): BuildResult {
       }
     }
   }
+  const groupCategories = new Map<string, Map<string, string[]>>(); // group -> category ("none" if unset) -> member ids
   for (const [mid, mt] of Object.entries(t.metrics)) {
     for (const term of mt.terms) if (!inSet(t.net_value.terms, term)) errors.push(`taxonomy.yaml: metrics.${mid} has unknown term "${term}"`);
     if (!inSet(t.metric_kinds, mt.kind)) errors.push(`taxonomy.yaml: metrics.${mid} has unknown kind "${mt.kind}"`);
+    if (mt.category !== undefined && !inSet(t.metric_categories, mt.category)) {
+      errors.push(`taxonomy.yaml: metrics.${mid} has unknown category "${mt.category}"`);
+    }
+    if (mt.group !== undefined) {
+      if (!inSet(t.metric_groups, mt.group)) errors.push(`taxonomy.yaml: metrics.${mid} has unknown group "${mt.group}"`);
+      else {
+        const byCat = groupCategories.get(mt.group) ?? new Map<string, string[]>();
+        const c = mt.category ?? 'none';
+        byCat.set(c, [...(byCat.get(c) ?? []), mid]);
+        groupCategories.set(mt.group, byCat);
+      }
+    }
+  }
+  for (const [gid, byCat] of groupCategories) {
+    if (byCat.size > 1) {
+      const parts = [...byCat].map(([c, ms]) => `${ms.join(', ')} in ${c === 'none' ? 'no category' : `"${c}"`}`);
+      errors.push(`taxonomy.yaml: metric group "${gid}" spans categories (${parts.join('; ')})`);
+    }
+  }
+  for (const pid of t.evaluations_exclude) {
+    referenced.add(pid);
+    if (!paperById.has(pid)) errors.push(`taxonomy.yaml: evaluations_exclude "${pid}" does not exist`);
   }
   const fc = t.featured_comparison;
   if (!inSet(t.metrics, fc.metric)) errors.push(`taxonomy.yaml: featured_comparison.metric "${fc.metric}" does not exist`);

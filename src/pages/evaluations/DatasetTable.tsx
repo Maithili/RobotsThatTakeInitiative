@@ -2,8 +2,7 @@
 import { Fragment, useState } from 'react';
 import { InputChip, LoopPill } from '../../components/Chip.tsx';
 import { EmptyState } from '../../components/EmptyState.tsx';
-import { datasetById, db, paperById, paperLabel } from '../../data.ts';
-import { inEvaluations } from '../../lib/scope.ts';
+import { datasetById, db, onEvaluations, paperById, paperLabel } from '../../data.ts';
 import type { DbDataset } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
 import { datasetGroups } from './merge.ts';
@@ -12,10 +11,10 @@ const KIND_LABEL: Record<string, string> = { dataset: 'Dataset', evaluation_setu
 const RELATION_LABEL: Record<string, string> = { extends: 'Extends', uses: 'Uses', validates_against: 'Validated against' };
 const COLS = 12;
 
-/** Level scope (SPEC §6.2): "used by" counts only papers at a focus level. */
+/** Level scope (SPEC §6.2): "used by" counts only papers the Evaluations page shows. */
 const inScope = (r: { paper: string }) => {
   const p = paperById.get(r.paper);
-  return !!p && inEvaluations(p);
+  return !!p && onEvaluations(p);
 };
 
 /** `datasets` defaults to the database; tests pass a fixture. */

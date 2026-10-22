@@ -58,7 +58,7 @@ Datasets, evaluation setups, and simulators live in [`data/datasets/`](data/data
 
 ## What the validator checks
 
-Errors (the build fails): schema mismatches, ids not in the taxonomy, references to papers or datasets that do not exist, an id that differs from its file name, duplicate evaluation ids, text over its length cap, PDF links or files, `goal: unknown` with `human_policy: known`, a family on a non-L2 paper, cycles in `builds_on`, and entries in `data/citations-manual.yaml` with unknown ids, a self-citation, or a pair listed twice.
+Errors (the build fails): schema mismatches, ids not in the taxonomy, references to papers or datasets that do not exist, an id that differs from its file name, duplicate evaluation ids, text over its length cap, PDF links or files, `goal: unknown` with `human_policy: known`, a family on a non-L2 paper, cycles in `builds_on`, a metric with an unknown `category` or `group`, a metric group whose members span categories, an `evaluations_exclude` id that is not a paper, and entries in `data/citations-manual.yaml` with unknown ids, a self-citation, or a pair listed twice.
 
 Warnings (the build passes): a missing `links.paper`, a `builds_on` target newer than the paper, a result metric not listed in its evaluation, a paper that nothing shows or references, and a `data/citations.json` that is missing, stale, or incomplete.
 

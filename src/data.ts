@@ -1,6 +1,6 @@
 // The generated database, plus lookup maps the UI uses everywhere.
 import raw from './generated/db.json';
-import { inEvaluations, inMethodsGraph, inMethodsTopBand, inSubproblems } from './lib/scope.ts';
+import { evaluationsScope, inMethodsGraph, inMethodsTopBand, inSubproblems } from './lib/scope.ts';
 import type { Db, DbDataset, DbPaper, LevelId, SubproblemId } from './schema.ts';
 import { SUBPROBLEM_IDS } from './schema.ts';
 
@@ -18,6 +18,9 @@ export const tx = prettify(db.taxonomy);
 export const papers: DbPaper[] = db.papers;
 export const paperById = new Map(papers.map((p) => [p.id, p]));
 export const datasetById = new Map<string, DbDataset>(db.datasets.map((d) => [d.id, d]));
+
+/** Papers the Evaluations page shows: focus level, minus the taxonomy's `evaluations_exclude` (SPEC §6.2, §8.4). */
+export const onEvaluations = evaluationsScope(tx.evaluations_exclude);
 
 export const LEVELS_TOP_DOWN: LevelId[] = ['L2', 'L1', 'L0'];
 export const SUBS: readonly SubproblemId[] = SUBPROBLEM_IDS;
@@ -48,7 +51,7 @@ export function addressesAny(p: DbPaper) {
 export function pagesFor(p: DbPaper): ('methods' | 'evaluations' | 'subproblems')[] {
   const out: ('methods' | 'evaluations' | 'subproblems')[] = [];
   if (inMethodsTopBand(p) || inMethodsGraph(p)) out.push('methods');
-  if (p.evaluations?.length && inEvaluations(p)) out.push('evaluations');
+  if (p.evaluations?.length && onEvaluations(p)) out.push('evaluations');
   if (addressesAny(p) && inSubproblems(p)) out.push('subproblems');
   return out;
 }

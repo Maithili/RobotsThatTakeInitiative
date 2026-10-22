@@ -131,13 +131,30 @@ test('4. hovering a timeline chip highlights the graph node; GAP sits outside bo
   expect(own).toBe(true);
 });
 
-test('5. clicking ΔC↑ leaves net actions saved, perturbed actions, and F1 in the metrics list', async ({ page }) => {
+test('5. clicking ΔC↑ counts 12 metrics, hides tabs and rows with none, and keeps net actions saved, perturbed actions, and F1', async ({ page }) => {
   await page.goto('/#/evaluations');
-  await page.getByTestId('term-dC_added').click();
+  const term = page.getByTestId('term-dC_added');
+  // Only categorized metrics count (SPEC §8.1).
+  await expect(term.locator('.term__count')).toHaveText('12');
+  await term.click();
   await expect.poll(() => params(page).get('term')).toBe('dC_added');
+  await expect(page.getByTestId('metric-tabs').getByRole('tab')).toHaveText([
+    'Change in user actions',
+    'Object movement prediction',
+    'Activity label prediction',
+    'Task performance',
+    'End-user perceptions',
+  ]);
   const list = page.getByTestId('metrics-list');
+  await expect(list.getByRole('listitem')).toHaveCount(2);
+  for (const label of ['Net actions saved', 'Perturbed actions']) await expect(list).toContainText(label);
+  // Papers with no ΔC↑ metric leave the table.
+  const table = page.getByTestId('protocol-table');
+  for (const id of ['gap', 'slate-pro', 'nopa']) await expect(table.getByTestId(`protocol-${id}`)).toHaveCount(1);
+  for (const id of ['proact', 'anticipatory-tamp']) await expect(table.getByTestId(`protocol-${id}`)).toHaveCount(0);
+  await page.getByTestId('metric-tab-object_movement_prediction').click();
   await expect(list.getByRole('listitem')).toHaveCount(3);
-  for (const label of ['Net actions saved', 'Perturbed actions', 'F1']) await expect(list).toContainText(label);
+  await expect(list.getByTestId('metric-f1')).toContainText('F1');
 });
 
 test('6. the featured chart shows 2 bars, then 6 after the toggle', async ({ page }) => {
@@ -407,13 +424,16 @@ test('12. datasets table has no simulator rows; GAP has one shaded protocol row 
   await expect(ds.getByTestId('ds-row-homer-plus')).toContainText('VirtualHome');
   await expect(ds.getByTestId('ds-row-rti-closed-loop')).toContainText('Setup');
   const table = page.getByTestId('protocol-table');
+  // 12 L2 papers with evaluations, PredictiveGraphs excluded.
+  await expect(table.locator('tbody tr')).toHaveCount(12);
   await expect(table.getByTestId('protocol-gap')).toHaveCount(1);
   const first = table.locator('tbody tr').first();
   await expect(first).toHaveAttribute('data-testid', 'protocol-gap');
   await expect(first).toHaveClass(/is-framework/);
   await expect(first.getByRole('link', { name: /Framework paper/ })).toHaveAttribute('href', 'https://arxiv.org/abs/2609.28910');
   await expect(first.locator('.loop-pill')).toHaveCount(3);
-  for (const k of ['year', 'year', 'paper', 'loop']) {
+  await expect(first.locator('.chip--category')).toHaveText(['Change in user actions', 'Object movement prediction']);
+  for (const k of ['year', 'year', 'paper', 'categories', 'loop']) {
     await page.getByTestId(`psort-${k}`).click();
     await expect(table.locator('tbody tr').first()).toHaveAttribute('data-testid', 'protocol-gap');
   }
@@ -467,6 +487,68 @@ test('14. a tangential work renders at half opacity, and unchecking Show tangent
   await expect(page.locator('[data-testid^="node-synthetic-t"]')).toHaveCount(0);
   await expect(tangentEdges).toHaveCount(0);
   await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(300);
+});
+
+test('15. the protocols table shows metric categories, never metric names; a group is one item; PredictiveGraphs and ProAct closed loop are gone', async ({ page }) => {
+  await page.goto('/#/evaluations');
+  const table = page.getByTestId('protocol-table');
+  await expect(table.locator('tbody tr').first()).toBeVisible();
+  await expect(table.locator('.chip--metric')).toHaveCount(0);
+  const labels = [
+    'Change in user actions',
+    'Object movement prediction',
+    'Activity label prediction',
+    'Task performance',
+    'End-user perceptions',
+    'Implicit need detection',
+    'Coordination fluency',
+  ];
+  const chips = await table.locator('.chip--category').allTextContents();
+  expect(chips.length).toBeGreaterThan(0);
+  for (const c of chips) expect(labels).toContain(c);
+  const text = await table.innerText();
+  for (const name of ['Net actions saved', 'Perturbed actions', 'Object F1', 'Used objects', 'Speedup', 'Goal precision', 'Detection F1', 'OID recall']) {
+    expect(text).not.toContain(name);
+  }
+  // One chip per category, in category order.
+  await expect(table.getByTestId('protocol-globe').locator('.chip--category')).toHaveText(['Object movement prediction', 'Activity label prediction']);
+
+  // PredictiveGraphs is off this page.
+  await expect(table.getByTestId('protocol-saavedra-2026-scene-graphs')).toHaveCount(0);
+  await expect(page.getByTestId('realism-dot-saavedra-2026-scene-graphs')).toHaveCount(0);
+
+  // ProAct keeps only its offline entry.
+  const proact = table.getByTestId('protocol-proact');
+  await expect(proact.locator('.loop-pill')).toHaveText(['Offline replay']);
+
+  // The Task performance tab lists goal precision, recall, and F1 as one item, and selecting it filters the table.
+  await page.getByTestId('metric-tab-task_performance').click();
+  await expect.poll(() => params(page).get('category')).toBe('task_performance');
+  await expect(page.getByTestId('metric-tab-task_performance')).toHaveAttribute('aria-selected', 'true');
+  const list = page.getByTestId('metrics-list');
+  await expect(list.getByRole('listitem')).toHaveCount(8);
+  const group = list.getByTestId('metric-group-goal_prf');
+  await expect(group).toContainText('Goal precision, recall, and F1');
+  await expect(group.locator('.chip--member')).toHaveText(['Goal precision', 'Goal recall', 'Goal F1']);
+  await expect(list.getByRole('listitem').filter({ hasText: 'Goal recall' })).toHaveCount(1);
+  await expect(table.locator('tbody tr')).toHaveCount(5);
+  await expect(table.getByTestId('protocol-gap')).toHaveCount(0);
+
+  // A category chip in the table selects its tab; metric= still filters and opens its tab.
+  await page.goto('/#/evaluations');
+  await page.getByTestId('protocol-proact').locator('.chip--category', { hasText: 'Implicit need detection' }).click();
+  await expect.poll(() => params(page).get('category')).toBe('implicit_need_detection');
+  await expect(page.getByTestId('metric-tab-implicit_need_detection')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('drawer')).toHaveCount(0);
+  await page.goto('/#/evaluations?metric=speedup');
+  await expect(page.getByTestId('metric-tab-task_performance')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('protocol-table').locator('tbody tr')).toHaveCount(2);
+
+  // PredictiveGraphs stays on the graph and the Subproblems page.
+  await page.goto('/#/methods?view=graph');
+  await expect(page.getByTestId('node-saavedra-2026-scene-graphs')).toHaveCount(1);
+  await page.goto('/#/subproblems?sub=A3');
+  await expect(page.getByTestId('sub-detail')).toContainText('PredictiveGraphs');
 });
 
 test('the legend has edges, clusters, and tangential works, and no action-type or level groups', async ({ page }) => {
@@ -526,9 +608,15 @@ test('the metrics list shows direction and unit, and metric chips name the direc
   await expect(page.getByTestId('metric-dir-perturbed_actions')).toContainText('↓');
   await expect(page.getByTestId('metric-dir-perturbed_actions')).toContainText('%');
   await expect(page.getByTestId('metric-dir-perturbed_actions').getByRole('img', { name: 'Lower is better' })).toBeVisible();
+  await page.getByTestId('metric-tab-object_movement_prediction').click();
   await expect(page.getByTestId('metric-dir-f1')).toContainText('↑');
   await expect(page.getByTestId('metric-dir-f1')).toContainText('fraction');
-  const chip = page.getByTestId('protocol-table').locator('.chip--metric').first();
+  // A group whose members differ in direction marks each member.
+  await expect(page.getByTestId('metric-used_wrong').getByRole('img', { name: 'Lower is better' })).toBeVisible();
+  await expect(page.getByTestId('metric-used_correct').getByRole('img', { name: 'Higher is better' })).toBeVisible();
+  // Metric chips live in the drawer now; the protocols table shows categories.
+  await page.goto('/#/evaluations?paper=gap');
+  const chip = page.getByTestId('drawer').locator('.chip--metric').first();
   await expect(chip).toHaveAttribute('title', /(higher|lower) is better · unit: /);
 });
 

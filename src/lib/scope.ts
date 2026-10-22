@@ -32,6 +32,13 @@ export function inEvaluations(p: Scoped): boolean {
   return atFocusLevel(p);
 }
 
+/** The Evaluations page scope with the taxonomy's `evaluations_exclude` applied (SPEC §8.4): focus-level papers that
+ *  are not excluded. Excluded papers stay on the graph and the Subproblems page. */
+export function evaluationsScope(exclude: Iterable<string>): (p: Scoped & Pick<DbPaper, 'id'>) => boolean {
+  const ex = new Set(exclude);
+  return (p) => inEvaluations(p) && !ex.has(p.id);
+}
+
 /** Subproblems page (lists, counts, matrix): papers at a focus level plus papers with no level. */
 export function inSubproblems(p: Scoped): boolean {
   return !p.level || atFocusLevel(p);

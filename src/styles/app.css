@@ -1517,10 +1517,48 @@ tr.clickable:hover td {
   flex-direction: column;
   gap: 4px;
 }
+/* Metric category tabs (SPEC §8.6). They wrap rather than scroll, so the page never scrolls sideways. */
+.metric-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+}
+.metric-tab {
+  border: 0;
+  background: none;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.metric-tab:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.metric-tab.is-active {
+  color: var(--text);
+  background: var(--surface-3);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+.chip--category {
+  font: inherit;
+  font-size: 12px;
+  background: var(--surface-2);
+  color: var(--text);
+}
+.chip--member {
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+}
 .metric-row {
   width: 100%;
   display: grid;
-  grid-template-columns: 170px minmax(0, 1fr) auto 70px 80px;
+  grid-template-columns: 220px minmax(0, 1fr) 44px 72px;
   gap: 10px;
   align-items: center;
   text-align: left;
@@ -1550,27 +1588,26 @@ tr.clickable:hover td {
   font-weight: 700;
   color: var(--text);
 }
-.metric-row__note {
-  display: block;
-  margin-top: 2px;
-  color: var(--text-3);
-  font-style: italic;
-}
-.kind {
-  font-size: 11px;
-  border-radius: 3px;
-  padding: 0 6px;
-  text-align: center;
-  border: 1px solid var(--border-strong);
-}
-.kind--direct {
-  background: var(--surface-3);
-}
-.kind--proxy {
-  border-style: dashed;
+.metric-row__terms {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
 }
 .metric-row__used {
   text-align: right;
+}
+/* A group is one item: label, definition, terms, and used-by on the first line, its member metrics below. */
+.metric-row--group {
+  cursor: default;
+}
+.metric-row--group:hover {
+  background: var(--surface);
+}
+.metric-row--group.is-on:hover {
+  background: var(--accent-soft);
+}
+.metric-row__members {
+  grid-column: 2 / -1;
 }
 
 /* ---------- subproblems page ---------- */
@@ -1945,7 +1982,8 @@ tr.clickable:hover td {
   .metric-row {
     grid-template-columns: 1fr auto;
   }
-  .metric-row__def {
+  .metric-row__def,
+  .metric-row__members {
     grid-column: 1 / -1;
   }
   .work-row {

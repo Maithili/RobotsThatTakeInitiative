@@ -30,8 +30,6 @@ evaluations:
       - activity_f1
       - object_f1
       - joint_mean_f1
-      - training_time
-      - inference_time
     baselines:
       - slate-pro
       - stot
