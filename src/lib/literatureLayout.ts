@@ -9,8 +9,8 @@ import { FRAMEWORK_PAPER } from './scope.ts';
 /** Dot radius at zoom 1 for a paper with no links; grows with links up to DOT_R_MAX. */
 export const DOT_R_MIN = 7;
 export const DOT_R_MAX = 16;
-/** Tangential works are smaller dots. */
-export const TANGENT_R = 5;
+/** Tangential works are slightly smaller dots. */
+export const TANGENT_R = 6;
 /** Label font size in screen pixels at every zoom. */
 export const LABEL_PX = 12;
 /** Gap between a dot and its label, in screen pixels. */
@@ -22,6 +22,13 @@ export const HULL_PAD = 16;
 
 const PAD = 3; // half the gap kept between two nodes' boxes
 const BAND_GAP = 16; // gap between the clusters and the band of tangential works
+/** Gap kept between two tangential groups, with room for their category labels. */
+const GROUP_GAP = 44;
+/** Pull of a tangential work toward its category's anchor, and the strength of its springs out of its category. */
+const ANCHOR_PULL = 0.2;
+const TANGENT_SPRING = 0.02;
+/** Ticks during which a tangential group moves along with its anchor. */
+const ANCHOR_CARRY_TICKS = 160;
 const TICKS = 300;
 /** Springs: every edge type pulls its two papers toward this distance, with this strength over the lower degree
  *  (d3's default). Springs across clusters are this much weaker, so the cluster pull still decides the cluster. */
@@ -102,6 +109,8 @@ export interface LayoutNodeInput {
   cluster: string | null;
   /** Tangential works take no cluster pull and sit in a band just outside the clusters. */
   tangent?: boolean;
+  /** A tangential work's category (its tangent type). Each category pulls toward its own anchor in the band. */
+  group?: string | null;
   r: number;
   /** Radius edges stop at and keep clear of (the dot, or the framework paper's ring). Defaults to r. */
   rr?: number;
@@ -143,6 +152,8 @@ interface SimNode extends SimulationNodeDatum, Shape {
   mark?: number;
   cluster: string | null;
   tangent: boolean;
+  /** Tangential category, '' for none; null for core papers. */
+  group: string | null;
   rr: number;
   tx: number;
   ty: number;
@@ -625,10 +636,11 @@ function untangle(nodes: SimNode[], edges: SimEdge[], clusters: string[], member
 
 /**
  * Spring layout, run once at build time (SPEC §7.2). Cluster centers sit on a circle; each node pulls toward its
- * cluster center, and nodes with no cluster toward the middle. Tangential works sit in a band just outside the
- * clusters. Every edge is a spring, all nodes repel each other, and a force pushes each node away from edges it
- * is not part of. Boxes for dots and labels never overlap, and no node sits in a hull not its own. A clean-up pass
- * then nudges nodes, within their cluster, to clear the remaining edge–node overlaps and reduce crossings.
+ * cluster center, and nodes with no cluster toward the middle. Tangential works pull toward an anchor for their
+ * category in the band just outside the clusters, so each category forms a loose group. Every edge is a spring, all
+ * nodes repel each other, and a force pushes each node away from edges it is not part of. Boxes for dots and labels
+ * never overlap, and no node sits in a hull not its own. A clean-up pass then nudges nodes, within their cluster, to
+ * clear the remaining edge–node overlaps and reduce crossings.
  */
 export function layoutLiterature(input: LayoutNodeInput[], clusterOrder: string[], links: LayoutLink[]): Map<string, Point> {
   const sorted = [...input].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
@@ -646,13 +658,9 @@ export function layoutLiterature(input: LayoutNodeInput[], clusterOrder: string[
     const a = r() * 2 * Math.PI;
     const spread = cluster ? (radii[cluster] ?? 60) * 0.8 : tangent ? 0 : 40;
     const d = tangent ? 0 : spread * Math.sqrt(r());
-    const base = { id: n.id, cluster, tangent, r: n.r, rr: n.rr ?? n.r, labelW: n.labelW, tx, ty };
-    if (tangent) {
-      // Start tangential works on a ring around everything; the band force pulls them in.
-      const R = Math.max(200, ...[...centers.values()].map(([x, y]) => Math.hypot(x, y))) + Math.max(100, ...Object.values(radii)) + 80;
-      return { ...base, x: R * Math.cos(a), y: R * Math.sin(a) };
-    }
-    return { ...base, x: tx + d * Math.cos(a), y: ty + d * Math.sin(a) };
+    // Tangential works move to their category's anchor once the anchors are placed (below).
+    const group = tangent ? n.group ?? '' : null;
+    return { id: n.id, cluster, tangent, group, r: n.r, rr: n.rr ?? n.r, labelW: n.labelW, tx, ty, x: tx + d * Math.cos(a), y: ty + d * Math.sin(a) };
   });
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const valid = links.filter((l) => byId.has(l.source) && byId.has(l.target) && l.source !== l.target);
@@ -699,79 +707,6 @@ export function layoutLiterature(input: LayoutNodeInput[], clusterOrder: string[
     }
   };
 
-  // Pulls each tangential work toward a band just outside the clusters: a ring around its nearest cluster (an
-  // ellipse around the cluster's boxes, grown by a margin, with extra room above for the family name), on the
-  // cluster's outer side, so the space between clusters stays for papers with no family. With no clusters, the
-  // ring goes around all other nodes.
-  const band = (alpha: number) => {
-    let rings = extents().map((e) => ({ cx: e.cx, cy: e.cy, rx: e.rx + HULL_PAD, ry: e.ry + HULL_PAD, ox: 0, oy: 0 }));
-    if (rings.length > 1) {
-      const mx = rings.reduce((s, g) => s + g.cx, 0) / rings.length;
-      const my = rings.reduce((s, g) => s + g.cy, 0) / rings.length;
-      for (const g of rings) {
-        const l = Math.hypot(g.cx - mx, g.cy - my) || 1;
-        g.ox = (g.cx - mx) / l;
-        g.oy = (g.cy - my) / l;
-      }
-    }
-    if (!rings.length) {
-      const core = nodes.filter((n) => !n.tangent);
-      if (!core.length) return;
-      const cx = core.reduce((s, n) => s + boxCx(n), 0) / core.length;
-      const cy = core.reduce((s, n) => s + n.y, 0) / core.length;
-      rings = [
-        {
-          cx,
-          cy,
-          rx: Math.max(...core.map((n) => Math.abs(boxCx(n) - cx) + halfW(n))),
-          ry: Math.max(...core.map((n) => Math.abs(n.y - cy) + halfH(n))),
-          ox: 0,
-          oy: 0,
-        },
-      ];
-    }
-    for (const n of nodes) {
-      if (!n.tangent) continue;
-      const q: [number, number] = [boxCx(n), n.y];
-      let best: { tx: number; ty: number; d: number } | null = null;
-      for (const g of rings) {
-        let dx = q[0] - g.cx;
-        let dy = q[1] - g.cy;
-        let d = Math.hypot(dx, dy);
-        if (d < 1e-6) {
-          const a = mulberry32(hash(n.id))() * 2 * Math.PI;
-          dx = Math.cos(a);
-          dy = Math.sin(a);
-          d = 1;
-        }
-        let ux = dx / d;
-        let uy = dy / d;
-        // Facing the middle: turn to the cluster's flank instead.
-        const inward = ux * g.ox + uy * g.oy;
-        if (inward < 0) {
-          ux -= inward * g.ox;
-          uy -= inward * g.oy;
-          const l = Math.hypot(ux, uy);
-          if (l < 1e-6) {
-            ux = -g.oy;
-            uy = g.ox;
-          } else {
-            ux /= l;
-            uy /= l;
-          }
-        }
-        const edge = 1 / Math.hypot(ux / g.rx, uy / g.ry);
-        const reach = edge + BAND_GAP + Math.abs(ux) * halfW(n) + Math.abs(uy) * halfH(n) + (uy < 0 ? -uy * 20 : 0);
-        const tx = g.cx + ux * reach;
-        const ty = g.cy + uy * reach;
-        const dist = Math.hypot(tx - q[0], ty - q[1]);
-        if (!best || dist < best.d) best = { tx, ty, d: dist };
-      }
-      n.vx = (n.vx ?? 0) + (best!.tx - q[0]) * 0.15 * alpha;
-      n.vy = (n.vy ?? 0) + (best!.ty - q[1]) * 0.15 * alpha;
-    }
-  };
-
   // Clusters of wide label boxes pack in more columns than rows, so the vertical pull is weaker in proportion
   // to the boxes' shape; clusters then come out round rather than flat.
   const core = nodes.filter((n) => !n.tangent);
@@ -779,11 +714,131 @@ export function layoutLiterature(input: LayoutNodeInput[], clusterOrder: string[
   const pullY = Math.max(0.15, Math.min(1, aspect * 0.8));
   const pull = (d: SimNode) => (d.tangent ? 0 : d.cluster ? 0.1 : 0.16);
 
+  // ---- tangential groups (SPEC §7.2) ----
+  // Each category gets an anchor in the band just outside the clusters, in a direction of its own from the
+  // middle: first the gaps between neighboring clusters, then the clusters' outer sides, then evenly around. A
+  // category takes the free direction closest to the papers it links to. Along that direction, the anchor sits
+  // at the least distance that keeps the group (a disk sized to its papers) clear of every cluster, of the papers
+  // with no family, and of the groups placed before it. Its papers pull toward it and form a loose group.
+  const tangents = nodes.filter((n) => n.tangent);
+  const size = new Map<string, number>();
+  for (const n of tangents) size.set(n.group!, (size.get(n.group!) ?? 0) + 1);
+  const groupIds = [...size.keys()].sort((a, b) => size.get(b)! - size.get(a)! || (a < b ? -1 : a > b ? 1 : 0));
+  const anchors = new Map<string, { ux: number; uy: number; rho: number; x: number; y: number }>();
+  if (groupIds.length) {
+    const k = clusters.length;
+    const dirs: { a: number; gap: boolean }[] = [];
+    if (k >= 2) {
+      for (let i = 0; i < k; i++) dirs.push({ a: Math.PI + (2 * Math.PI * (i + 0.5)) / k, gap: true });
+      for (let i = 0; i < k; i++) dirs.push({ a: Math.PI + (2 * Math.PI * i) / k, gap: false });
+    }
+    const more = Math.max(8, 2 * groupIds.length);
+    for (let i = 0; i < more; i++) dirs.push({ a: -Math.PI / 2 + (2 * Math.PI * i) / more, gap: k < 2 });
+    const angDist = (a: number, b: number) => Math.abs(((((a - b) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
+    // Preferred direction: toward the core papers a category links to, at their starting targets.
+    const prefer = new Map<string, number | null>();
+    for (const g of groupIds) {
+      let sx = 0;
+      let sy = 0;
+      let m = 0;
+      for (const l of valid) {
+        const a = byId.get(l.source)!;
+        const b = byId.get(l.target)!;
+        const other = a.group === g ? b : b.group === g ? a : null;
+        if (!other || other.tangent) continue;
+        sx += other.tx;
+        sy += other.ty;
+        m++;
+      }
+      prefer.set(g, m && Math.hypot(sx, sy) > 1e-6 ? Math.atan2(sy, sx) : null);
+    }
+    const used: number[] = [];
+    for (const g of groupIds) {
+      const p = prefer.get(g)!;
+      let best = -1;
+      let bestCost = Infinity;
+      // Two groups keep at least 30 degrees apart when they can.
+      for (const spaced of [true, false]) {
+        dirs.forEach((d, i) => {
+          if (used.includes(i) || (spaced && used.some((j) => angDist(dirs[j].a, d.a) < Math.PI / 6))) return;
+          const cost = (p === null ? 0 : angDist(d.a, p)) + (d.gap ? 0 : 1.2);
+          if (cost < bestCost - 1e-9) {
+            bestCost = cost;
+            best = i;
+          }
+        });
+        if (best >= 0) break;
+      }
+      used.push(best);
+      const rho = Math.sqrt(tangents.filter((n) => n.group === g).reduce((s, n) => s + footprint(n), 0) / Math.PI);
+      anchors.set(g, { ux: Math.cos(dirs[best].a), uy: Math.sin(dirs[best].a), rho, x: 0, y: 0 });
+    }
+  }
+  const placeAnchors = () => {
+    const ext = extents();
+    const loose = core.filter((n) => !n.cluster);
+    const placed: { x: number; y: number; rho: number }[] = [];
+    for (const g of groupIds) {
+      const a = anchors.get(g)!;
+      const need = a.rho + BAND_GAP;
+      let R = 0;
+      for (; R < 20000; R += 6) {
+        const x = R * a.ux;
+        const y = R * a.uy;
+        // Clear of each cluster's ellipse (with room above it for the family name), ...
+        if (ext.some((e) => ((x - e.cx) / (e.rx + HULL_PAD + need)) ** 2 + ((y - e.cy) / (e.ry + HULL_PAD + need + (y < e.cy ? 20 : 0))) ** 2 < 1)) continue;
+        // ... of the papers with no family, ...
+        if (loose.some((n) => Math.hypot(Math.max(0, Math.abs(x - boxCx(n)) - halfW(n)), Math.max(0, Math.abs(y - n.y) - halfH(n))) < need)) continue;
+        // ... and of the groups placed before.
+        if (placed.some((o) => Math.hypot(x - o.x, y - o.y) < o.rho + a.rho + GROUP_GAP)) continue;
+        break;
+      }
+      a.x = R * a.ux;
+      a.y = R * a.uy;
+      placed.push(a);
+    }
+  };
+  placeAnchors();
+  // Tangential works start spread around their anchor.
+  for (const n of tangents) {
+    const a = anchors.get(n.group!)!;
+    const r = mulberry32(hash(`${n.id}#group`));
+    const t = r() * 2 * Math.PI;
+    const d = a.rho * 0.8 * Math.sqrt(r());
+    n.x = a.x + d * Math.cos(t);
+    n.y = a.y + d * Math.sin(t);
+  }
+  let anchorTick = 0;
+  const anchorPull = (alpha: number) => {
+    if (anchorTick % 4 === 0) {
+      const before = new Map([...anchors].map(([g, a]) => [g, [a.x, a.y]]));
+      placeAnchors();
+      // While the clusters grow into shape, each group moves with its anchor, so no work gets caught behind a
+      // cluster on its way out.
+      if (anchorTick < ANCHOR_CARRY_TICKS) {
+        for (const n of tangents) {
+          const a = anchors.get(n.group!)!;
+          const [x0, y0] = before.get(n.group!)!;
+          n.x += a.x - x0;
+          n.y += a.y - y0;
+        }
+      }
+    }
+    anchorTick++;
+    for (const n of tangents) {
+      const a = anchors.get(n.group!)!;
+      n.vx = (n.vx ?? 0) + (a.x - boxCx(n)) * ANCHOR_PULL * alpha;
+      n.vy = (n.vy ?? 0) + (a.y - n.y) * ANCHOR_PULL * Math.sqrt(pullY) * alpha;
+    }
+  };
+
   const spring = (l: SimulationLinkDatum<SimNode>) => {
     const a = l.source as SimNode;
     const b = l.target as SimNode;
     const k = SPRING_STRENGTH / Math.min(degree.get(a.id) ?? 1, degree.get(b.id) ?? 1);
-    if (a.tangent || b.tangent) return Math.max(0.05, k * 0.5);
+    // A tangential work's springs to other categories and to the core stay weak, so its category's anchor
+    // decides where it sits.
+    if (a.tangent || b.tangent) return a.group === b.group ? k * 0.5 : TANGENT_SPRING;
     return a.cluster === b.cluster ? k : k * SPRING_ACROSS;
   };
 
@@ -792,7 +847,7 @@ export function layoutLiterature(input: LayoutNodeInput[], clusterOrder: string[
     .randomSource(mulberry32(42))
     .force('x', forceX<SimNode>((d) => d.tx).strength(pull))
     .force('y', forceY<SimNode>((d) => d.ty).strength((d) => pull(d) * pullY))
-    .force('band', band)
+    .force('anchor', anchorPull)
     .force(
       'link',
       forceLink<SimNode, SimulationLinkDatum<SimNode>>(simLinks)
@@ -858,6 +913,7 @@ export function layoutPapers(papers: GraphPaper[], familyOrder: string[], framew
       id: p.id,
       cluster: !p.tangent && p.method?.family && familyOrder.includes(p.method.family) ? p.method.family : null,
       tangent: !!p.tangent,
+      group: p.tangent ?? null,
       r,
       rr: edgeRadius(r, p.id === framework),
       labelW: labelWidth(p.short_name, p.year),
@@ -959,4 +1015,188 @@ export function placeLabels(
     insert(box);
   }
   return shown;
+}
+
+// ---------- tangential category labels ----------
+
+/** A box in screen pixels at the current zoom. */
+export interface ScreenBox {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+export interface GroupLabelInput {
+  id: string;
+  /** Label width and height in screen pixels. */
+  w: number;
+  h: number;
+  /** The group's dots, at zoom 1. */
+  members: { x: number; y: number; r: number; labelW: number }[];
+}
+
+/** True if the segment from a to b meets the box (Liang–Barsky clipping). */
+function segmentMeetsBox(ax: number, ay: number, bx: number, by: number, b: ScreenBox): boolean {
+  let t0 = 0;
+  let t1 = 1;
+  const dx = bx - ax;
+  const dy = by - ay;
+  for (const [p, q] of [
+    [-dx, ax - b.x0],
+    [dx, b.x1 - ax],
+    [-dy, ay - b.y0],
+    [dy, b.y1 - ay],
+  ]) {
+    if (p === 0) {
+      if (q < 0) return false;
+    } else {
+      const t = q / p;
+      if (p < 0) {
+        if (t > t1) return false;
+        if (t > t0) t0 = t;
+      } else {
+        if (t < t0) return false;
+        if (t < t1) t1 = t;
+      }
+    }
+  }
+  return true;
+}
+
+const meets = (a: ScreenBox, b: ScreenBox) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+
+/**
+ * Places one text label per tangential category, near its papers (SPEC §7.2), at zoom k in screen space. Each
+ * label tries spots around its group and around each of its papers, and takes the one that covers the fewest dots,
+ * node labels, other category labels, blocks (such as family names), and edges, stays out of family hulls and
+ * inside the content bounds (so fitting keeps it in view), and sits closest to its papers. Deterministic.
+ */
+export function placeGroupLabels(
+  groups: GroupLabelInput[],
+  k: number,
+  ctx: {
+    /** Every visible dot, at zoom 1. */
+    dots: { x: number; y: number; r: number }[];
+    /** Node labels that may show at this zoom, as dot and label width; the label sits right of the dot. */
+    labels?: { x: number; y: number; r: number; w: number }[];
+    /** Drawn edges as polylines, at zoom 1. */
+    edges?: Pt[][];
+    /** Family hulls, at zoom 1. */
+    hulls?: [number, number][][];
+    /** Boxes to keep clear of, in screen pixels at zoom k. */
+    blocks?: ScreenBox[];
+    /** Content bounds, at zoom 1. */
+    bounds?: { x0: number; y0: number; x1: number; y1: number };
+  },
+): Map<string, ScreenBox> {
+  const CELL = 64;
+  type Item = { kind: 'dot' | 'label' | 'block' | 'group'; box: ScreenBox; mark: number };
+  const grid = new Map<number, Item[]>();
+  const key = (i: number, j: number) => (i + 32768) * 65536 + (j + 32768);
+  const add = (it: Item) => {
+    for (let i = Math.floor(it.box.x0 / CELL); i <= Math.floor(it.box.x1 / CELL); i++)
+      for (let j = Math.floor(it.box.y0 / CELL); j <= Math.floor(it.box.y1 / CELL); j++) {
+        const list = grid.get(key(i, j));
+        if (list) list.push(it);
+        else grid.set(key(i, j), [it]);
+      }
+  };
+  for (const d of ctx.dots) add({ kind: 'dot', box: { x0: (d.x - d.r) * k, x1: (d.x + d.r) * k, y0: (d.y - d.r) * k, y1: (d.y + d.r) * k }, mark: 0 });
+  for (const l of ctx.labels ?? []) {
+    const x0 = (l.x + l.r) * k + LABEL_GAP;
+    add({ kind: 'label', box: { x0, x1: x0 + l.w, y0: l.y * k - LABEL_H / 2, y1: l.y * k + LABEL_H / 2 }, mark: 0 });
+  }
+  for (const b of ctx.blocks ?? []) add({ kind: 'block', box: b, mark: 0 });
+  const segs = (ctx.edges ?? []).map((pts) => {
+    const sp = pts.map(([x, y]) => [x * k, y * k] as Pt);
+    const xs = sp.map((p) => p[0]);
+    const ys = sp.map((p) => p[1]);
+    return { sp, box: { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) } };
+  });
+  const hulls = (ctx.hulls ?? []).filter((h) => h.length >= 3).map((h) => h.map(([x, y]) => [x * k, y * k] as [number, number]));
+  const B = ctx.bounds ? { x0: ctx.bounds.x0 * k, x1: ctx.bounds.x1 * k, y0: ctx.bounds.y0 * k, y1: ctx.bounds.y1 * k } : null;
+  let stamp = 0;
+
+  const cost = (b: ScreenBox, cx: number, cy: number, spread: number, near: (b: ScreenBox) => number) => {
+    let c = 0;
+    stamp++;
+    for (let i = Math.floor(b.x0 / CELL); i <= Math.floor(b.x1 / CELL); i++)
+      for (let j = Math.floor(b.y0 / CELL); j <= Math.floor(b.y1 / CELL); j++)
+        for (const it of grid.get(key(i, j)) ?? []) {
+          if (it.mark === stamp || !meets(it.box, b)) continue;
+          it.mark = stamp;
+          c += it.kind === 'label' ? 80 : 1000;
+        }
+    for (const s of segs) {
+      if (!meets(s.box, b)) continue;
+      for (let i = 1; i < s.sp.length; i++) {
+        if (segmentMeetsBox(s.sp[i - 1][0], s.sp[i - 1][1], s.sp[i][0], s.sp[i][1], b)) {
+          c += 40;
+          break;
+        }
+      }
+    }
+    const probes: [number, number][] = [
+      [b.x0, b.y0],
+      [b.x1, b.y0],
+      [b.x0, b.y1],
+      [b.x1, b.y1],
+      [(b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2],
+    ];
+    if (hulls.some((h) => probes.some((p) => polygonContains(h, p)))) c += 300;
+    // Outside the content bounds, a label may fall outside the fitted view: worse than covering a dot.
+    if (B) c += 60 * (Math.max(0, B.x0 - b.x0) + Math.max(0, b.x1 - B.x1) + Math.max(0, B.y0 - b.y0) + Math.max(0, b.y1 - B.y1));
+    const dc = Math.hypot((b.x0 + b.x1) / 2 - cx, (b.y0 + b.y1) / 2 - cy);
+    return c + 0.5 * near(b) + 0.15 * Math.max(0, dc - spread);
+  };
+
+  const out = new Map<string, ScreenBox>();
+  for (const g of groups) {
+    if (!g.members.length) continue;
+    const ms = g.members.map((m) => ({ x: m.x * k, y: m.y * k, r: m.r * k, lw: m.labelW }));
+    const cx = ms.reduce((s, m) => s + m.x, 0) / ms.length;
+    const cy = ms.reduce((s, m) => s + m.y, 0) / ms.length;
+    const spread = Math.max(...ms.map((m) => Math.hypot(m.x - cx, m.y - cy) + m.r));
+    const bx0 = Math.min(...ms.map((m) => m.x - m.r));
+    const bx1 = Math.max(...ms.map((m) => m.x + m.r));
+    const by0 = Math.min(...ms.map((m) => m.y - m.r));
+    const by1 = Math.max(...ms.map((m) => m.y + m.r));
+    const below = Math.max(by1, ...ms.map((m) => m.y + LABEL_H / 2));
+    const lx1 = Math.max(...ms.map((m) => m.x + m.r + LABEL_GAP + m.lw));
+    const { w, h } = g;
+    const gap = 4;
+    const tops: [number, number][] = [];
+    // Around the group: above and below (left, centered, right), to the left, and to the right past the labels.
+    for (const x of [bx0, (bx0 + bx1) / 2 - w / 2, bx1 - w]) tops.push([x, by0 - h - gap], [x, below + gap]);
+    for (const y of [cy - h / 2, by0, by1 - h]) tops.push([bx0 - w - 2 * gap, y], [lx1 + 2 * gap, y]);
+    // Around each paper.
+    for (const m of ms) {
+      tops.push([m.x - w / 2, m.y - m.r - h - gap], [m.x - w / 2, m.y + m.r + gap], [m.x - m.r, m.y - m.r - h - gap], [m.x - m.r, m.y + m.r + gap]);
+      tops.push([m.x - m.r - gap - w, m.y - h / 2], [m.x + m.r + LABEL_GAP + m.lw + 2 * gap, m.y - h / 2]);
+    }
+    // A ring around the group, for crowded spots.
+    for (let i = 0; i < 16; i++) {
+      const a = (2 * Math.PI * i) / 16;
+      tops.push([cx + Math.cos(a) * (spread + h) - w / 2, cy + Math.sin(a) * (spread + h) - h / 2]);
+    }
+    // Each spot also moved inside the content bounds, for small zooms, where a label is wide next to the graph.
+    if (B) {
+      for (const [x, y] of [...tops]) {
+        const cx2 = Math.max(B.x0, Math.min(x, B.x1 - w));
+        const cy2 = Math.max(B.y0, Math.min(y, B.y1 - h));
+        if (cx2 !== x || cy2 !== y) tops.push([cx2, cy2]);
+      }
+    }
+    const near = (b: ScreenBox) => Math.min(...ms.map((m) => Math.hypot(Math.max(0, b.x0 - m.x, m.x - b.x1), Math.max(0, b.y0 - m.y, m.y - b.y1))));
+    let best: { box: ScreenBox; c: number } | null = null;
+    for (const [x, y] of tops) {
+      const box = { x0: x, y0: y, x1: x + w, y1: y + h };
+      const c = cost(box, cx, cy, spread, near);
+      if (!best || c < best.c - 1e-9) best = { box, c };
+    }
+    out.set(g.id, best!.box);
+    add({ kind: 'group', box: best!.box, mark: 0 });
+  }
+  return out;
 }

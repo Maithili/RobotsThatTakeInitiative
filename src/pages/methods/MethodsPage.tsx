@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ActionChip, InputChip, LevelChip } from '../../components/Chip.tsx';
+import { ActionChip, InputChip, LevelChip, TangentTag } from '../../components/Chip.tsx';
 import { EmptyState, Missing } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
 import { db, fixUrl, papers as allPapers, tx } from '../../data.ts';
@@ -78,9 +78,9 @@ function MethodsList({ papers, tangential }: { papers: DbPaper[]; tangential: Db
     .map((l) => ({ id: l.id, label: <><LevelChip level={l.level} /> {l.title}</>, papers: l.papers }));
   // Tangential works come last, grouped by tangent type (SPEC §7.2).
   if (url.get('tangents') !== '0') {
-    for (const [tid, t] of Object.entries(tx.tangent_types)) {
+    for (const tid of Object.keys(tx.tangent_types)) {
       const ps = tangential.filter((p) => p.tangent === tid && matchesGlobal(p, url.filters));
-      if (ps.length) groups.push({ id: `tangent:${tid}`, label: <><span className="tag">Tangential</span> {t.label}</>, papers: ps });
+      if (ps.length) groups.push({ id: `tangent:${tid}`, label: <TangentTag type={tid} />, papers: ps });
     }
   }
 
@@ -159,7 +159,6 @@ export function MethodsPage() {
   const methods = useMemo(() => papers.filter((p) => inMethodsGraph(p) && !p.tangent), [papers]);
   const tangential = useMemo(() => (TANGENTS_IN_GRAPH ? papers.filter((p) => p.tangent) : []), [papers]);
   const graphPapers = useMemo(() => [...methods, ...tangential], [methods, tangential]);
-  const clusters = useMemo(() => Object.keys(families).filter((fam) => methods.some((p) => p.method?.family === fam)), [families, methods]);
   const [hoverId, setHover] = useState<string | null>(null);
   const narrow = typeof window !== 'undefined' && window.innerWidth < 640;
   const view = url.get('view') === 'list' || (url.get('view') !== 'graph' && narrow) ? 'list' : 'graph';
@@ -177,7 +176,7 @@ export function MethodsPage() {
         </p>
       </div>
 
-      <TopBand papers={bandPapers} clusters={clusters} families={families} hoverId={hoverId} setHover={setHover} />
+      <TopBand papers={bandPapers} hoverId={hoverId} setHover={setHover} />
 
       <FilterBar
         controls={['family', 'action', 'input', 'theme']}

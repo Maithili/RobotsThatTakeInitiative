@@ -1,14 +1,14 @@
-// Methods top band (SPEC §7.1): level cards, a condensed timeline with one row per L2 and L1 card, and the legend.
+// Methods top band (SPEC §7.1): level cards and a condensed timeline with one row per L2 and L1 card. The legend
+// sits with the graph (GraphLegend.tsx).
 import { brushX, type BrushBehavior } from 'd3-brush';
 import { select } from 'd3-selection';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { KnownsChips } from '../../components/Chip.tsx';
 import { tx } from '../../data.ts';
-import { EDGE_LABEL, EDGE_TYPES, edgeParam, parseEdgeTypes, type EdgeType } from '../../lib/edges.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
 import type { DbPaper, LevelId } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
-import { BAND_LEVELS, familyHue, FOCUS_LEVELS, TANGENTS_IN_GRAPH, TIMELINE_START, type FamilyInfo } from './constants.ts';
+import { BAND_LEVELS, FOCUS_LEVELS, TIMELINE_START } from './constants.ts';
 
 const PRE_W = 86;
 const BREAK_W = 12;
@@ -255,112 +255,12 @@ function TimelineAxis({ bands, width }: { bands: Band[]; width: number }) {
   );
 }
 
-/** Edge legend sample: a short line in the edge's style with a small arrowhead. */
-function EdgeSample({ type }: { type: EdgeType }) {
-  return (
-    <svg width="34" height="10" viewBox="0 0 34 10" aria-hidden="true" className="lgd__edge">
-      <path d="M1,5 H27" className={`litg__edge litg__edge--${type}`} />
-      <path d={type === 'cites' ? 'M27,2.6 L32,5 L27,7.4 z' : 'M26,2 L32.5,5 L26,8 z'} className={`litg__arrow litg__arrow--${type}`} />
-    </svg>
-  );
-}
-
-const EDGE_LEGEND: Record<EdgeType, string> = {
-  builds: EDGE_LABEL.builds.name,
-  benchmarks: EDGE_LABEL.benchmarks.name,
-  cites: 'Show all citation lines',
-};
-
-function Legend({ clusters, families }: { clusters: string[]; families: Record<string, FamilyInfo> }) {
-  const url = useUrl();
-  const shown = parseEdgeTypes(url.get('edges'));
-  return (
-    <aside className="mtop__legend" aria-label="Legend">
-      <div className="lgd__group">
-        <h2 className="strip__title">Edges</h2>
-        <ul className="plain lgd">
-          {EDGE_TYPES.map((t) => (
-            <li key={t}>
-              <label className="check">
-                <input
-                  type="checkbox"
-                  checked={shown.has(t)}
-                  data-testid={`edges-${t}`}
-                  onChange={(e) => {
-                    const next = new Set(shown);
-                    if (e.target.checked) next.add(t);
-                    else next.delete(t);
-                    url.set({ edges: edgeParam(next) });
-                  }}
-                />
-                <EdgeSample type={t} />
-                {EDGE_LEGEND[t]}
-              </label>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="lgd__group">
-        <h2 className="strip__title">Papers</h2>
-        <ul className="plain lgd">
-          {clusters.map((c) => {
-            const semi = !!families[c]?.semi_tangential;
-            return (
-              <li key={c} data-testid={`legend-family-${c}`} title={semi ? 'Semi-tangential family: drawn lighter until hovered' : undefined}>
-                <span className={`lgd__dot lgd__dot--${familyHue(families, c)}${semi ? ' lgd__dot--semi' : ''}`} aria-hidden="true" /> {families[c]?.name ?? c}
-                {semi && <span className="muted small">· semi-tangential, drawn lighter</span>}
-              </li>
-            );
-          })}
-          <li>
-            <span className="lgd__dot lgd__dot--none" aria-hidden="true" /> No family
-          </li>
-          <li>
-            <span className="lgd__dot lgd__dot--none lgd__dot--ring" aria-hidden="true" /> Framework paper
-          </li>
-          <li>
-            <span className="lgd__sizes" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </span>
-            Larger: more linked papers
-          </li>
-          <li>
-            <span className="lgd__ramp" aria-hidden="true" />
-            Darker: newer
-          </li>
-        </ul>
-      </div>
-      {TANGENTS_IN_GRAPH && (
-        <div className="lgd__group">
-          <h2 className="strip__title">Tangential works</h2>
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={url.get('tangents') !== '0'}
-              data-testid="show-tangents"
-              onChange={(e) => url.set({ tangents: e.target.checked ? null : '0' })}
-            />
-            <span className="lgd__dot lgd__dot--tangent" aria-hidden="true" />
-            Show tangential works
-          </label>
-        </div>
-      )}
-    </aside>
-  );
-}
-
 export function TopBand({
   papers,
-  clusters,
-  families,
   hoverId,
   setHover,
 }: {
   papers: DbPaper[];
-  clusters: string[];
-  families: Record<string, FamilyInfo>;
   hoverId: string | null;
   setHover: (id: string | null) => void;
 }) {
@@ -390,7 +290,6 @@ export function TopBand({
       <div className="mtop__axis" ref={ref}>
         <TimelineAxis bands={bands} width={width} />
       </div>
-      <Legend clusters={clusters} families={families} />
     </section>
   );
 }

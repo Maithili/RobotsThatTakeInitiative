@@ -34,6 +34,29 @@ const known = z.enum(['known', 'unknown']);
 
 // ---------- taxonomy ----------
 
+/** Hue slots for tangential categories in the literature graph (SPEC §7.2), each with CSS tokens for both themes.
+ *  They are distinct from the family hues, which go by family order. */
+export const TANGENT_HUES = ['amber', 'magenta', 'sky', 'brown'] as const;
+export type TangentHue = (typeof TANGENT_HUES)[number];
+/** Names of the family hues and the gray for papers with no category. A tangential category never takes one. */
+export const RESERVED_HUES = ['teal', 'coral', 'blue', 'green', 'purple', 'gray', 'grey'] as const;
+
+const tangentHue = z.enum(TANGENT_HUES, {
+  errorMap: (issue, ctx) => {
+    const slots = TANGENT_HUES.join(', ');
+    if (issue.code === 'invalid_enum_value') {
+      const v = String(issue.received);
+      return {
+        message: (RESERVED_HUES as readonly string[]).includes(v)
+          ? `"${v}" is reserved for families or uncategorized papers; use a tangential hue: ${slots}`
+          : `unknown hue "${v}"; use one of ${slots}`,
+      };
+    }
+    if (issue.code === 'invalid_type') return { message: `needs a color, one of ${slots}` };
+    return { message: ctx.defaultError };
+  },
+});
+
 const defn = z.object({ label: z.string(), definition: z.string() });
 const levelDef = z.object({
   name: z.string(),
@@ -78,7 +101,8 @@ export const TaxonomySchema = z.object({
   stages: z.record(z.object({ name: z.string(), definition: z.string() })),
   subproblems: z.object(Object.fromEntries(SUBPROBLEM_IDS.map((s) => [s, subproblemDef])) as Record<SubproblemId, typeof subproblemDef>),
   themes: z.record(defn),
-  tangent_types: z.record(defn),
+  /** Each tangential category has its own hue slot (SPEC §7.2); no two share one. */
+  tangent_types: z.record(defn.extend({ color: tangentHue })),
   statuses: z.record(z.object({ glyph: z.string(), label: z.string() })),
   relations: z.record(defn),
   net_value: z.object({

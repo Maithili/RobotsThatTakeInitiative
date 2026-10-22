@@ -138,6 +138,26 @@ describe('validator', () => {
     expectError(run([base('a', { method: { knowns: { goal: 'known', human_policy: 'unknown' }, family: 'goal_inference' } })]), /not L2/);
   });
 
+  it('gives each tangential category its own tangential hue slot', () => {
+    const withTangents = (types: Record<string, Record<string, unknown>>) => {
+      const t = bareTaxonomy();
+      t.tangent_types = types;
+      return run([], { datasets: [], taxonomy: t });
+    };
+    const cat = (color?: unknown) => ({ label: 'L', definition: 'D', ...(color === undefined ? {} : { color }) });
+    // The real taxonomy gives every category a hue slot, each a different one.
+    expect(Object.values(realTaxonomy.tangent_types).map((x: any) => x.color).sort()).toEqual(['amber', 'magenta', 'sky']);
+    expect(withTangents({ a: cat('amber'), b: cat('magenta'), c: cat('sky'), d: cat('brown') }).errors).toEqual([]);
+    // Missing, unknown, or a family's hue (or the gray for uncategorized papers) is rejected, naming the slots.
+    expectError(withTangents({ a: cat() }), /tangent_types\.a\.color: needs a color, one of amber, magenta, sky, brown/);
+    expectError(withTangents({ a: cat('chartreuse') }), /tangent_types\.a\.color: unknown hue "chartreuse"/);
+    expectError(withTangents({ a: cat('teal') }), /tangent_types\.a\.color: "teal" is reserved for families/);
+    expectError(withTangents({ a: cat('gray') }), /"gray" is reserved/);
+    expectError(withTangents({ a: cat(2) }), /tangent_types\.a\.color: needs a color/);
+    // Two categories never share a color.
+    expectError(withTangents({ a: cat('amber'), b: cat('amber') }), /tangent_types\.b\.color "amber" is already the color of a/);
+  });
+
   it('rejects a method block without knowns', () => {
     expectError(run([base('a', { method: { family: 'goal_inference' } })]), /knowns/);
     expectError(run([base('a', { method: { knowns: null } })]), /knowns/);
@@ -336,7 +356,8 @@ describe('taxonomy additions: semi-tangential families, search tangents, metric 
     const t = r.db!.taxonomy;
     expect(t.families.implicit_cues).toMatchObject({ name: 'Implicit Cues', semi_tangential: true });
     expect(t.families.goal_inference.semi_tangential).toBeUndefined();
-    expect(t.tangent_types.search.label).toBe('Search in changing homes');
+    expect(t.tangent_types.search).toMatchObject({ label: 'Dynamic mapping and object search', color: 'amber' });
+    expect(t.tangent_types.hri).toMatchObject({ label: 'User perceptions of proactivity', color: 'magenta' });
     expect(t.metrics.net_actions_saved).toMatchObject({ direction: 'higher', unit: '%' });
     expect(t.metrics.perturbed_actions).toMatchObject({ direction: 'lower', unit: '%' });
     expect(t.metrics.f1).toMatchObject({ direction: 'higher', unit: 'fraction' });

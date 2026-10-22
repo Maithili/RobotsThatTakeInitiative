@@ -287,6 +287,12 @@ export function buildDb(input: BuildInput): BuildResult {
   }
 
   // ---- taxonomy cross-references ----
+  const hueOwner = new Map<string, string>();
+  for (const [tid, tt] of Object.entries(t.tangent_types)) {
+    const other = hueOwner.get(tt.color);
+    if (other) errors.push(`taxonomy.yaml: tangent_types.${tid}.color "${tt.color}" is already the color of ${other}; each category needs its own`);
+    else hueOwner.set(tt.color, tid);
+  }
   for (const [lid, lt] of Object.entries(t.loop_types)) {
     for (const r of lt.refs ?? []) {
       referenced.add(r);

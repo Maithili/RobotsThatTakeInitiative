@@ -1,4 +1,6 @@
+import { polygonContains } from 'd3-polygon';
 import { describe, expect, it } from 'vitest';
+import type { Pt } from '../src/lib/edgeRouting.ts';
 import {
   countOverlaps,
   dotRadius,
@@ -6,16 +8,20 @@ import {
   DOT_R_MIN,
   hullOf,
   inLiteratureGraph,
+  LABEL_GAP,
+  LABEL_H,
   labelWidth,
   labelYear,
   layoutLiterature,
   layoutPapers,
   linkedPapers,
+  placeGroupLabels,
   placeLabels,
   shapeInside,
   TANGENT_R,
   type LayoutNodeInput,
   type Point,
+  type ScreenBox,
   type Shape,
 } from '../src/lib/literatureLayout.ts';
 import { SYNTHETIC_COUNT, SYNTHETIC_FAMILIES, SYNTHETIC_TANGENTS, syntheticPapers } from '../src/pages/methods/synthetic.ts';
@@ -93,6 +99,95 @@ describe('literature graph layout (build time)', () => {
     const gap = (n: (typeof placed)[number]) => Math.min(...hulls.flatMap((h) => h.map((p, i) => toSegment(n.x, n.y, p, h[(i + 1) % h.length]))));
     const far = placed.filter((n) => n.tangent && gap(n) > 220).map((n) => n.id);
     expect(far).toEqual([]);
+    // Each category forms its own loose group: every work sits nearer its own category's center than any other's,
+    // and the groups sit apart, outside every hull.
+    const byId = new Map(papers.map((p) => [p.id, p]));
+    const cats = [...new Set(papers.filter((p) => p.tangent).map((p) => p.tangent!))];
+    expect(cats.length).toBeGreaterThanOrEqual(4);
+    const center = new Map(
+      cats.map((c) => {
+        const ms = placed.filter((n) => byId.get(n.id)!.tangent === c);
+        return [c, [ms.reduce((s, n) => s + n.x, 0) / ms.length, ms.reduce((s, n) => s + n.y, 0) / ms.length] as [number, number]];
+      }),
+    );
+    const stray = placed
+      .filter((n) => n.tangent)
+      .filter((n) => {
+        const own = byId.get(n.id)!.tangent!;
+        const d = (c: string) => Math.hypot(n.x - center.get(c)![0], n.y - center.get(c)![1]);
+        return cats.some((c) => c !== own && d(c) < d(own));
+      })
+      .map((n) => n.id);
+    expect(stray).toEqual([]);
+    for (const a of cats) for (const b of cats) if (a < b) expect(Math.hypot(center.get(a)![0] - center.get(b)![0], center.get(a)![1] - center.get(b)![1])).toBeGreaterThan(300);
+    for (const [c, [x, y]] of center) expect(hulls.some((h) => polygonContains(h, [x, y])), `${c} center inside a hull`).toBe(false);
+  });
+
+  it('pulls each tangential category toward its own anchor next to the clusters', () => {
+    const f = fixture(24, 2, 0);
+    const tangents: LayoutNodeInput[] = ['x', 'y'].flatMap((g) => [0, 1, 2, 3].map((i) => ({ id: `${g}${i}`, cluster: null, tangent: true, group: g, r: 6, labelW: 50 })));
+    // Category x cites cluster c0 (left), category y cites cluster c1 (right).
+    const links = [...f.links, ...[0, 1, 2, 3].flatMap((i) => [{ source: 'p0', target: `x${i}` }, { source: 'p1', target: `y${i}` }])];
+    const pos = layoutLiterature([...f.nodes, ...tangents], f.clusters, links);
+    const mean = (pred: (id: string) => boolean) => {
+      const ps = [...pos].filter(([id]) => pred(id)).map(([, p]) => p);
+      return { x: ps.reduce((s, p) => s + p.x, 0) / ps.length, y: ps.reduce((s, p) => s + p.y, 0) / ps.length };
+    };
+    const x = mean((id) => id.startsWith('x'));
+    const y = mean((id) => id.startsWith('y'));
+    const c0 = mean((id) => f.nodes.some((n) => n.id === id && n.cluster === 'c0'));
+    const c1 = mean((id) => f.nodes.some((n) => n.id === id && n.cluster === 'c1'));
+    // Each category sits apart from the other, beside the cluster it links to.
+    expect(Math.hypot(x.x - y.x, x.y - y.y)).toBeGreaterThan(100);
+    const d = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
+    expect(d(x, c0)).toBeLessThan(d(x, c1));
+    expect(d(y, c1)).toBeLessThan(d(y, c0));
+    const placed = shapes([...f.nodes, ...tangents], pos);
+    expect(countOverlaps(placed)).toBe(0);
+    expect(inForeignHull(placed, f.clusters)).toEqual([]);
+  });
+});
+
+describe('tangential category labels', () => {
+  const group = { id: 'g', w: 120, h: 17, members: [0, 1, 2].map((i) => ({ x: i * 30, y: 0, r: 6, labelW: 40 })) };
+  const hit = (a: ScreenBox, b: ScreenBox) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+  const dotBox = (d: { x: number; y: number; r: number }, k = 1): ScreenBox => ({ x0: (d.x - d.r) * k, x1: (d.x + d.r) * k, y0: (d.y - d.r) * k, y1: (d.y + d.r) * k });
+
+  it('sits near its papers and covers no dot, label, or other category label', () => {
+    // Other papers crowd the spot above the group; the label goes elsewhere, still next to the group.
+    const others = [-10, 30, 60, 90].map((x, i) => ({ x, y: -26, r: 8, id: `o${i}` }));
+    const dots = [...group.members, ...others];
+    const boxes = placeGroupLabels([group, { ...group, id: 'h', members: [{ x: 300, y: 0, r: 6, labelW: 40 }] }], 1, {
+      dots,
+      labels: dots.map((d) => ({ ...d, w: 40 })),
+    });
+    const b = boxes.get('g')!;
+    for (const d of dots) expect(hit(b, dotBox(d))).toBe(false);
+    for (const d of dots) expect(hit(b, { x0: d.x + d.r + LABEL_GAP, x1: d.x + d.r + LABEL_GAP + 40, y0: d.y - LABEL_H / 2, y1: d.y + LABEL_H / 2 })).toBe(false);
+    expect(hit(b, boxes.get('h')!)).toBe(false);
+    const nearest = Math.min(...group.members.map((m) => Math.hypot(Math.max(0, b.x0 - m.x, m.x - b.x1), Math.max(0, b.y0 - m.y, m.y - b.y1))));
+    expect(nearest).toBeLessThan(40);
+  });
+
+  it('keeps off edges where it can, and stays in the content bounds', () => {
+    // An edge runs just above the group; the label goes below it.
+    const edge: Pt[] = [
+      [-200, -16],
+      [300, -16],
+    ];
+    const b = placeGroupLabels([group], 1, { dots: group.members, edges: [edge] }).get('g')!;
+    expect(b.y0).toBeGreaterThan(-16);
+    // Content bounds that end just right of the group: the label does not run past them, at any zoom, though the
+    // label keeps its size on screen.
+    for (const [k, bounds] of [
+      [1, { x0: -40, y0: -200, x1: 100, y1: 200 }],
+      [0.5, { x0: -300, y0: -400, x1: 100, y1: 400 }],
+    ] as const) {
+      const c = placeGroupLabels([group], k, { dots: group.members, bounds }).get('g')!;
+      expect(c.x0).toBeGreaterThanOrEqual(bounds.x0 * k - 0.5);
+      expect(c.x1).toBeLessThanOrEqual(bounds.x1 * k + 0.5);
+      for (const d of group.members) expect(hit(c, dotBox(d, k))).toBe(false);
+    }
   });
 });
 

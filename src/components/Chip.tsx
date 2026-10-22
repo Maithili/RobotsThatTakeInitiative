@@ -49,6 +49,18 @@ export function LevelChip({ level }: { level: LevelId | null }) {
   );
 }
 
+/** A tangential work's category, with a dot in the category's color (SPEC §7.2). A type the taxonomy lacks is gray. */
+export function TangentTag({ type, prefix = true }: { type: string; prefix?: boolean }) {
+  const t = Object.prototype.hasOwnProperty.call(tx.tangent_types, type) ? tx.tangent_types[type] : null;
+  return (
+    <span className="tag tag--tangent" title={t?.definition} data-testid="tangent-tag" data-tangent={type}>
+      <span className={`tan-dot tan-dot--${t?.color ?? 'none'}`} aria-hidden="true" />
+      {prefix && 'Tangential · '}
+      {t?.label ?? type}
+    </span>
+  );
+}
+
 export function KnownsChips({ knowns }: { knowns: { goal: string; human_policy: string } | null | undefined }) {
   if (!knowns) return <span className="muted">—</span>;
   return (

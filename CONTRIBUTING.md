@@ -40,7 +40,7 @@ Every id below is defined in [`data/taxonomy.yaml`](data/taxonomy.yaml), which f
 | `short_name` | The paper's name for its method or system, else "FirstAuthor Year". ≤ 24 characters. | |
 | `title`, `authors`, `venue`, `year` | As on the landing page. | |
 | `type` | `survey` for surveys (adds a "Survey" chip in the drawer); omit otherwise. | |
-| `tangent` | Marks a tangential work, such as an HRI study of proactivity. It needs no method block and shows in the literature graph at half opacity. | [`tangent_types`](data/taxonomy.yaml) |
+| `tangent` | Marks a tangential work, such as a user study of proactivity. It needs no method block and shows in the literature graph in its category's color at 60% opacity, grouped and labeled by category. | [`tangent_types`](data/taxonomy.yaml) |
 | `links.paper` / `code` / `project` | Landing page; official code; project page. | |
 | `ids.doi` / `ids.arxiv` | Bare DOI (`10.1145/…`) and arXiv id (`2401.01234`) from the landing page. `fetch-citations` uses them. | |
 | `provenance` | Where the tags come from. ≤ 140 characters. | |
@@ -58,7 +58,7 @@ Datasets, evaluation setups, and simulators live in [`data/datasets/`](data/data
 
 ## What the validator checks
 
-Errors (the build fails): schema mismatches, ids not in the taxonomy, references to papers or datasets that do not exist, an id that differs from its file name, duplicate evaluation ids, text over its length cap, PDF links or files, `goal: unknown` with `human_policy: known`, a family on a non-L2 paper, cycles in `builds_on`, a metric with an unknown `category` or `group`, a metric group whose members span categories, an `evaluations_exclude` id that is not a paper, and entries in `data/citations-manual.yaml` with unknown ids, a self-citation, or a pair listed twice.
+Errors (the build fails): schema mismatches, ids not in the taxonomy, references to papers or datasets that do not exist, an id that differs from its file name, duplicate evaluation ids, text over its length cap, PDF links or files, a tangent type without its own color (one of `amber`, `magenta`, `sky`, `brown`, each used once), `goal: unknown` with `human_policy: known`, a family on a non-L2 paper, cycles in `builds_on`, a metric with an unknown `category` or `group`, a metric group whose members span categories, an `evaluations_exclude` id that is not a paper, and entries in `data/citations-manual.yaml` with unknown ids, a self-citation, or a pair listed twice.
 
 Warnings (the build passes): a missing `links.paper`, a `builds_on` target newer than the paper, a result metric not listed in its evaluation, a paper that nothing shows or references, and a `data/citations.json` that is missing, stale, or incomplete.
 

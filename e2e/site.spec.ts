@@ -229,12 +229,21 @@ test('the literature graph lays out the synthetic fixture: 300 L2 papers in 4 cl
     const hit = (a: DOMRect, b: DOMRect) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
     const dots = [...document.querySelectorAll('[data-testid^="node-synthetic-"] .litg__dot')].map((n) => n.getBoundingClientRect());
     const labels = [...document.querySelectorAll('.litg__label')].map((n) => ({ id: n.getAttribute('data-id'), r: n.getBoundingClientRect() }));
+    const cats = [...document.querySelectorAll('.litg__cat-label')].map((n) => n.getBoundingClientRect());
     let n = 0;
     for (let i = 0; i < dots.length; i++) for (let j = i + 1; j < dots.length; j++) if (hit(dots[i], dots[j])) n++;
     for (let i = 0; i < labels.length; i++) for (let j = i + 1; j < labels.length; j++) if (hit(labels[i].r, labels[j].r)) n++;
-    return { n, labels: labels.length };
+    // Tangential category labels cover no dot, no paper label, and no other category label.
+    for (let i = 0; i < cats.length; i++) {
+      for (const d of dots) if (hit(cats[i], d)) n++;
+      for (const l of labels) if (hit(cats[i], l.r)) n++;
+      for (let j = i + 1; j < cats.length; j++) if (hit(cats[i], cats[j])) n++;
+    }
+    return { n, labels: labels.length, cats: cats.length };
   });
   expect(overlaps.n).toBe(0);
+  // Every taxonomy category in the fixture gets its label; works of an unknown type get none.
+  expect(overlaps.cats).toBe(3);
   // At the fitted zoom only the larger dots carry labels; zooming in reveals more.
   expect(overlaps.labels).toBeGreaterThan(0);
   expect(overlaps.labels).toBeLessThan(100);
@@ -461,11 +470,11 @@ test('13. the realism plot puts GAP at task-specific policy and adaptive simulat
   await expect(page.getByText('Organization adapted from')).toHaveCount(0);
 });
 
-test('14. a tangential work renders at half opacity, and unchecking Show tangential works removes it and its edges', async ({ page }) => {
+test('14. a tangential work renders at 60% opacity, and unchecking Show tangential works removes it, its edges, and its category label', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
   const koch = page.getByTestId('node-koch-2024-proactive-hri-review');
   await expect(koch).toHaveAttribute('data-tangent', 'hri');
-  await expect(koch).toHaveCSS('opacity', '0.5');
+  await expect(koch).toHaveCSS('opacity', '0.6');
   await expect(page.getByTestId('tchip-koch-2024-proactive-hri-review')).toHaveCount(0);
   // Its label does not repeat the year that its short name holds.
   await expect(page.getByTestId('label-koch-2024-proactive-hri-review')).toHaveText('Koch van den Broek 2024');
@@ -478,7 +487,7 @@ test('14. a tangential work renders at half opacity, and unchecking Show tangent
   await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
   await settleGraph(page);
   const t = page.getByTestId('node-synthetic-t0');
-  await expect(t).toHaveCSS('opacity', '0.5');
+  await expect(t).toHaveCSS('opacity', '0.6');
   const tangentEdges = page.locator('.litg__edges .litg__edge.is-tangent');
   expect(await tangentEdges.count()).toBeGreaterThan(0);
   await expect(page.locator('.litg__edges .litg__edge.is-tangent:not(.is-dim):not(.is-hl)').first()).toHaveCSS('stroke-opacity', '0.5');
@@ -486,6 +495,7 @@ test('14. a tangential work renders at half opacity, and unchecking Show tangent
   await expect.poll(() => params(page).get('tangents')).toBe('0');
   await expect(page.locator('[data-testid^="node-synthetic-t"]')).toHaveCount(0);
   await expect(tangentEdges).toHaveCount(0);
+  await expect(page.locator('.litg__cat-label')).toHaveCount(0);
   await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(300);
 });
 
@@ -551,27 +561,137 @@ test('15. the protocols table shows metric categories, never metric names; a gro
   await expect(page.getByTestId('sub-detail')).toContainText('PredictiveGraphs');
 });
 
-test('the legend has edges, clusters, and tangential works, and no action-type or level groups', async ({ page }) => {
+test('the legend sits in the graph panel directly above the graph; the top band keeps the level cards and the timeline', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
   const legend = page.getByRole('complementary', { name: 'Legend' });
+  await expect(legend).toHaveCount(1);
+  // Inside the graph panel, right above the graph, and not in the top band.
+  await expect(page.getByTestId('literature-graph').getByRole('complementary', { name: 'Legend' })).toBeVisible();
+  await expect(page.locator('.mtop').getByRole('complementary')).toHaveCount(0);
+  await expect(page.locator('.mtop')).not.toContainText('Show tangential works');
+  const lb = (await legend.boundingBox())!;
+  const gb = (await page.locator('.litg__svg').boundingBox())!;
+  expect(lb.y + lb.height).toBeLessThanOrEqual(gb.y + 1);
+  expect(gb.y - (lb.y + lb.height)).toBeLessThan(4);
+  // The timeline takes the width the legend left.
+  const band = (await page.locator('.mtop').boundingBox())!;
+  const axis = (await page.locator('.mtop__axis').boundingBox())!;
+  expect(band.x + band.width - (axis.x + axis.width)).toBeLessThan(20);
+
+  // Edge styles with their checkboxes, families with hull tints, tangential categories in their colors with no hull,
+  // gray for no category, the framework ring, dot size and darkness, and Show tangential works.
   await expect(legend).toContainText('Edges');
+  for (const t of ['builds', 'benchmarks', 'cites']) await expect(legend.getByTestId(`edges-${t}`)).toHaveCount(1);
+  for (const f of ['goal_inference', 'temporal_imitation', 'implicit_cues']) {
+    await expect(legend.getByTestId(`legend-family-${f}`).locator('.lgd__hull .lgd__dot')).toHaveCount(1);
+  }
+  await expect(legend.getByTestId('legend-tangent-search')).toHaveText('Dynamic mapping and object search');
+  await expect(legend.getByTestId('legend-tangent-hri')).toHaveText('User perceptions of proactivity');
+  await expect(legend.locator('[data-testid^="legend-tangent-"] .lgd__hull')).toHaveCount(0);
+  await expect(legend.getByTestId('legend-tangent-search').locator('.lgd__dot')).toHaveCSS('opacity', '0.6');
+  await expect(legend.getByTestId('legend-none')).toHaveText('No category');
+  await expect(legend.getByTestId('legend-framework')).toContainText('Framework paper');
+  await expect(legend.getByTestId('legend-framework').locator('.lgd__dot--ring')).toHaveCount(1);
+  await expect(legend).toContainText('Larger');
+  await expect(legend).toContainText('Darker');
   await expect(legend).toContainText('Show tangential works');
+  // No action-type or level groups.
   await expect(legend.getByRole('heading', { name: 'Actions' })).toHaveCount(0);
   await expect(legend.getByRole('heading', { name: 'Levels' })).toHaveCount(0);
   await expect(legend.locator('.action-icon')).toHaveCount(0);
   await expect(legend.locator('.level-chip')).toHaveCount(0);
+
+  // On a narrow screen the row wraps, and the page still does not scroll sideways.
+  await page.setViewportSize({ width: 375, height: 800 });
+  await expect.poll(async () => (await legend.boundingBox())!.width).toBeLessThan(375);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
 });
 
-test('the list view ends with tangential works grouped by type', async ({ page }) => {
+test('tangential categories draw in their own colors with a label each and no hull; papers with no category are gray', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  await settleGraph(page);
+  // A visible label in the category's color, and no hull element for the category.
+  const label = page.getByTestId('cat-label-search');
+  await expect(label).toBeVisible();
+  await expect(label).toHaveText('Dynamic mapping and object search');
+  await expect(page.getByTestId('cat-label-hri')).toHaveText('User perceptions of proactivity');
+  await expect(page.locator('[data-testid="hull-search"], [data-testid="hull-hri"]')).toHaveCount(0);
+  await expect(page.locator('path[data-testid^="hull-"]')).toHaveCount(3);
+  const resolved = (v: string) =>
+    page.evaluate((c) => {
+      const el = document.createElement('span');
+      el.style.color = c;
+      document.body.append(el);
+      const out = getComputedStyle(el).color;
+      el.remove();
+      return out;
+    }, v);
+  expect(await label.evaluate((el) => getComputedStyle(el).fill)).toBe(await resolved('var(--tan-amber-ink)'));
+  // Its papers: dots in the category's color at 60% opacity.
+  for (const id of ['sgm', 'flowmaps', 'evolvingnav', 'tap', 'mullen-2025-home-emergency']) {
+    const n = page.getByTestId(`node-${id}`);
+    await expect(n).toHaveAttribute('data-tangent', 'search');
+    await expect(n).toHaveCSS('opacity', '0.6');
+    await expect(n.locator('.litg__dot')).toHaveCSS('fill', await resolved('var(--tan-amber)'));
+  }
+  await expect(page.getByTestId('node-koch-2024-proactive-hri-review').locator('.litg__dot')).toHaveCSS('fill', await resolved('var(--tan-magenta)'));
+  // Each label sits next to its papers and covers none of the dots or paper labels.
+  const geo = await page.evaluate(() => {
+    const hit = (a: DOMRect, b: DOMRect) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+    const out: Record<string, { covered: string[]; nearest: number }> = {};
+    for (const t of document.querySelectorAll('.litg__cat-label')) {
+      const r = t.getBoundingClientRect();
+      const covered = [...document.querySelectorAll('.litg__node .litg__dot, .litg__label')]
+        .filter((e) => hit(r, e.getBoundingClientRect()))
+        .map((e) => e.closest('[data-id]')?.getAttribute('data-id') ?? '?');
+      const members = [...document.querySelectorAll(`.litg__node[data-tangent="${t.getAttribute('data-category')}"] .litg__dot`)].map((d) => d.getBoundingClientRect());
+      const nearest = Math.min(...members.map((m) => Math.hypot(Math.max(0, r.left - m.right, m.left - r.right), Math.max(0, r.top - m.bottom, m.top - r.bottom))));
+      out[t.getAttribute('data-category')!] = { covered, nearest };
+    }
+    return out;
+  });
+  expect(Object.keys(geo).sort()).toEqual(['hri', 'search']);
+  for (const [cat, g] of Object.entries(geo)) {
+    expect(g.covered, `${cat} label covers`).toEqual([]);
+    expect(g.nearest, `${cat} label distance to its papers`).toBeLessThan(40);
+  }
+  // Core papers with no family are gray; GAP keeps purple with its ring.
+  for (const id of ['anticipatory-tamp', 'talukder-2025-anticipatory-planning', 'courteous-anticipation']) {
+    await expect(page.getByTestId(`node-${id}`).locator('.litg__dot')).toHaveAttribute('style', /var\(--fam-none-dark\)/);
+  }
+  await expect(page.getByTestId('node-gap').locator('.litg__dot')).toHaveAttribute('style', /var\(--fam-framework-dark\)/);
+  await expect(page.getByTestId('node-gap').locator('.litg__ring')).toHaveCSS('stroke', await resolved('var(--fam-framework-dark)'));
+
+  // The hover card and the drawer name the category.
+  await page.getByTestId('node-sgm').hover();
+  await expect(page.locator('.hovercard')).toContainText('Dynamic mapping and object search');
+  await page.getByTestId('node-koch-2024-proactive-hri-review').hover();
+  await expect(page.locator('.hovercard')).toContainText('User perceptions of proactivity');
+  await page.goto('/#/methods?paper=sgm');
+  await expect(page.getByTestId('drawer').getByTestId('tangent-tag')).toContainText('Dynamic mapping and object search');
+  await expect(page.getByTestId('drawer-tangent')).toContainText('Models how homes change over time');
+
+  // The fixture exercises several groups: three labeled categories, and gray works of an unknown type with no label.
+  await page.goto('/#/methods?view=graph&synthetic=1');
+  await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
+  for (const c of ['hri', 'conversational', 'search']) await expect(page.getByTestId(`cat-label-${c}`)).toBeVisible();
+  await expect(page.locator('.litg__cat-label')).toHaveCount(3);
+  await expect(page.locator('path[data-testid^="hull-"]')).toHaveCount(4);
+  const unknown = page.locator('.litg__node[data-tangent="synthetic_unknown"] .litg__dot');
+  await expect(unknown).toHaveCount(3);
+  await expect(unknown.first()).toHaveAttribute('style', /var\(--tan-none\)/);
+});
+
+test('the list view ends with tangential works grouped by category, in taxonomy order', async ({ page }) => {
   await page.goto('/#/methods?view=list');
-  const groups = page.locator('[data-testid^="list-group-"]');
-  await expect(groups.first()).toBeVisible();
-  const ids = await groups.evaluateAll((els) => els.map((e) => e.getAttribute('data-testid') ?? ''));
-  // Tangential groups come last, in tangent-type order (types with no paper have no group).
+  await expect(page.getByTestId('methods-list')).toBeVisible();
+  const ids = await page.locator('[data-testid^="list-group-"]').evaluateAll((els) => els.map((e) => e.getAttribute('data-testid')!));
   const first = ids.findIndex((id) => id.startsWith('list-group-tangent:'));
   expect(first).toBeGreaterThan(0);
   expect(ids.slice(first)).toEqual(['list-group-tangent:hri', 'list-group-tangent:search']);
   await expect(page.getByTestId('list-group-tangent:hri')).toContainText('Koch van den Broek 2024');
+  await expect(page.getByTestId('list-group-tangent:hri').getByTestId('tangent-tag')).toContainText('User perceptions of proactivity');
+  await expect(page.getByTestId('list-group-tangent:search').getByTestId('tangent-tag')).toContainText('Dynamic mapping and object search');
 });
 
 test('a semi-tangential family draws at 75% opacity (dots, hull, name, label, edges) until hovered, and the legend says so', async ({ page }) => {
@@ -589,10 +709,10 @@ test('a semi-tangential family draws at 75% opacity (dots, hull, name, label, ed
   const semiEdges = page.locator('.litg__edges .litg__edge.is-semi:not(.is-dim):not(.is-hl)');
   expect(await semiEdges.count()).toBeGreaterThan(0);
   await expect(semiEdges.first()).toHaveCSS('stroke-opacity', '0.75');
-  // Tangential works keep half opacity.
-  await expect(page.getByTestId('node-synthetic-t0')).toHaveCSS('opacity', '0.5');
+  // Tangential works keep 60% opacity.
+  await expect(page.getByTestId('node-synthetic-t0')).toHaveCSS('opacity', '0.6');
   await expect(page.getByTestId('legend-family-synthetic_d')).toContainText('semi-tangential');
-  await expect(page.getByTestId('legend-family-synthetic_d').locator('.lgd__dot')).toHaveCSS('opacity', '0.75');
+  await expect(page.getByTestId('legend-family-synthetic_d').locator('.lgd__hull')).toHaveCSS('opacity', '0.75');
   await expect(page.getByTestId('legend-family-synthetic_a')).not.toContainText('semi-tangential');
 
   // Hovering a paper brings its cluster to full opacity.

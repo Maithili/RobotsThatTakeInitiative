@@ -5,7 +5,7 @@ import { citationSourceText } from '../lib/citations.ts';
 import { inMethodsGraph } from '../lib/scope.ts';
 import type { DbPaper } from '../schema.ts';
 import { applyParams, useUrl } from '../state/url.ts';
-import { ActionChip, InputChip, KnownsChips, LevelChip, LoopPill, MetricChip } from './Chip.tsx';
+import { ActionChip, InputChip, KnownsChips, LevelChip, LoopPill, MetricChip, TangentTag } from './Chip.tsx';
 import { Missing } from './EmptyState.tsx';
 import { CaptureGlyph, StatusGlyph } from './StatusGlyph.tsx';
 
@@ -102,6 +102,7 @@ function DrawerBody({ p }: { p: DbPaper }) {
           <span>{p.year}</span>
           {p.venue && <span className="muted">{p.venue}</span>}
           {p.type === 'survey' && <span className="tag">Survey</span>}
+          {p.tangent && <TangentTag type={p.tangent} />}
         </div>
         <h2 id="drawer-title" className="drawer__title">
           {p.title}
@@ -151,6 +152,12 @@ function DrawerBody({ p }: { p: DbPaper }) {
         {m?.family && (
           <p className="drawer__family">
             Family: <strong>{tx.families[m.family]?.name}</strong>
+          </p>
+        )}
+        {p.tangent && (
+          <p className="drawer__family" data-testid="drawer-tangent">
+            Tangential category: <strong>{tx.tangent_types[p.tangent]?.label ?? p.tangent}</strong>
+            {tx.tangent_types[p.tangent] && <span className="muted"> · {tx.tangent_types[p.tangent].definition}</span>}
           </p>
         )}
       </Section>

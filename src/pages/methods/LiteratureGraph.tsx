@@ -1,10 +1,11 @@
-// Methods literature graph (SPEC §7.2): dots in one soft hull per family, positions from the build-time layout,
-// three edge styles, zoom and pan, hover fading, collision-aware labels, and click-to-focus ancestry.
+// Methods literature graph (SPEC §7.2): the legend above, dots in one soft hull per family, tangential works in
+// colored, labeled groups with no hull, positions from the build-time layout, three edge styles, zoom and pan, hover
+// fading, collision-aware labels, and click-to-focus ancestry.
 import { select } from 'd3-selection';
 import { curveCatmullRomClosed, line } from 'd3-shape';
 import { zoom as d3zoom, zoomIdentity, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { ActionIcon, InputChip, KnownsChips, LevelChip } from '../../components/Chip.tsx';
+import { ActionIcon, InputChip, KnownsChips, LevelChip, TangentTag } from '../../components/Chip.tsx';
 import { EmptyState } from '../../components/EmptyState.tsx';
 import { FRAMEWORK_PAPER, paperLabel, tx } from '../../data.ts';
 import { edgeKey, edgeRadius, FRAMEWORK_RING, geometryOf, stepIndex, type EdgeGeometry, type Routes } from '../../lib/edgeRouting.ts';
@@ -22,13 +23,16 @@ import {
   labelYear,
   linkedPapers,
   labelMinRadius,
+  placeGroupLabels,
   placeLabels,
   textWidth,
   type LabelCandidate,
+  type ScreenBox,
 } from '../../lib/literatureLayout.ts';
 import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
-import { familyHue, FOCUS_LEVELS, TANGENTS_IN_GRAPH, type FamilyInfo } from './constants.ts';
+import { familyHue, FOCUS_LEVELS, FRAMEWORK_HUE, NO_CATEGORY_HUE, tangentHue, TANGENTS_IN_GRAPH, type FamilyInfo } from './constants.ts';
+import { GraphLegend } from './GraphLegend.tsx';
 
 /** Screen margin kept around the content when fitting. */
 const FIT_MARGIN = 20;
@@ -38,6 +42,9 @@ const ZOOM_MIN = 0.12;
 const ZOOM_MAX = 4;
 const MIN_H = 220;
 const MOTION_MS = 280;
+/** Tangential category labels: font size and box height in screen pixels (SPEC §7.2). */
+const CAT_PX = 13;
+const CAT_H = 17;
 
 const hullPath = line<[number, number]>().curve(curveCatmullRomClosed.alpha(0.5));
 
@@ -51,8 +58,11 @@ interface GNode {
   rr: number;
   labelW: number;
   year: string | null;
+  /** CSS hue slot: a family's ('0' to '3'), the framework paper's, a tangential category's, or gray ('none'). */
   hue: string;
   tangent: boolean;
+  /** Tangential category, when the taxonomy knows the paper's tangent type. */
+  cat: string | null;
   cluster: string | null;
   /** In a semi-tangential family: drawn at 75% opacity until its cluster is hovered (SPEC §7.2). */
   semi: boolean;
@@ -64,7 +74,7 @@ function NodeCard({ p }: { p: DbPaper }) {
     <>
       <div className="hovercard__top">
         <strong>{p.short_name}</strong> <span className="muted">{p.year}</span> {p.level && <LevelChip level={p.level} />}
-        {p.tangent && <span className="tag">Tangential · {tx.tangent_types[p.tangent]?.label ?? p.tangent}</span>}
+        {p.tangent && <TangentTag type={p.tangent} />}
       </div>
       <div className="one-line small">{p.title}</div>
       {m?.core_strength && <div className="small">{m.core_strength}</div>}
@@ -197,7 +207,10 @@ export function LiteratureGraph({
       if (!inLiteratureGraph(p, FOCUS_LEVELS, TANGENTS_IN_GRAPH) || p.x === undefined || p.y === undefined) continue;
       const tangent = !!p.tangent;
       const fam = !tangent && p.method?.family && families[p.method.family] ? p.method.family : null;
+      const cat = tangent && Object.prototype.hasOwnProperty.call(tx.tangent_types, p.tangent!) ? p.tangent! : null;
       const r = dotRadius(linkedPapers(p).size, tangent);
+      // Families take their hue, tangential works their category's; GAP stays purple; the rest are gray.
+      const hue = tangent ? tangentHue(tx.tangent_types, cat) : p.id === FRAMEWORK_PAPER ? FRAMEWORK_HUE : familyHue(families, fam);
       out.set(p.id, {
         p,
         id: p.id,
@@ -207,8 +220,9 @@ export function LiteratureGraph({
         rr: edgeRadius(r, p.id === FRAMEWORK_PAPER),
         labelW: labelWidth(p.short_name, p.year),
         year: labelYear(p.short_name, p.year),
-        hue: familyHue(families, fam),
+        hue,
         tangent,
+        cat,
         cluster: fam,
         semi: !!(fam && families[fam]?.semi_tangential),
       });
@@ -275,11 +289,24 @@ export function LiteratureGraph({
     return !!n && (showTangents || !n.tangent);
   }, [nodes, showTangents]);
 
-  // Keyboard order: clusters in family order, then unclustered papers, then tangential works; by year within each.
+  // Keyboard order: clusters in family order, then unclustered papers, then tangential works by category; by year
+  // within each.
   const ordered = useMemo(() => {
-    const rank = (n: GNode) => (n.tangent ? clusterOrder.length + 1 : n.cluster ? clusterOrder.indexOf(n.cluster) : clusterOrder.length);
+    const cats = Object.keys(tx.tangent_types);
+    const rank = (n: GNode) =>
+      n.tangent ? clusterOrder.length + 1 + (n.cat ? cats.indexOf(n.cat) : cats.length) : n.cluster ? clusterOrder.indexOf(n.cluster) : clusterOrder.length;
     return [...visible].sort((a, b) => rank(a) - rank(b) || a.p.year - b.p.year || a.p.short_name.localeCompare(b.p.short_name));
   }, [visible, clusterOrder]);
+
+  // Legend contents (SPEC §7.2): what the graph holds, whether or not tangential works are shown.
+  const legend = useMemo(() => {
+    const all = [...nodes.values()];
+    return {
+      categories: Object.keys(tx.tangent_types).filter((t) => all.some((n) => n.cat === t)),
+      uncategorized: all.some((n) => n.hue === NO_CATEGORY_HUE),
+      framework: nodes.has(FRAMEWORK_PAPER),
+    };
+  }, [nodes]);
 
   // Content bounds at zoom 1: dots, labels, hulls, and room for hull names.
   const bounds = useMemo(() => {
@@ -334,11 +361,13 @@ export function LiteratureGraph({
     }
     return [lo, hi];
   }, [visible, f.years]);
+  // Tangential works take their category's color, drawn at 60% opacity by CSS (SPEC §7.2).
   const fillOf = (n: GNode) => {
-    if (n.tangent) return undefined;
+    if (n.tangent) return `var(--tan-${n.hue})`;
     const t = yr1 > yr0 ? Math.max(0, Math.min(1, (n.p.year - yr0) / (yr1 - yr0))) : 1;
     return `color-mix(in oklab, var(--fam-${n.hue}-dark) ${Math.round(18 + 82 * t)}%, var(--fam-${n.hue}-light))`;
   };
+  const inkOf = (n: GNode) => (n.tangent ? `var(--tan-${n.hue}-ink)` : `var(--fam-${n.hue}-ink)`);
 
   // ---- zoom ----
   const fitTransform = useCallback(
@@ -512,6 +541,50 @@ export function LiteratureGraph({
     return () => window.removeEventListener('keydown', onKey);
   }, [focus, searched, url]);
 
+  // ---- tangential category labels (SPEC §7.2): one per category, in its color, near its papers ----
+  // Family names, in screen pixels at the label zoom: no other label covers them.
+  const hullNames = useMemo<ScreenBox[]>(
+    () =>
+      clusters.map((c) => {
+        const w = textWidth(families[c.id]?.name ?? c.id, 14) / 2 + 2;
+        return { x0: c.cx * labelK - w, x1: c.cx * labelK + w, y0: c.top * labelK - 20, y1: c.top * labelK - 2 };
+      }),
+    [clusters, families, labelK],
+  );
+  const catGroups = useMemo(
+    () => Object.keys(tx.tangent_types).map((t) => ({ id: t, members: visible.filter((n) => n.cat === t) })).filter((g) => g.members.length),
+    [visible],
+  );
+  const catBoxes = useMemo(() => {
+    if (!catGroups.length) return new Map<string, ScreenBox>();
+    // The edges drawn with the chosen edge types, as polylines; labels keep off them where they can.
+    const lines = pairs.flatMap((e) => {
+      const [a, b] = e.key.split('|');
+      const r = isShown(a) && isShown(b) ? drawnRelation(e, shown) : null;
+      return r ? [geometry(r).pts] : [];
+    });
+    const minR = labelMinRadius(visible.map((n) => n.rr), labelK);
+    return placeGroupLabels(
+      catGroups.map((g) => ({
+        id: g.id,
+        w: Math.ceil(textWidth(tx.tangent_types[g.id].label, CAT_PX) * 1.06),
+        h: CAT_H,
+        members: g.members.map((n) => ({ x: n.x, y: n.y, r: n.rr, labelW: n.labelW })),
+      })),
+      labelK,
+      {
+        dots: visible.map((n) => ({ x: n.x, y: n.y, r: n.rr })),
+        labels: visible.filter((n) => n.rr >= minR).map((n) => ({ x: n.x, y: n.y, r: n.rr, w: n.labelW })),
+        edges: lines,
+        hulls: clusters.map((c) => c.hull),
+        blocks: hullNames,
+        bounds,
+      },
+    );
+    // geometry() reads the route cache for this zoom step.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catGroups, visible, pairs, shown, isShown, labelK, step, geoCache, clusters, hullNames, bounds]);
+
   // ---- labels: always for hover, focus, selection, and search; otherwise by size, without overlaps ----
   const tier0 = useMemo(() => new Set([hovered, focus, openId, searched].filter((x): x is string => !!x && isShown(x))), [hovered, focus, openId, searched, isShown]);
   const labeled = useMemo(() => {
@@ -523,12 +596,10 @@ export function LiteratureGraph({
     }
     // While hovering, faded dots do not block the labels of the hovered paper and its neighbors.
     const dots = visible.map((n) => ({ id: n.id, x: n.x, y: n.y, r: n.rr, soft: !!hl && !hl.has(n.id) }));
-    const blocks = clusters.map((c) => {
-      const w = textWidth(families[c.id]?.name ?? c.id, 14) / 2 + 2;
-      return { x0: c.cx * labelK - w, x1: c.cx * labelK + w, y0: c.top * labelK - 20, y1: c.top * labelK - 2 };
-    });
+    // Family names and category labels block node labels.
+    const blocks = [...hullNames, ...catBoxes.values()];
     return placeLabels(cands, dots, labelK, { minR: labelMinRadius(visible.map((n) => n.rr), labelK), blocks });
-  }, [visible, tier0, hl, lit, matches, labelK, clusters, families]);
+  }, [visible, tier0, hl, lit, matches, labelK, hullNames, catBoxes]);
 
   // ---- hover cards ----
   const toScreen = (x: number, y: number) => tRef.current.apply([x, y]);
@@ -591,6 +662,19 @@ export function LiteratureGraph({
     ));
   };
 
+  const categoryTip = (id: string) => {
+    const b = catBoxes.get(id);
+    const t = tx.tangent_types[id];
+    if (!b || !t) return;
+    showTip(b.x0 / labelK, b.y1 / labelK, (
+      <>
+        <strong>{t.label}</strong>
+        <span className="tag">Tangential category</span>
+        <span className="small">{t.definition}</span>
+      </>
+    ), 4);
+  };
+
   const idAt = (t: EventTarget | null) => (t instanceof Element ? t.closest('[data-id]')?.getAttribute('data-id') ?? null : null);
   const edgeAt = (t: EventTarget | null) => (t instanceof Element ? t.closest('[data-edge]')?.getAttribute('data-edge') ?? null : null);
   const open = (id: string) => url.set({ focus: id, paper: id }, { push: true });
@@ -632,15 +716,17 @@ export function LiteratureGraph({
     }
   }
 
-  const hotHue = hovered ? nodes.get(hovered)!.hue : null;
+  const hotInk = hovered ? inkOf(nodes.get(hovered)!) : null;
+  const hotCat = hovered ? nodes.get(hovered)!.cat : null;
   const narrowKeys = size && size.w < 520;
 
   return (
     <div
       className={`litg${hl ? ' is-hovering' : ''}`}
       data-testid="literature-graph"
-      style={hotHue ? ({ '--hot': `var(--fam-${hotHue}-ink)` } as CSSProperties) : undefined}
+      style={hotInk ? ({ '--hot': hotInk } as CSSProperties) : undefined}
     >
+      <GraphLegend clusters={clusterOrder} families={families} categories={legend.categories} uncategorized={legend.uncategorized} framework={legend.framework} />
       <div
         className="litg__viewport"
         ref={wrap}
@@ -782,6 +868,29 @@ export function LiteratureGraph({
                   {families[c.id]?.name ?? c.id}
                 </text>
               ))}
+              {catGroups.map((g) => {
+                const b = catBoxes.get(g.id);
+                if (!b) return null;
+                const dim = !g.members.some((n) => matches.has(n.id) && (!lit || lit.has(n.id)));
+                return (
+                  <text
+                    key={g.id}
+                    x={b.x0 / labelK}
+                    y={(b.y0 + b.y1) / 2 / labelK}
+                    dy="0.35em"
+                    className={`litg__cat-label tan-ink--${tangentHue(tx.tangent_types, g.id)}${hotCat === g.id ? ' is-hl' : ''}${dim ? ' is-dim' : ''}`}
+                    data-testid={`cat-label-${g.id}`}
+                    data-category={g.id}
+                    tabIndex={0}
+                    onMouseEnter={() => categoryTip(g.id)}
+                    onFocus={() => categoryTip(g.id)}
+                    onMouseLeave={() => setTip(null)}
+                    onBlur={() => setTip(null)}
+                  >
+                    {tx.tangent_types[g.id].label}
+                  </text>
+                );
+              })}
               {ordered.map((n) =>
                 labeled.has(n.id) ? (
                   <text

@@ -1203,7 +1203,8 @@ tr.clickable:hover td {
 }
 .hovercard__top {
   display: flex;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 4px 6px;
   align-items: center;
 }
 
@@ -2012,14 +2013,14 @@ tr.clickable:hover td {
 }
 
 
-/* ---------- methods page: top band (SPEC §7.1) ---------- */
+/* ---------- methods page: top band (SPEC §7.1): level cards, then the timeline across the remaining width ---------- */
 .mtop {
   display: grid;
-  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(170px, 210px);
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   grid-template-areas:
-    'c2 t2 lg'
-    'c1 t1 lg'
-    'c0 ax lg';
+    'c2 t2'
+    'c1 t1'
+    'c0 ax';
   gap: 8px 14px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -2033,22 +2034,6 @@ tr.clickable:hover td {
 .mtop__tl--L2 { grid-area: t2; }
 .mtop__tl--L1 { grid-area: t1; }
 .mtop__axis { grid-area: ax; min-width: 0; align-self: start; }
-.mtop__legend {
-  grid-area: lg;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  border-left: 1px solid var(--border);
-  padding-left: 12px;
-  font-size: 12px;
-}
-.mtop__legend .strip__title {
-  margin: 4px 0 2px;
-}
-.lgd__group {
-  display: flex;
-  flex-direction: column;
-}
 .mtop__card .levelcard {
   height: 100%;
 }
@@ -2056,26 +2041,6 @@ tr.clickable:hover td {
   min-width: 0;
   display: flex;
   align-items: stretch;
-}
-.lgd {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.lgd--row {
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-}
-.lgd li {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.lgd .check {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
 .tl__row {
   position: relative;
@@ -2180,7 +2145,9 @@ tr.clickable:hover td {
 
 /* ---------- methods page: literature graph (SPEC §7.2) ---------- */
 /* Family hues, each a ramp from a light stop (oldest) to a dark stop (newest), plus an ink for text on the page.
-   0 teal (Goal Inference), 1 coral (Temporal Imitation), 2 and 3 for new families, none (purple) for no family. */
+   0 teal (Goal Inference), 1 coral (Temporal Imitation), 2 blue and 3 green for new families, framework (purple) for
+   GAP, and none (gray) for papers that fit no category. Tangential categories take their own hue slots (the taxonomy's
+   `color`: amber, magenta, sky, or brown), each a dot color and an ink, distinct from the family hues (SPEC §7.2). */
 :root {
   --graph-bg: var(--surface);
   --edge: #a1a6b0;
@@ -2197,11 +2164,22 @@ tr.clickable:hover td {
   --fam-3-light: #d2e2a9;
   --fam-3-dark: #4f7812;
   --fam-3-ink: #47700f;
-  --fam-none-light: #dacdf3;
-  --fam-none-dark: #6b3eb6;
-  --fam-none-ink: #6337ab;
-  --tangent-fill: #b7bac2;
-  --tangent-stroke: #737782;
+  --fam-framework-light: #dacdf3;
+  --fam-framework-dark: #6b3eb6;
+  --fam-framework-ink: #6337ab;
+  --fam-none-light: #c9cbd1;
+  --fam-none-dark: #686b75;
+  --fam-none-ink: #5d606a;
+  --tan-amber: #b07800;
+  --tan-amber-ink: #7f5600;
+  --tan-magenta: #b8337f;
+  --tan-magenta-ink: #a1286f;
+  --tan-sky: #1784a8;
+  --tan-sky-ink: #0f6887;
+  --tan-brown: #8a6040;
+  --tan-brown-ink: #725038;
+  --tan-none: #7a7e88;
+  --tan-none-ink: #5d606a;
   --hull-opacity: 0.075;
 }
 @media (prefers-color-scheme: dark) {
@@ -2220,11 +2198,22 @@ tr.clickable:hover td {
     --fam-3-light: #c3d995;
     --fam-3-dark: #5c8c19;
     --fam-3-ink: #abd56e;
-    --fam-none-light: #cbb9f1;
-    --fam-none-dark: #8155d2;
-    --fam-none-ink: #c3a6ff;
-    --tangent-fill: #6f737d;
-    --tangent-stroke: #a3a7b1;
+    --fam-framework-light: #cbb9f1;
+    --fam-framework-dark: #8155d2;
+    --fam-framework-ink: #c3a6ff;
+    --fam-none-light: #b4b8c0;
+    --fam-none-dark: #5e626c;
+    --fam-none-ink: #b9bcc6;
+    --tan-amber: #e0a530;
+    --tan-amber-ink: #f2c46a;
+    --tan-magenta: #e5609f;
+    --tan-magenta-ink: #ff9fcf;
+    --tan-sky: #38a6cf;
+    --tan-sky-ink: #8ad2f0;
+    --tan-brown: #b48a66;
+    --tan-brown-ink: #d8b896;
+    --tan-none: #8a8e98;
+    --tan-none-ink: #b9bcc6;
     --hull-opacity: 0.12;
   }
 }
@@ -2243,11 +2232,22 @@ tr.clickable:hover td {
   --fam-3-light: #c3d995;
   --fam-3-dark: #5c8c19;
   --fam-3-ink: #abd56e;
-  --fam-none-light: #cbb9f1;
-  --fam-none-dark: #8155d2;
-  --fam-none-ink: #c3a6ff;
-  --tangent-fill: #6f737d;
-  --tangent-stroke: #a3a7b1;
+  --fam-framework-light: #cbb9f1;
+  --fam-framework-dark: #8155d2;
+  --fam-framework-ink: #c3a6ff;
+  --fam-none-light: #b4b8c0;
+  --fam-none-dark: #5e626c;
+  --fam-none-ink: #b9bcc6;
+  --tan-amber: #e0a530;
+  --tan-amber-ink: #f2c46a;
+  --tan-magenta: #e5609f;
+  --tan-magenta-ink: #ff9fcf;
+  --tan-sky: #38a6cf;
+  --tan-sky-ink: #8ad2f0;
+  --tan-brown: #b48a66;
+  --tan-brown-ink: #d8b896;
+  --tan-none: #8a8e98;
+  --tan-none-ink: #b9bcc6;
   --hull-opacity: 0.12;
 }
 
@@ -2309,6 +2309,32 @@ tr.clickable:hover td {
 .litg__hull-label:focus-visible {
   text-decoration: underline;
 }
+/* tangential category labels: text in the category's ink near its papers, no hull or shading (SPEC §7.2) */
+.litg__cat-label {
+  font-size: 1.0833em;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  cursor: help;
+  outline: none;
+  paint-order: stroke;
+  stroke: var(--graph-bg);
+  stroke-width: 0.3em;
+  stroke-linejoin: round;
+  transition: fill-opacity 150ms, stroke-opacity 150ms;
+}
+.litg__cat-label:focus-visible {
+  text-decoration: underline;
+}
+.litg__cat-label.is-dim,
+.litg.is-hovering .litg__cat-label:not(.is-hl) {
+  fill-opacity: 0.3;
+  stroke-opacity: 0.3;
+}
+.tan-ink--amber { fill: var(--tan-amber-ink); }
+.tan-ink--magenta { fill: var(--tan-magenta-ink); }
+.tan-ink--sky { fill: var(--tan-sky-ink); }
+.tan-ink--brown { fill: var(--tan-brown-ink); }
+.tan-ink--none { fill: var(--tan-none-ink); }
 
 /* edges: thin gray curves; builds solid, benchmarks dashed, cites dotted and lighter (SPEC §5.5).
    Fading uses stroke-opacity and faded arrowheads rather than opacity, so hundreds of edges fade without each
@@ -2359,10 +2385,10 @@ tr.clickable:hover td {
 .litg__edge--builds.is-dim { marker-end: url(#litg-arrow-builds-faint); }
 .litg__edge--benchmarks.is-dim { marker-end: url(#litg-arrow-benchmarks-faint); }
 .litg__edge--cites.is-dim { marker-end: url(#litg-arrow-cites-faint); }
-.litg.is-hovering .litg__edge:not(.is-hl) { stroke-opacity: 0.08; }
-.litg.is-hovering .litg__edge--builds:not(.is-hl) { marker-end: url(#litg-arrow-builds-ghost); }
-.litg.is-hovering .litg__edge--benchmarks:not(.is-hl) { marker-end: url(#litg-arrow-benchmarks-ghost); }
-.litg.is-hovering .litg__edge--cites:not(.is-hl) { marker-end: url(#litg-arrow-cites-ghost); }
+.litg.is-hovering .litg__edges .litg__edge:not(.is-hl) { stroke-opacity: 0.08; }
+.litg.is-hovering .litg__edges .litg__edge--builds:not(.is-hl) { marker-end: url(#litg-arrow-builds-ghost); }
+.litg.is-hovering .litg__edges .litg__edge--benchmarks:not(.is-hl) { marker-end: url(#litg-arrow-benchmarks-ghost); }
+.litg.is-hovering .litg__edges .litg__edge--cites:not(.is-hl) { marker-end: url(#litg-arrow-cites-ghost); }
 .litg__edge.is-hl {
   stroke: var(--hot, var(--text-2));
   stroke-width: 1.6;
@@ -2396,21 +2422,16 @@ tr.clickable:hover td {
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
+/* tangential works: dots in their category's color at 60% opacity, no hull (SPEC §7.2) */
 .litg__node.is-tangent {
-  opacity: 0.5;
+  opacity: 0.6;
 }
 .litg__node.is-semi {
   opacity: 0.75;
 }
-.litg__node.is-tangent .litg__dot {
-  fill: var(--tangent-fill);
-  stroke: var(--tangent-stroke);
-  stroke-width: 1;
-  stroke-dasharray: 2 1.5;
-}
 .litg__ring {
   fill: none;
-  stroke: var(--fam-none-dark);
+  stroke: var(--fam-framework-dark);
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
@@ -2438,9 +2459,6 @@ tr.clickable:hover td {
 .litg__node.is-hover .litg__dot {
   stroke: var(--text);
   stroke-width: 2;
-}
-.litg__node.is-tangent.is-hover .litg__dot {
-  stroke-dasharray: none;
 }
 .litg__node.is-focus .litg__dot {
   stroke: var(--text);
@@ -2578,7 +2596,43 @@ tr.clickable:hover td {
   pointer-events: none;
 }
 
-/* legend marks for the graph (SPEC §7.1) */
+/* legend: a compact row directly above the graph, inside its panel, that wraps on narrow screens (SPEC §7.2) */
+.litg__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-2);
+}
+.lgd__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+}
+.lgd__title {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.lgd__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+label.lgd__item {
+  cursor: pointer;
+}
+.lgd__toggle {
+  margin-left: auto;
+}
 .lgd__edge {
   flex: none;
 }
@@ -2597,19 +2651,53 @@ tr.clickable:hover td {
 .lgd__dot--2 { background: color-mix(in oklab, var(--fam-2-dark) 60%, var(--fam-2-light)); }
 .lgd__dot--3 { background: color-mix(in oklab, var(--fam-3-dark) 60%, var(--fam-3-light)); }
 .lgd__dot--none { background: color-mix(in oklab, var(--fam-none-dark) 60%, var(--fam-none-light)); }
+.lgd__dot--framework { background: color-mix(in oklab, var(--fam-framework-dark) 60%, var(--fam-framework-light)); }
 .lgd__dot--ring {
-  box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--fam-none-dark);
+  box-shadow: 0 0 0 1.5px var(--graph-bg), 0 0 0 3px var(--fam-framework-dark);
   margin: 0 2px;
 }
-.lgd__dot--semi {
-  opacity: 0.75;
+/* a family: its dot on a swatch of its hull tint */
+.lgd__hull {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 16px;
+  border-radius: 8px;
 }
-.lgd__dot--tangent {
+.lgd__hull .lgd__dot {
   width: 9px;
   height: 9px;
-  background: var(--tangent-fill);
-  border: 1px dashed var(--tangent-stroke);
+}
+.lgd__hull--0 { background: color-mix(in srgb, var(--fam-0-dark) 15%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fam-0-dark) 28%, transparent); }
+.lgd__hull--1 { background: color-mix(in srgb, var(--fam-1-dark) 15%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fam-1-dark) 28%, transparent); }
+.lgd__hull--2 { background: color-mix(in srgb, var(--fam-2-dark) 15%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fam-2-dark) 28%, transparent); }
+.lgd__hull--3 { background: color-mix(in srgb, var(--fam-3-dark) 15%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fam-3-dark) 28%, transparent); }
+.lgd__hull.is-semi {
+  opacity: 0.75;
+}
+/* a tangential category: its dot at 60% opacity, with no hull */
+.lgd__dot--tan {
   opacity: 0.6;
+}
+/* category dots, in the legend, hover cards, the drawer, and the list */
+.tan-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.tan-dot--amber { background: var(--tan-amber); }
+.tan-dot--magenta { background: var(--tan-magenta); }
+.tan-dot--sky { background: var(--tan-sky); }
+.tan-dot--brown { background: var(--tan-brown); }
+.tan-dot--none { background: var(--tan-none); }
+.tag--tangent {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 .lgd__sizes {
   display: inline-flex;
@@ -2650,25 +2738,12 @@ tr.clickable:hover td {
 @media (max-width: 899px) {
   .mtop {
     grid-template-columns: minmax(150px, 200px) minmax(0, 1fr);
-    grid-template-areas:
-      'c2 t2'
-      'c1 t1'
-      'c0 ax'
-      'lg lg';
-  }
-  .mtop__legend {
-    border-left: 0;
-    border-top: 1px solid var(--border);
-    padding: 8px 0 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 6px 16px;
   }
 }
 @media (max-width: 639px) {
   .mtop {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: 'c2' 't2' 'c1' 't1' 'ax' 'c0' 'lg';
+    grid-template-areas: 'c2' 't2' 'c1' 't1' 'ax' 'c0';
   }
   .mtop__card .levelcard__def,
   .mtop__card .levelcard__note {

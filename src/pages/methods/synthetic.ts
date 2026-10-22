@@ -1,6 +1,7 @@
 // Synthetic papers for checking that the literature graph stays readable and responsive as it grows (SPEC §7.2, M4):
 // 300 L2 papers, 292 of them in 4 families and 8 with no family, plus 30 tangential works, linked by builds on,
-// benchmarks against, and cites. Reached only through ?synthetic=1; never mixed with real data.
+// benchmarks against, and cites. The tangential works fall in the three taxonomy categories, 9 each, plus 3 of a
+// type the taxonomy lacks, which draw gray. Reached only through ?synthetic=1; never mixed with real data.
 // scripts/build-data.ts lays these papers out and writes src/generated/synthetic-layout.json.
 import type { DbPaper } from '../../schema.ts';
 
@@ -26,6 +27,9 @@ export const SYNTHETIC_COUNT = 300;
 export const SYNTHETIC_UNCLUSTERED = 8;
 export const SYNTHETIC_TANGENTS = 30;
 const TANGENT_TYPES = ['hri', 'conversational', 'search'];
+/** A tangent type the taxonomy lacks: these works fit no category and draw gray (SPEC §7.2). */
+export const SYNTHETIC_UNKNOWN_TANGENT = 'synthetic_unknown';
+const SYNTHETIC_UNKNOWN_COUNT = 3;
 const NAMES = ['Atlas', 'Beacon', 'Cairn', 'Delta', 'Ember', 'Fable', 'Garnet', 'Harbor', 'Iris', 'Juniper', 'Kestrel', 'Lumen', 'Meridian', 'Nimbus', 'Orbit', 'Pilot', 'Quill', 'Rover', 'Sable', 'Tandem', 'Umber', 'Vesper', 'Willow', 'Yarrow', 'Zephyr'];
 
 /** Picks up to n distinct items, favoring the first list. */
@@ -94,7 +98,7 @@ export function syntheticPapers(): DbPaper[] {
       title: `Synthetic tangential work ${i}`,
       authors: ['Synthetic Author'],
       year,
-      tangent: TANGENT_TYPES[i % TANGENT_TYPES.length],
+      tangent: i < SYNTHETIC_TANGENTS - SYNTHETIC_UNKNOWN_COUNT ? TANGENT_TYPES[i % TANGENT_TYPES.length] : SYNTHETIC_UNKNOWN_TANGENT,
       links: { paper: null },
       provenance: 'Synthetic fixture',
       level: null,

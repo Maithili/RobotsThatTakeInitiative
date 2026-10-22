@@ -12,7 +12,7 @@ levels:                       # ordered by increasing unknowns
     knowns: {goal: unknown, human_policy: unknown}
     definition: The robot acts towards predicted needs without being prompted at all.
 
-families:                     # L2 only, from RTI §III-B
+families:                     # L2 only, from RTI §III-B. Graph hues follow this order: teal, coral, blue, green (SPEC §7.2)
   goal_inference:
     name: Goal Inference
     definition: Online goal inference followed by goal-conditioned planning.
@@ -122,10 +122,10 @@ themes:                       # cross-cutting, RTI §III-A
   continual_learning: {label: Continual learning, definition: Adapting to drifting needs without forgetting.}
   user_interaction:   {label: User interaction, definition: Resolving uncertainty and answering user queries.}
 
-tangent_types:                # works next to the algorithmic core. Maithili adds more.
-  hri:            {label: HRI studies, definition: "HRI work on proactivity, such as user studies on its desirability and reviews of the field."}
-  conversational: {label: Conversational proactivity, definition: Proactivity in conversational settings.}
-  search:         {label: Search in changing homes, definition: "Finds objects or people in homes that change over time, given what to find."}
+tangent_types:                # works next to the algorithmic core. Maithili adds more. color: one of amber, magenta, sky, brown, a different one per category (SPEC §7.2)
+  hri:            {label: User perceptions of proactivity, color: magenta, definition: User studies and reviews of how people see and define proactive robots.}
+  conversational: {label: Conversational proactivity, color: sky, definition: Proactivity in conversational settings.}
+  search:         {label: Dynamic mapping and object search, color: amber, definition: "Models how homes change over time and finds objects or people in them, given what to find."}
 
 statuses:
   addresses: {glyph: "●", label: Addresses}
