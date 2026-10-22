@@ -2,7 +2,7 @@
 import { Fragment, useState } from 'react';
 import { InputChip, LoopPill } from '../../components/Chip.tsx';
 import { EmptyState } from '../../components/EmptyState.tsx';
-import { datasetById, db, onEvaluations, paperById, paperLabel } from '../../data.ts';
+import { datasetById, db, onEvaluations, paperById, paperLabel, tx } from '../../data.ts';
 import type { DbDataset } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
 import { datasetGroups } from './merge.ts';
@@ -10,6 +10,7 @@ import { datasetGroups } from './merge.ts';
 const KIND_LABEL: Record<string, string> = { dataset: 'Dataset', evaluation_setup: 'Setup' };
 const RELATION_LABEL: Record<string, string> = { extends: 'Extends', uses: 'Uses', validates_against: 'Validated against' };
 const COLS = 12;
+const LOOPS = Object.keys(tx.loop_types);
 
 /** Level scope (SPEC §6.2): "used by" counts only papers the Evaluations page shows. */
 const inScope = (r: { paper: string }) => {
@@ -118,7 +119,8 @@ export function DatasetTable({ datasets = db.datasets }: { datasets?: DbDataset[
               <span className="stack-xs small">
                 <span>{(d.human_models ?? []).join('; ') || <span className="muted">—</span>}</span>
                 <span className="chips">
-                  {(d.loops ?? []).map((l) => (
+                  {/* In scale order, as in the protocols table. */}
+                  {LOOPS.filter((l) => (d.loops ?? []).includes(l)).map((l) => (
                     <LoopPill key={l} loop={l} />
                   ))}
                 </span>

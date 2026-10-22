@@ -1422,13 +1422,29 @@ tr.clickable:hover td {
   font-weight: 600;
   fill: var(--text);
 }
-.bar {
-  cursor: pointer;
+.bar,
+.bar-label {
+  pointer-events: none;
 }
-.bar:hover,
-.bar:focus-visible {
-  filter: brightness(1.12);
+/* Each bar's whole column takes the pointer and focus, so a bar near zero stays reachable. */
+.bar-hit {
+  fill: transparent;
+  cursor: pointer;
   outline: none;
+}
+.bar-hit:hover,
+.bar-hit:focus-visible {
+  fill: var(--focus);
+  fill-opacity: 0.08;
+}
+.bar-hit:focus-visible {
+  stroke: var(--focus);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+.bar-hit:hover + .bar,
+.bar-hit:focus-visible + .bar {
+  filter: brightness(1.12);
   stroke: var(--focus);
   stroke-width: 2;
 }
@@ -1502,6 +1518,10 @@ tr.clickable:hover td {
   background: var(--surface-2);
   border-radius: var(--radius-sm);
   padding: 8px 10px;
+  /* The panel's cell spans the whole wide table: keep the panel in the visible part as the table scrolls. */
+  position: sticky;
+  left: 8px;
+  max-width: min(720px, calc(100vw - 56px));
 }
 /* Metrics (SPEC §8.6): category boxes stacked vertically, one row per metric or group. */
 .metric-boxes {
@@ -2821,13 +2841,17 @@ label.lgd__item {
 /* ---------- evaluations: realism plot (SPEC §8.3) ---------- */
 :root {
   --framework: #b5651d;
+  /* Text in the framework color: darker on the light theme to meet WCAG AA on the shaded row. */
+  --framework-ink: #8a4a10;
 }
 :root[data-theme='dark'] {
   --framework: #f0a15c;
+  --framework-ink: #f0a15c;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --framework: #f0a15c;
+    --framework-ink: #f0a15c;
   }
 }
 .realism__wrap {
@@ -2908,6 +2932,7 @@ label.lgd__item {
 .realism__card {
   pointer-events: auto;
   width: 280px;
+  max-width: 100%;
 }
 .realism__links {
   display: flex;
@@ -2954,7 +2979,7 @@ label.lgd__item {
   margin-left: 6px;
   font-size: 10.5px;
   border: 1px solid var(--framework);
-  color: var(--framework);
+  color: var(--framework-ink);
   border-radius: 999px;
   padding: 0 6px;
   text-decoration: none;

@@ -71,6 +71,24 @@ const keyMembers = (k: string) => metricKeyMembers(k, tx.metrics);
 const keyCategory = (k: string) => categoryOf(keyMembers(k)[0]);
 const keyLabel = (k: string) => tx.metrics[k]?.label ?? tx.metric_groups[k]?.label ?? k;
 
+/** This page's own URL params (SPEC §6.2), shown as chips in the filter bar. */
+const PAGE_PARAMS = ['loop', 'term', 'category', 'metric', 'dataset'] as const;
+type PageParam = (typeof PAGE_PARAMS)[number];
+const has = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
+const KNOWN: Record<PageParam, (v: string) => boolean> = {
+  loop: (v) => has(tx.loop_types, v),
+  term: (v) => has(tx.net_value.terms, v),
+  category: (v) => has(tx.metric_categories, v),
+  metric: (v) => has(tx.metrics, v) || has(tx.metric_groups, v),
+  dataset: (v) => datasetById.has(v),
+};
+/** A page param, or null when it names nothing in the taxonomy or data. A stale id in a shared link is ignored,
+ *  rather than emptying the table while the loop control reads "All loop types" or dimming every metric row. */
+function pageParam(url: ReturnType<typeof useUrl>, k: PageParam): string | null {
+  const v = url.get(k);
+  return v && KNOWN[k](v) ? v : null;
+}
+
 function metricsForTerm(term: string) {
   return METRICS.filter((m) => LISTED.has(m) && tx.metrics[m].terms.includes(term));
 }
@@ -79,7 +97,7 @@ function metricsForTerm(term: string) {
 
 function NetValueNavigator({ hoverTerms }: { hoverTerms: Set<string> }) {
   const url = useUrl();
-  const term = url.get('term');
+  const term = pageParam(url, 'term');
   return (
     <section className="card netvalue" aria-labelledby="nv-title">
       <h2 id="nv-title" className="sr-only">
@@ -126,29 +144,40 @@ function NetValueNavigator({ hoverTerms }: { hoverTerms: Set<string> }) {
 
 type PSort = 'paper' | 'year' | 'env' | 'loop' | 'human' | 'categories' | 'baselines';
 
+/** A row's sort value. An empty string means the cell shows "—". */
 function pval(r: PaperEvalRow, k: PSort): string | number {
+  const name = (d: string) => (datasetById.get(d)?.name ?? d).toLowerCase();
   switch (k) {
     case 'paper':
       return r.paper.short_name.toLowerCase();
     case 'year':
       return r.paper.year;
     case 'env':
-      return [...r.environments, ...r.datasets].join();
+      // By the names the cell shows.
+      return [...r.environments, ...r.datasets].map(name).join(',');
     case 'loop':
       return furthestLoop(r, LOOPS);
     case 'human':
-      return r.humans.join();
+      return r.humans.join('; ').toLowerCase();
     case 'categories':
-      // By the first category in category order, then the next; papers with none sort last.
-      return r.categories.map((c) => String(CATEGORIES.indexOf(c)).padStart(2, '0')).join(',') || '~';
+      // By the first category in category order, then the next.
+      return r.categories.map((c) => String(CATEGORIES.indexOf(c)).padStart(2, '0')).join(',');
     case 'baselines':
       return r.baselines.length + r.otherBaselines.length;
   }
 }
 
+/** Ascending or descending, with empty cells ("—") last either way. */
+function compareRows(va: string | number, vb: string | number, dir: 1 | -1): number {
+  const ea = va === '';
+  const eb = vb === '';
+  if (ea !== eb) return ea ? 1 : -1;
+  return (va < vb ? -1 : va > vb ? 1 : 0) * dir;
+}
+
 function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
   const url = useUrl();
-  const category = url.get('category');
+  const category = pageParam(url, 'category');
   const [sort, setSort] = useState<{ key: PSort; dir: 1 | -1 }>({ key: 'loop', dir: 1 });
   const [open, setOpen] = useState<Set<string>>(new Set());
   const sorted = [...rows].sort((a, b) => {
@@ -156,9 +185,7 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
     const fa = a.paper.id === FRAMEWORK_PAPER ? 0 : 1;
     const fb = b.paper.id === FRAMEWORK_PAPER ? 0 : 1;
     if (fa !== fb) return fa - fb;
-    const va = pval(a, sort.key);
-    const vb = pval(b, sort.key);
-    return (va < vb ? -1 : va > vb ? 1 : 0) * sort.dir || a.paper.year - b.paper.year || a.paper.short_name.localeCompare(b.paper.short_name);
+    return compareRows(pval(a, sort.key), pval(b, sort.key), sort.dir) || a.paper.year - b.paper.year || a.paper.short_name.localeCompare(b.paper.short_name);
   });
   const cols: [PSort, string][] = [
     ['paper', 'Paper'],
@@ -249,17 +276,19 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
                   </span>
                 </td>
                 <td>
-                  {r.environments.map((d) => (
-                    <span key={d} className="chip chip--dataset">
-                      {datasetById.get(d)?.name ?? d}
-                    </span>
-                  ))}{' '}
-                  {r.datasets.map((d) => (
-                    <span key={d} className="chip">
-                      {datasetById.get(d)?.name ?? d}
-                    </span>
-                  ))}
-                  {!r.environments.length && !r.datasets.length && <span className="muted">—</span>}
+                  <span className="chips">
+                    {r.environments.map((d) => (
+                      <span key={d} className="chip chip--dataset">
+                        {datasetById.get(d)?.name ?? d}
+                      </span>
+                    ))}
+                    {r.datasets.map((d) => (
+                      <span key={d} className="chip">
+                        {datasetById.get(d)?.name ?? d}
+                      </span>
+                    ))}
+                    {!r.environments.length && !r.datasets.length && <span className="muted">—</span>}
+                  </span>
                 </td>
                 <td>
                   <span className="chips">{r.loops.length ? r.loops.map((l) => <LoopPill key={l} loop={l} />) : <span className="muted">—</span>}</span>
@@ -325,7 +354,7 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
 
 /** Sets `category=`, and drops a `metric=` outside that category, so the two filters never contradict. */
 function selectCategory(url: ReturnType<typeof useUrl>, c: string | null) {
-  const metric = url.get('metric');
+  const metric = pageParam(url, 'metric');
   url.set({ category: c, ...(c && metric && keyCategory(metric) !== c ? { metric: null } : {}) });
 }
 
@@ -392,9 +421,9 @@ function TermTags({ tags, className, testId }: { tags: TermTag[]; className: str
 
 function MetricRow({ item, onHoverTerms }: { item: MetricItem; onHoverTerms: (t: string[]) => void }) {
   const url = useUrl();
-  const metric = url.get('metric');
-  const category = url.get('category');
-  const term = url.get('term');
+  const metric = pageParam(url, 'metric');
+  const category = pageParam(url, 'category');
+  const term = pageParam(url, 'term');
   const key = item.id;
   const { label, definition } = item.group ? tx.metric_groups[key] : tx.metrics[key];
   const sum = itemSummary(item, tx.metrics, TERMS);
@@ -506,9 +535,9 @@ const BOX_TAGS = new Map(BOXES.map((c) => [c, termTags((ITEMS.get(c) ?? []).flat
 
 function MetricsList({ onHoverTerms }: { onHoverTerms: (t: string[]) => void }) {
   const url = useUrl();
-  const term = url.get('term');
-  const category = url.get('category');
-  const metric = url.get('metric');
+  const term = pageParam(url, 'term');
+  const category = pageParam(url, 'category');
+  const metric = pageParam(url, 'metric');
   const [collapsed, setCollapsed] = useState<Set<string>>(readCollapsed);
   useEffect(() => writeCollapsed(collapsed), [collapsed]);
   const toggle = (c: string) =>
@@ -596,11 +625,12 @@ export function EvaluationsPage() {
   const url = useUrl();
   const [hover, setHover] = useState<string[]>([]);
   const hoverTerms = new Set(hover);
-  const loop = url.get('loop');
-  const term = url.get('term');
-  const metric = url.get('metric');
-  const category = url.get('category');
-  const dataset = url.get('dataset');
+  const loop = pageParam(url, 'loop');
+  const term = pageParam(url, 'term');
+  const metric = pageParam(url, 'metric');
+  const category = pageParam(url, 'category');
+  const dataset = pageParam(url, 'dataset');
+  const active = { loop, term, category, metric, dataset };
 
   const rows = paperRows.filter(
     (r) =>
@@ -622,6 +652,7 @@ export function EvaluationsPage() {
       <RealismPlot rows={paperRows} matches={matches} />
       <FilterBar
         controls={['family', 'theme']}
+        pageFilters={PAGE_PARAMS.filter((k) => active[k])}
         extra={
           <span className="filterbar__extra chips">
             <label className="colfilter">

@@ -1,21 +1,32 @@
 // Evaluation realism plot (SPEC §8.3): interaction (x, from each evaluation's loop type) by human behavior realism (y),
 // action space complexity as color, one dot per paper from its main evaluations, a target past the top-right corner.
 // Setting and robot realism show only in the hover card.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FocusEvent, type SyntheticEvent } from 'react';
 import { datasetById, FRAMEWORK_PAPER, paperLabel, tx } from '../../data.ts';
 import { useUrl } from '../../state/url.ts';
 import type { PaperEvalRow } from './merge.ts';
 import { yearAfterName } from '../../lib/year.ts';
+import { useWidth } from './useWidth.ts';
 
 const R = 7;
 const STEP = 2 * R + 5;
-const CELL_W = 170;
 const CELL_H = 58;
-const LEFT = 170;
 const TOP = 56;
 const BOTTOM = 64;
-const TARGET = 70;
 const TICK_CHARS = 22;
+/** The hover card's width (SPEC §8.3); it never runs past the plot's right edge. */
+const CARD_W = 280;
+/** The plot's widest drawing (the SVG's CSS max-width). */
+const MAX_W = 760;
+
+/** Plot geometry for an available width. From 640 px up, the full layout, scaled to fit. Narrower, a compact one
+ *  drawn at about its screen size, so tick labels stay readable on a phone instead of shrinking with the plot. */
+export function realismLayout(width: number, columns: number) {
+  if (width >= 640) return { left: 170, cellW: 170, target: 70, tickChars: TICK_CHARS };
+  const left = 104;
+  const target = 46;
+  return { left, cellW: Math.max(76, Math.min(170, Math.floor((width - left - target) / columns))), target, tickChars: 13 };
+}
 
 /** CSS fill for an action-space-complexity level: one ramp step per level, in taxonomy order, gray when not assessed. */
 export function actionSpaceFill(id: string | null, order: string[]): string {
@@ -44,9 +55,10 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
   const AS_ORDER = Object.keys(AS.levels);
   const placed = rows.filter((r) => r.realism.interaction && r.realism.human);
   const skipped = rows.length - placed.length;
-  const [card, setCard] = useState<{ row: PaperEvalRow; x: number; y: number } | null>(null);
+  const [card, setCard] = useState<{ row: PaperEvalRow; left: number; top: number } | null>(null);
   const closeTimer = useRef<number | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
+  const { left: LEFT, cellW: CELL_W, target: TARGET, tickChars } = realismLayout(Math.min(MAX_W, useWidth(wrap, MAX_W)), RX.length);
 
   const W = LEFT + RX.length * CELL_W + TARGET;
   const H = TOP + RY.length * CELL_H + BOTTOM;
@@ -87,11 +99,22 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
     closeTimer.current = window.setTimeout(() => setCard(null), 250);
   };
   useEffect(() => () => cancelClose(), []);
-  const open = (row: PaperEvalRow, x: number, y: number) => {
+  /** Opens the card under a dot, kept inside the plot's width so it never runs off a narrow screen. */
+  const open = (row: PaperEvalRow, e: SyntheticEvent<SVGGElement>) => {
     cancelClose();
-    const svg = wrap.current?.querySelector('svg');
-    const scale = svg ? svg.getBoundingClientRect().width / W : 1;
-    setCard({ row, x: x * scale, y: y * scale });
+    const w = wrap.current;
+    if (!w) return;
+    const wr = w.getBoundingClientRect();
+    const dr = e.currentTarget.getBoundingClientRect();
+    const x = dr.left + dr.width / 2 - wr.left;
+    setCard({ row, left: Math.max(0, Math.min(x - 20, wr.width - CARD_W)), top: dr.bottom - wr.top + 6 });
+  };
+  /** Keyboard: the card closes when focus leaves the plot and its card, or on Esc. */
+  const onBlur = (e: FocusEvent<HTMLDivElement>) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+      cancelClose();
+      setCard(null);
+    }
   };
   const levelLabel = (axis: Axis, id: string | null) => (id ? tx.realism[axis].levels[id]?.label ?? id : 'Not stated');
   const actionSpaceLabel = (id: string | null) => (id ? AS.levels[id]?.label ?? id : 'Not assessed');
@@ -107,7 +130,18 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
         <h2 id="realism-title">How close to the real target is each evaluation?</h2>
         <span className="small muted">One dot per paper, from its main evaluation. Click a dot for details.</span>
       </div>
-      <div className="realism__wrap" ref={wrap} onMouseLeave={scheduleClose}>
+      <div
+        className="realism__wrap"
+        ref={wrap}
+        onMouseLeave={scheduleClose}
+        onBlur={onBlur}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape' && card) {
+            cancelClose();
+            setCard(null);
+          }
+        }}
+      >
         <svg viewBox={`0 0 ${W} ${H}`} className="realism__svg" role="group" aria-label="Evaluation realism plot" data-testid="realism-plot">
           {/* bands */}
           {RX.map((rx, i) =>
@@ -116,7 +150,7 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
           {/* axes */}
           {RX.map((rx, i) => (
             <text key={rx} x={cellX(i) + CELL_W / 2} y={TOP + RY.length * CELL_H + 18} textAnchor="middle" className="realism__tick" data-testid={`realism-x-${rx}`}>
-              {wrapLabel(tx.realism.interaction.levels[rx].label).map((line, n) => (
+              {wrapLabel(tx.realism.interaction.levels[rx].label, tickChars).map((line, n) => (
                 <tspan key={n} x={cellX(i) + CELL_W / 2} dy={n ? 13 : 0}>
                   {line}
                 </tspan>
@@ -124,7 +158,7 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
             </text>
           ))}
           {RY.map((ry, j) => {
-            const lines = wrapLabel(tx.realism.human.levels[ry].label);
+            const lines = wrapLabel(tx.realism.human.levels[ry].label, tickChars);
             return (
               <text
                 key={ry}
@@ -178,9 +212,9 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
                 data-env={r.realism.environment ?? ''}
                 data-robot={r.realism.robot ?? ''}
                 data-action-space={r.actionSpaceComplexity ?? ''}
-                onMouseEnter={() => open(r, x, y)}
+                onMouseEnter={(e) => open(r, e)}
                 onMouseLeave={scheduleClose}
-                onFocus={() => open(r, x, y)}
+                onFocus={(e) => open(r, e)}
                 onClick={() => url.openPaper(r.paper.id)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -199,7 +233,7 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
         {card && (
           <div
             className="hovercard realism__card"
-            style={{ left: Math.max(0, card.x - 20), top: card.y + 14 }}
+            style={{ left: card.left, top: card.top }}
             role="dialog"
             aria-label={`${card.row.paper.short_name} evaluation`}
             data-testid="realism-card"

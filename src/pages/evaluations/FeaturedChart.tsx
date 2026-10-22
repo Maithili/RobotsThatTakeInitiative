@@ -1,9 +1,11 @@
 import { scaleBand, scaleLinear } from 'd3-scale';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { evalById, paperLabel, tx } from '../../data.ts';
 import { useUrl } from '../../state/url.ts';
+import { useWidth } from './useWidth.ts';
 
-const W = 640;
+const MAX_W = 640;
+const MIN_W = 280;
 const H = 260;
 const M = { top: 16, right: 12, bottom: 44, left: 40 };
 
@@ -12,6 +14,9 @@ export function FeaturedChart() {
   const url = useUrl();
   const fc = tx.featured_comparison;
   const metric = tx.metrics[fc.metric];
+  // Drawn at the width it has on screen, so its text keeps its size on a phone instead of shrinking with the chart.
+  const box = useRef<HTMLDivElement>(null);
+  const W = Math.max(MIN_W, Math.min(MAX_W, useWidth(box, MAX_W)));
 
   const data = useMemo(
     () =>
@@ -36,8 +41,8 @@ export function FeaturedChart() {
         <h2 id="featured-title">{fc.title}</h2>
       </div>
       <p className="small muted">{metric?.label} for each method, scored offline and in closed loop. Click a bar to open the method.</p>
-      <div className="featured__chart">
-        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${fc.title}. ${metric?.label} by method and evaluation.`}>
+      <div className="featured__chart" ref={box}>
+        <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`${fc.title}. ${metric?.label} by method and evaluation.`}>
           {ticks.map((t) => (
             <g key={t}>
               <line x1={M.left} x2={W - M.right} y1={y(t)} y2={y(t)} className="chart-grid" />
@@ -57,12 +62,13 @@ export function FeaturedChart() {
                 const val = v.value ?? 0;
                 return (
                   <g key={v.col} className={`bar-g bar-g--${v.col}`}>
+                    {/* The whole column is the target, so a bar near zero can still be hovered, focused, and clicked. */}
                     <rect
                       x={bx}
-                      y={y(val)}
+                      y={M.top}
                       width={bw}
-                      height={y(0) - y(val)}
-                      className={`bar bar--${v.col}`}
+                      height={y(0) - M.top}
+                      className="bar-hit"
                       data-testid="featured-bar"
                       tabIndex={0}
                       role="button"
@@ -75,7 +81,8 @@ export function FeaturedChart() {
                         }
                       }}
                     />
-                    <text x={bx + bw / 2} y={y(val) - 5} textAnchor="middle" className="bar-label">
+                    <rect x={bx} y={y(val)} width={bw} height={y(0) - y(val)} className={`bar bar--${v.col}`} aria-hidden="true" />
+                    <text x={bx + bw / 2} y={y(val) - 5} textAnchor="middle" className="bar-label" aria-hidden="true">
                       {v.value === null ? '—' : v.value.toFixed(3)}
                     </text>
                   </g>

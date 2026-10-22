@@ -23,12 +23,23 @@ function labelOf(k: GlobalListKey, v: string) {
   return optionsFor(k).find(([id]) => id === v)?.[1] ?? v;
 }
 
-/** Active global filters as removable chips, plus controls for the dimensions a page offers. */
-export function FilterBar({ controls = [], years, extra }: { controls?: GlobalListKey[]; years?: [number, number]; extra?: ReactNode }) {
+/** Active global filters as removable chips, plus controls for the dimensions a page offers. `pageFilters` names the
+ *  page's own params that are set (shown by the page in `extra`): they count as active, and "Clear all" clears them. */
+export function FilterBar({
+  controls = [],
+  years,
+  extra,
+  pageFilters = [],
+}: {
+  controls?: GlobalListKey[];
+  years?: [number, number];
+  extra?: ReactNode;
+  pageFilters?: readonly string[];
+}) {
   const url = useUrl();
   const f = url.filters;
   const [open, setOpen] = useState(false);
-  const active = hasActiveFilters(f);
+  const active = hasActiveFilters(f) || pageFilters.length > 0;
   const yr = f.years ?? years;
 
   return (
@@ -65,7 +76,11 @@ export function FilterBar({ controls = [], years, extra }: { controls?: GlobalLi
           <input type="search" placeholder="Filter text" value={f.q} onChange={(e) => url.set({ q: e.target.value || null })} />
         </label>
         {active && (
-          <button type="button" className="btn btn--sm btn--ghost" onClick={() => url.set({ family: null, action: null, input: null, theme: null, years: null, q: null })}>
+          <button
+            type="button"
+            className="btn btn--sm btn--ghost"
+            onClick={() => url.set({ family: null, action: null, input: null, theme: null, years: null, q: null, ...Object.fromEntries(pageFilters.map((k) => [k, null])) })}
+          >
             Clear all
           </button>
         )}

@@ -1202,3 +1202,114 @@ test('GAP cites NOPA: the drawer lists it, and hovering GAP draws its dotted cit
   expect(shown.length).toBeGreaterThan(1);
   for (const id of shown) expect(id).toMatch(/^edge-.+-gap$/);
 });
+
+// QA: Evaluations
+test.describe('QA: Evaluations', () => {
+  test('page filters count as active: no "No filters" beside them, and Clear all clears them', async ({ page }) => {
+    await page.goto('/#/evaluations?loop=offline_replay&term=dC_saved');
+    const bar = page.getByRole('region', { name: 'Filters' });
+    await expect(bar.getByRole('button', { name: 'Remove term filter' })).toBeVisible();
+    await expect(bar).not.toContainText('No filters');
+    await bar.getByRole('button', { name: 'Clear all' }).click();
+    await expect.poll(() => [params(page).get('loop'), params(page).get('term')]).toEqual([null, null]);
+    await expect(bar).toContainText('No filters');
+    await expect(page.getByTestId('loop-filter')).toHaveValue('');
+    await expect(page.getByTestId('protocol-table').locator('tbody tr')).toHaveCount(11);
+  });
+
+  test('unknown page param values are ignored rather than emptying the table or dimming every metric', async ({ page }) => {
+    await page.goto('/#/evaluations?loop=bogus&term=bogus&category=bogus&metric=bogus&dataset=bogus');
+    await expect(page.getByTestId('protocol-table').locator('tbody tr')).toHaveCount(11);
+    await expect(page.getByRole('region', { name: 'Filters' })).toContainText('No filters');
+    await expect(page.locator('.filterbar .chip')).toHaveCount(0);
+    await expect(page.locator('.metric-row[data-dim="true"], .metric-box.is-dim')).toHaveCount(0);
+  });
+
+  test('at 390 px the realism plot and featured chart keep readable text, and every realism card stays on screen', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/#/evaluations');
+    // Rendered size of 11-unit SVG text: the SVG's on-screen width over its viewBox width.
+    const textPx = (sel: string) =>
+      page.locator(sel).evaluate((svg) => (11 * svg.getBoundingClientRect().width) / Number(svg.getAttribute('viewBox')!.split(' ')[2]));
+    expect(await textPx('.realism__svg')).toBeGreaterThanOrEqual(9);
+    expect(await textPx('.featured__chart svg')).toBeGreaterThanOrEqual(10.5);
+    const dots = page.locator('[data-testid^="realism-dot-"]');
+    expect(await dots.count()).toBeGreaterThan(0);
+    for (const dot of await dots.all()) {
+      await dot.hover();
+      const id = (await dot.getAttribute('data-testid'))!;
+      const b = (await page.getByTestId('realism-card').boundingBox())!;
+      expect(b.x, id).toBeGreaterThanOrEqual(0);
+      expect(b.x + b.width, id).toBeLessThanOrEqual(390);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  });
+
+  test('the realism card closes when keyboard focus leaves the plot, and on Esc', async ({ page }) => {
+    await page.goto('/#/evaluations');
+    const card = page.getByTestId('realism-card');
+    await page.getByTestId('realism-dot-proact').focus();
+    await expect(card).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(card).toBeHidden();
+    await page.getByTestId('realism-dot-globe').focus();
+    await expect(card).toBeVisible();
+    await page.getByTestId('loop-filter').focus();
+    await expect(card).toBeHidden();
+  });
+
+  test('a featured bar near zero can still be hovered and clicked', async ({ page }) => {
+    await page.goto('/#/evaluations');
+    const bar = page.getByTestId('featured-bar').nth(4);
+    await expect(bar).toHaveAttribute('aria-label', 'STREAK, Closed loop, LLM user: 0.002');
+    const b = (await bar.boundingBox())!;
+    expect(b.height).toBeGreaterThan(50);
+    await page.mouse.click(b.x + b.width / 2, b.y + b.height - 10);
+    await expect.poll(() => params(page).get('paper')).toBe('streak');
+  });
+
+  test('datasets table: the info panel stays in the visible part of the table at 390 px, and loop pills run in scale order', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/#/evaluations');
+    await page.getByRole('button', { name: 'About HOMER', exact: true }).click();
+    const panel = page.locator('.info-panel');
+    await expect(panel).toContainText('Introduced in');
+    let b = (await panel.boundingBox())!;
+    expect(b.x + b.width).toBeLessThanOrEqual(390);
+    // Scrolled sideways, the panel stays in view.
+    await page.getByTestId('dataset-table').locator('xpath=..').evaluate((e) => (e.scrollLeft = 600));
+    await expect.poll(async () => (await panel.boundingBox())!.x).toBeGreaterThanOrEqual(0);
+    b = (await panel.boundingBox())!;
+    expect(b.x + b.width).toBeLessThanOrEqual(390);
+    await expect(page.getByTestId('ds-row-homer-llm-closed-loop').locator('.loop-pill')).toHaveText(['Closed loop, scripted human', 'Closed loop, adaptive simulated human']);
+  });
+
+  test('protocols table: dataset chips keep a gap, empty cells sort last both ways, and the framework tag meets AA', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto('/#/evaluations');
+    const chips = page.getByTestId('protocol-globe').locator('td').nth(3).locator('.chip');
+    await expect(chips).toHaveText(['HOMER+', 'HOMER-Noise']);
+    const [a, c] = [(await chips.nth(0).boundingBox())!, (await chips.nth(1).boundingBox())!];
+    expect(c.x - (a.x + a.width)).toBeGreaterThanOrEqual(3);
+    // Rows with no environment or dataset ("—") sort last, ascending and descending. GAP stays pinned first.
+    const rows = page.getByTestId('protocol-table').locator('tbody tr');
+    for (let i = 0; i < 2; i++) {
+      await page.getByTestId('psort-env').click();
+      const empty = await rows.evaluateAll((rs) => rs.map((r) => (r.querySelectorAll('td')[3].querySelector('.chip') ? 0 : 1)));
+      expect(empty.slice(1)).toEqual([...empty.slice(1)].sort((x, y) => x - y));
+    }
+    // The "Framework paper" tag text reads at 4.5:1 or more on GAP's shaded row.
+    const ratio = await page.getByTestId('protocol-gap').locator('.tag--framework').evaluate((el) => {
+      const rgb = (s: string) => {
+        const m = s.match(/[\d.]+/g)!.map(Number);
+        return s.startsWith('color(') ? m.slice(0, 3).map((v) => v * 255) : m.slice(0, 3);
+      };
+      const lum = (c: number[]) =>
+        c.map((v) => v / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0);
+      const fg = lum(rgb(getComputedStyle(el).color));
+      const bg = lum(rgb(getComputedStyle(el.closest('td')!).backgroundColor));
+      return (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
+    });
+    expect(ratio).toBeGreaterThanOrEqual(4.5);
+  });
+});
