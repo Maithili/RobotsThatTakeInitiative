@@ -59,6 +59,7 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
+    task_complexity: high  # draft: predicts the set of goal predicates of a multi-predicate household goal
   - id: watch-and-help-help
     environment: virtualhome
     loop: closed_scripted
@@ -72,6 +73,7 @@ evaluations:
       robot: task_specific
       human: scripted
       environment: simulator
+    task_complexity: high  # draft: goal-conditioned planning until every predicate of the goal holds
   - id: watch-and-help-human
     environment: virtualhome
     loop: user_study_short
@@ -88,3 +90,4 @@ evaluations:
       robot: task_specific
       human: non_target
       environment: simulator
+    task_complexity: high  # draft: same task as the help stage, with participants

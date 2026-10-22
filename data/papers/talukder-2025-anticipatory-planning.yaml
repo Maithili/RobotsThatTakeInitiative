@@ -67,3 +67,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
+    task_complexity: high  # draft: FastDownward plans for predicate-list tasks in ProcTHOR homes

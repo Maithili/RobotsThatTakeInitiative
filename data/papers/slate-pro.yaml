@@ -60,6 +60,7 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
+    task_complexity: medium  # draft: predicts routine object usage as object relocations on HOMER+
   - id: slate-pro-queries
     datasets:
       - homer-plus
@@ -74,3 +75,4 @@ evaluations:
       robot: task_specific
       human: scripted
       environment: simulator
+    task_complexity: medium  # draft: same predictions, one query each

@@ -21,6 +21,8 @@ export interface PaperEvalRow {
   adapt: Cap | null;
   /** Closest level per realism axis across the entries, by taxonomy order. */
   realism: { robot: string | null; human: string | null; environment: string | null };
+  /** Most complex task level across the entries, by taxonomy order (SPEC §8.3). Null when no entry has one. */
+  complexity: string | null;
 }
 
 const uniq = <T,>(xs: T[]) => [...new Set(xs)];
@@ -38,6 +40,11 @@ export function closest(values: (string | null | undefined)[], order: string[]):
   return best >= 0 ? order[best] : null;
 }
 
+/** The most complex level among the values, by `order` from low to high, or null. */
+export function mostComplex(values: (string | null | undefined)[], order: string[]): string | null {
+  return closest(values, order);
+}
+
 /** Distinct categories of `metrics`, in `order`. Metrics with no category add none. */
 export function categoriesOf(metrics: string[], order: string[], categoryOf: (m: string) => string | null | undefined): string[] {
   const used = new Set(metrics.map(categoryOf));
@@ -49,6 +56,8 @@ export function mergePaper(
   loopOrder: string[],
   realismOrder: { robot: string[]; human: string[]; environment: string[] },
   categories: { order: string[]; of: (m: string) => string | null | undefined } = { order: [], of: () => null },
+  /** `task_complexity` level ids, from low to high. */
+  complexityOrder: string[] = [],
 ): PaperEvalRow {
   const es = paper.evaluations ?? [];
   const metrics = uniq(es.flatMap((e) => e.metrics ?? []));
@@ -70,6 +79,7 @@ export function mergePaper(
       human: closest(es.map((e) => e.realism?.human), realismOrder.human),
       environment: closest(es.map((e) => e.realism?.environment), realismOrder.environment),
     },
+    complexity: mostComplex(es.map((e) => e.task_complexity), complexityOrder),
   };
 }
 

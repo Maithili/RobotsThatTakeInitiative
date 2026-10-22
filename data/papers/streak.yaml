@@ -66,3 +66,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
+    task_complexity: medium  # draft: object relocations, scored per object as in STOT

@@ -504,6 +504,32 @@ describe('datasets, setups, and realism', () => {
   it('rejects unknown realism levels', () => {
     expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', realism: { robot: 'telepathy' } }] })]), /realism.robot level "telepathy"/);
   });
+  it('rejects an opacity on a realism level; environment no longer drives opacity', () => {
+    const t = bareTaxonomy();
+    t.realism.environment.levels.simulator.opacity = 0.25;
+    expectError(run([], { taxonomy: t }), /realism\.environment\.levels\.simulator: Unrecognized key.*opacity/);
+  });
+  it('accepts known task complexity levels and null, and rejects unknown ones', () => {
+    const ok = run([
+      base('a', {
+        evaluations: [
+          { id: 'e1', loop: 'offline_replay', task_complexity: 'medium' },
+          { id: 'e2', loop: 'offline_replay', task_complexity: null },
+          { id: 'e3', loop: 'offline_replay' },
+        ],
+      }),
+    ]);
+    expect(ok.errors).toEqual([]);
+    expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', task_complexity: 'galactic' }] })]), /evaluation e: unknown task_complexity level "galactic"/);
+  });
+  it('rejects a task complexity scale with more levels than the color ramp has steps', () => {
+    const t = bareTaxonomy();
+    t.task_complexity.levels.extreme = { label: 'Extreme', definition: 'More than the ramp can show.' };
+    expectError(run([], { taxonomy: t }), /task_complexity\.levels: needs 1 to 3 levels/);
+    const none = bareTaxonomy();
+    none.task_complexity.levels = {};
+    expectError(run([], { taxonomy: none }), /task_complexity\.levels: needs 1 to 3 levels/);
+  });
   it('derives basis_of', () => {
     const r = run([], { datasets: [sim, ds, { ...setup, environment: 'sim', based_on: [{ id: 'ds', relation: 'uses' }], human_models: ['Scripted'], loops: ['closed_scripted'] }] });
     expect(r.errors).toEqual([]);

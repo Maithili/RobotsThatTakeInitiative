@@ -77,10 +77,11 @@ const subproblemDef = z.object({
 
 const realismAxis = z.object({
   label: z.string(),
-  levels: z.record(
-    z.object({ label: z.string(), definition: z.string().optional(), opacity: z.number().min(0).max(1).optional(), refs: z.array(z.string()).optional() }).strict(),
-  ),
+  levels: z.record(z.object({ label: z.string(), definition: z.string().optional(), refs: z.array(z.string()).optional() }).strict()),
 });
+
+/** Steps in the task-complexity color ramp (SPEC §8.3), one CSS token each (`--complexity-1` …). */
+export const COMPLEXITY_STEPS = 3;
 
 export const TaxonomySchema = z.object({
   levels: z.object({ L0: levelDef, L1: levelDef, L2: levelDef }),
@@ -157,6 +158,18 @@ export const TaxonomySchema = z.object({
     environment: realismAxis,
     source_url: url.nullable(),
   }),
+  /** Ordered from low to high. Colors the realism plot's dots (SPEC §8.3), one ramp step per level. */
+  task_complexity: z
+    .object({
+      label: z.string(),
+      definition: z.string(),
+      levels: z
+        .record(defn.strict())
+        .refine((l) => Object.keys(l).length >= 1 && Object.keys(l).length <= COMPLEXITY_STEPS, {
+          message: `needs 1 to ${COMPLEXITY_STEPS} levels, one per step of the color ramp`,
+        }),
+    })
+    .strict(),
   featured_comparison: z.object({
     title: z.string(),
     metric: z.string(),
@@ -211,6 +224,8 @@ export const EvaluationSchema = z
       .object({ robot: z.string().nullable().optional(), human: z.string().nullable().optional(), environment: z.string().nullable().optional() })
       .strict()
       .optional(),
+    /** A `task_complexity` level id. Null when the paper does not let you decide. */
+    task_complexity: z.string().nullable().optional(),
     results: z.array(ResultSchema).optional(),
   })
   .strict();

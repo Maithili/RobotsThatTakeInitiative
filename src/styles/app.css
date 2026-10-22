@@ -2857,13 +2857,24 @@ label.lgd__item {
   font-size: 20px;
   fill: var(--text-2);
 }
+/* Fill comes from the task-complexity ramp (--complexity-*), set inline. Dots are fully opaque. */
 .realism__fill {
-  fill: var(--accent);
+  fill: var(--complexity-none);
 }
 .realism__outline {
   fill: none;
-  stroke: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+.realism__dot.is-unassessed .realism__outline,
+.realism__legend li.is-unassessed .realism__outline {
+  stroke: var(--complexity-none-edge);
   stroke-width: 1.2;
+  stroke-dasharray: 2.5 2;
+}
+.realism__swatch {
+  margin-right: 5px;
+  vertical-align: -1px;
 }
 .realism__ring {
   fill: none;
@@ -2905,6 +2916,9 @@ label.lgd__item {
 }
 .realism__legend svg {
   vertical-align: middle;
+}
+.realism__legend li[title] {
+  cursor: help;
 }
 
 /* ---------- evaluations: framework paper row (SPEC §8.4) ---------- */

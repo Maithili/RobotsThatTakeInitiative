@@ -25,6 +25,16 @@
   --level-L2-ink: #ffffff;
   --level-none: #9a9ca5;
 
+  /* Task complexity on the realism plot (SPEC §8.3): one sequential leaf-green ramp (OKLCH hue 140), light (low) to
+     dark (high), most contrast at the high end in both themes. Purple is GAP's; amber, magenta, sky and brown are the
+     tangential categories; teal, coral and blue are the families in use. The hue sits apart from the ΔV term's sea
+     green. Not assessed is a pale gray with a dashed edge. */
+  --complexity-1: #7eba71;
+  --complexity-2: #478638;
+  --complexity-3: #26541c;
+  --complexity-none: #d5d7dc;
+  --complexity-none-edge: #7a7e88;
+
   /* Net value terms: four categorical colors, always paired with their symbols. */
   --term-dV: #1b8a5a;
   --term-dC_saved: #2a6fdb;
@@ -79,6 +89,11 @@
     --level-L1-ink: #ffffff;
     --level-L2-ink: #10163d;
     --level-none: #6d717c;
+    --complexity-1: #427138;
+    --complexity-2: #63aa53;
+    --complexity-3: #a7e09b;
+    --complexity-none: #3d4049;
+    --complexity-none-edge: #8a8e98;
     --term-dV: #4cc68f;
     --term-dC_saved: #6aa3ff;
     --term-dC_added: #ff8a5c;
@@ -120,6 +135,11 @@
   --level-L1-ink: #ffffff;
   --level-L2-ink: #10163d;
   --level-none: #6d717c;
+  --complexity-1: #427138;
+  --complexity-2: #63aa53;
+  --complexity-3: #a7e09b;
+  --complexity-none: #3d4049;
+  --complexity-none-edge: #8a8e98;
   --term-dV: #4cc68f;
   --term-dC_saved: #6aa3ff;
   --term-dC_added: #ff8a5c;

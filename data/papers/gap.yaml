@@ -73,6 +73,7 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
+    task_complexity: medium  # draft: object placements, scored by the user actions they skip
     results:
       - method: slate-pro
         metric: f1
@@ -105,6 +106,7 @@ evaluations:
       robot: task_specific
       human: adaptive_sim
       environment: simulator
+    task_complexity: medium  # draft: a planner proposes and selects candidate object placements
     results:
       - method: slate-pro
         metric: f1
@@ -137,6 +139,7 @@ evaluations:
       robot: task_specific
       human: scripted
       environment: simulator
+    task_complexity: medium  # draft: a planner proposes and selects candidate object placements
     results:
       - method: slate-pro
         metric: f1

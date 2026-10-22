@@ -66,6 +66,7 @@ evaluations:
       robot: task_specific
       human: scripted
       environment: simulator
+    task_complexity: high  # draft: goal-conditioned planning toward multi-predicate goals (goal predicate F1, speedup)
   - id: nopa-user-study
     environment: virtualhome
     loop: user_study_short
@@ -81,3 +82,4 @@ evaluations:
       robot: task_specific
       human: non_target
       environment: simulator
+    task_complexity: high  # draft: same task as the simulation

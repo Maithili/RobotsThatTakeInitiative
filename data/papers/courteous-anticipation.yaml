@@ -69,3 +69,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
+    task_complexity: high  # draft: PDDL plans for predicate-set tasks, 1 to 3 robots

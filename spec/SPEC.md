@@ -294,7 +294,7 @@ captures:                     # GAP paper Appendix I
   goal_adaptation: {label: Goal adaptation, definition: The user reallocates effort to new goals in response to the robot (Relaxation 2).}
   values: [yes, partial, no]
 
-realism:                      # drives the plot in §8.3. Levels ordered from far to close. Pending Maithili's review.
+realism:                      # the plot in §8.3: environment (x) by human (y). Robot shows only in the hover card. Levels ordered from far to close. Pending Maithili's review.
   robot:
     label: "Robot: closer to the target robot"
     levels:
@@ -311,12 +311,20 @@ realism:                      # drives the plot in §8.3. Levels ordered from fa
       target_users:      {label: Target users, definition: The people the robot is meant to assist.}
   environment:
     label: "Setting: closer to the target setting"
-    levels:              # opacity rises with realism
-      simulator:         {label: Simulator, opacity: 0.25}
-      vr:                {label: VR, opacity: 0.5}
-      lab:               {label: Lab, opacity: 0.75}
-      own_home:          {label: Users' own homes, opacity: 1.0}
+    levels:
+      simulator:         {label: Simulator}
+      vr:                {label: VR}
+      lab:               {label: Lab}
+      own_home:          {label: Users' own homes}
   source_url: null       # link to the paper this organization comes from, once it is public
+
+task_complexity:              # colors the dots in §8.3. Levels ordered from low to high, at most 3 (one per ramp step). Pending Maithili's review.
+  label: Task complexity
+  definition: The combinatorial complexity of the tasks or actions the evaluation asks for.
+  levels:
+    low:    {label: Low, definition: "Few options per decision: a trigger, a label, or one choice from a short list."}
+    medium: {label: Medium, definition: "One object–destination (or object–action) choice at a time, from the objects and places in the scene."}
+    high:   {label: High, definition: "Composed plans: sequences of actions or subgoals over many objects."}
 
 featured_comparison:          # drives the chart in §8.2
   title: Offline evaluation overstates performance
@@ -372,7 +380,8 @@ Evaluation entry:
 | `captures` | `{state_drift, goal_adaptation}`, each `yes`, `partial`, `no`, or null | |
 | `provenance` | string ≤ 140 | |
 | `results` | list of `{method, method_label?, metric, value, sd?}` | `method` is a paper id. Use `method_label` alone for a baseline with no paper. |
-| `realism` | `{robot, human, environment}`, each a level id from `realism` or null | Filled only from what the paper states about its evaluation. Drives the plot in §8.3. |
+| `realism` | `{robot, human, environment}`, each a level id from `realism` or null | Filled only from what the paper states about its evaluation. `human` and `environment` place the dot in the plot in §8.3; `robot` shows only in its hover card. |
+| `task_complexity` | level id from `task_complexity` or null | The combinatorial complexity of the evaluation's tasks or actions, read from its task descriptions, outputs, and metrics. Colors the dot in §8.3. Null when the paper does not let you decide. The current values are drafts for Maithili to confirm. |
 
 Example:
 
@@ -623,14 +632,15 @@ A grouped bar chart built from `featured_comparison`. Each method's Offline bar 
 
 ### 8.3 Evaluation realism plot
 
-This plot shows how close each paper's evaluation is to the real target, on three axes from `realism` in the taxonomy. The idea comes from a figure in a paper that is not yet public (§16).
+This plot shows how close each paper's evaluation is to the real target, on two axes from `realism` in the taxonomy, with task complexity as color. The idea comes from a figure in a paper that is not yet public (§16).
 
-- **x axis**: robot realism. **y axis**: human realism. Each axis has one band per level, in taxonomy order, labeled with the level names.
-- **Environment realism** sets each dot's opacity, from faint (simulator) to solid (users' own homes). Every dot keeps a thin solid outline so faint dots stay visible. A legend shows the four opacity steps with their labels.
+- **x axis**: environment realism, from Simulator on the left to Users' own homes on the right. **y axis**: human realism, far at the bottom. Each axis has one band per level, in taxonomy order, labeled with the level names.
+- **No robot axis.** Every evaluation in the database uses a task-specific policy, so robot realism would not separate papers (per Maithili, Oct 22 2026). `realism.robot` stays in the data and in the hover card.
+- **Color** is task complexity (`task_complexity` in the taxonomy): the combinatorial complexity of the tasks or actions the evaluation asks for, which stands in for the complexity of the policy. It uses one sequential green ramp, light for low and dark for high on the light theme, with its own steps on the dark theme so high keeps the most contrast. Purple stays GAP's, and the ramp avoids the tangential-category hues. An evaluation with no level is pale gray with a dashed outline. Dots are fully opaque. A compact legend under the plot lists the levels, each with its definition on hover, then "Not assessed" and the framework-paper ring.
 - A dashed "target" circle with a star sits past the top-right corner, beyond the last band on both axes.
-- **One dot per paper.** A paper with several evaluation entries takes the closest level on each axis across its entries. Papers with no realism levels do not appear.
-- Dots that share a cell pack into a small grid inside it, ordered by year, so they never overlap. GAP's dot has a ring in the framework-paper color.
-- **Hover or focus** on a dot shows a card with short name, year, title, Paper ↗ and Code ↗ links, the three realism levels in words, loop types, and datasets. The card stays open while the pointer moves into it, so its links can be clicked. Clicking a dot opens the drawer.
+- **One dot per paper.** A paper with several evaluation entries takes the closest level on each axis and the most complex task level across its entries. A paper appears only when it has both a human and an environment level. A note under the plot counts the papers it leaves out.
+- Dots that share a cell pack into a small grid inside it, ordered by year, so they never overlap. GAP's dot has a ring in the framework-paper color, and its fill follows task complexity like every other dot.
+- **Hover or focus** on a dot shows a card with short name, year, title, Paper ↗ and Code ↗ links, the people, setting, task complexity, and robot levels in words, loop types, and datasets. The card stays open while the pointer moves into it, so its links can be clicked. Clicking a dot opens the drawer.
 - Filters dim dots. Dots are keyboard-focusable in year order.
 - **Credit line.** When `realism.source_url` is set, the caption reads "Organization adapted from" with a link to that paper. It stays null until the paper is public.
 - The loop-type filter moves to the filter bar as a dropdown bound to `loop=`.
@@ -703,6 +713,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 - Color tokens on `:root`, redefined for dark mode under `prefers-color-scheme`, plus a manual theme toggle saved in `localStorage` inside try/catch.
 - **Levels** use one sequential hue ramp, lightest for L0 and darkest for L2, since levels are ordered by unknowns. Color never carries meaning alone. Lanes have labels and chips say "L1".
 - **Statuses** use glyphs ● ◐ ○, with a blank cell for "not tagged". Every view that uses them shows a legend.
+- **Task complexity** (§8.3) uses one sequential green ramp (`--complexity-1` to `--complexity-3`), with its own dark-theme steps, and pale gray for "Not assessed".
 - **No subproblem codes.** G1, G2, A1, A2, A3, P1, and P2 never appear as visible text. The UI uses subproblem names, or the `short` labels where space is tight. Codes stay in data files and URLs.
 - **Net value terms** use four categorical colors plus their symbols. The same colors appear in the equation, metric chips, and table dots.
 - System UI sans-serif for the interface, KaTeX for math, tabular numerals in tables.
@@ -720,7 +731,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 
 **npm scripts**: `dev`, `build` (runs `build-data` first), `validate`, `test`, `e2e`, `new-paper`, `preview`.
 
-**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, and an `evaluations_exclude` id that is not a paper), the `evaluations_exclude` scope, metric box rows (a group as one row, at its first member, dimmed only when no member measures the selected term, tagged ΔV or ΔC by the union of its members' terms), the category filter, `metric=` with a group id, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
+**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, an `evaluations_exclude` id that is not a paper, an unknown `task_complexity` level, a `task_complexity` scale with more levels than ramp steps, and an `opacity` on a realism level), the `evaluations_exclude` scope, the most complex task level across a paper's entries and its ramp color, metric box rows (a group as one row, at its first member, dimmed only when no member measures the selected term, tagged ΔV or ΔC by the union of its members' terms), the category filter, `metric=` with a group id, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
 
 **End-to-end tests (Playwright)** on the seed data:
 
@@ -736,7 +747,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 10. At 375 px wide, no page scrolls horizontally.
 11. On Methods, the STOT to SLaTe-PRO edge is solid. With "Show all citation lines" off, no dotted edge shows until a node is hovered. The fit button brings every node into view. No drawn edge, in the seed data or the synthetic fixture, passes within clearance of a node that isn't one of its ends. A unit test over the edge geometry checks this; it would catch Watch-And-Help to NOPA passing through ProAct.
 12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table's columns run paper, year, metric categories, environment and datasets, loop types, human models, baselines. It has 12 rows and exactly one GAP row, shaded and first, showing three loop-type pills and the categories Change in user actions and Object movement prediction, and it stays first after sorting by year, name, metric categories, and loop type.
-13. The realism plot shows GAP's dot at task-specific policy and adaptive simulated user, at simulator opacity. Hovering it shows a card with a working Paper link.
+13. The realism plot's axes are setting (x) and people (y), with no robot axis. GAP's dot sits at Simulator and Adaptive simulated user, fully opaque, in the medium task-complexity color in both themes, with its ring. Hovering it shows a card with a working Paper link and "Medium" task complexity. ProAct, with no stated setting, has no dot, and the note under the plot counts it.
 14. With a fixture tangential paper, its graph node renders in its category's color at 60% opacity, and unchecking "Show tangential works" removes it and its edges.
 15. The protocols table shows category labels, one chip per category in category order, and no metric names. The metrics list has no tabs, and every category box is visible at once, in category order. The Task performance box shows "Goal precision, recall, and F1 ↑ fraction" as one row, with links to Watch-And-Help and NOPA and no hover card. Clicking a paper link opens the drawer. Clicking the row sets `metric=goal_prf` and filters the table to those two papers. Clicking a category chip in the table sets `category=`, filters the table, and scrolls to and highlights its box. `metric=speedup` marks its row and filters the table. PredictiveGraphs has no row and no realism dot but stays on the graph and the Subproblems page. ProAct has no closed-loop pill.
 16. A bare `#/evaluations` URL has no active filter chip, shows all 12 protocol rows, and dims no metric row. Bare `#/methods` and `#/subproblems` URLs also start with nothing selected or dimmed. Category headers show their ΔV and ΔC tags, collapsing a box hides its rows, and no "↕" appears on the page.
@@ -781,7 +792,10 @@ Confirmed by Maithili (Oct 22, 2026): the Koch van den Broek review sits under "
 
 The three anticipatory planning papers (Anticipatory TAMP, Talukder 2025, Courteous Anticipation) are open loop, per Maithili: their task streams are fixed and never respond to the robot. Their entries use `offline_replay`, with the human side at `recorded`.
 
+Realism plot axes, per Maithili (Oct 22, 2026): x is environment and y is human. Robot realism leaves the plot because every evaluation uses a task-specific policy; it stays in the data and the hover card. Environment no longer sets opacity. Color shows task complexity, which she chose to measure as "the combinatorial complexity of tasks or actions", as a way to show policy complexity. Every placed paper currently sits in the Simulator column.
+
 
 1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them.
-2. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.
-3. **Tangential works.** Maithili lists them. Candidates from the GAP paper references that fit the two tangent types: Peng et al. 2019 [16] (a CHI design and evaluation of service-robot proactivity), and the works that ask questions [17] and [18]. Both left the database earlier. ADAPT [19] stays on the Subproblems page only and is not tangential, per Maithili.
+2. **Task complexity.** The three levels in `task_complexity` (§5.1) and the per-evaluation values are drafts, read from the paper files and, where reachable, the papers' abstracts. Each value carries a one-line evidence comment in its paper file. Maithili reviews them. Din 2025 (short subgoal sequences) sits between medium and high, and ProAct stays null.
+3. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.
+4. **Tangential works.** Maithili lists them. Candidates from the GAP paper references that fit the two tangent types: Peng et al. 2019 [16] (a CHI design and evaluation of service-robot proactivity), and the works that ask questions [17] and [18]. Both left the database earlier. ADAPT [19] stays on the Subproblems page only and is not tangential, per Maithili.

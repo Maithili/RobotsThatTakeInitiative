@@ -78,3 +78,4 @@ evaluations:
       robot: null
       human: recorded
       environment: null
+    task_complexity: null  # undecided: trigger and step detection is low, robot step choice over task graphs is not described

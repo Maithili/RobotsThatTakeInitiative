@@ -521,21 +521,55 @@ test('12. datasets table has no simulator rows; GAP has one shaded protocol row 
   await expect(page.getByTestId('protocol-gap')).toHaveCount(0);
 });
 
-test('13. the realism plot puts GAP at task-specific policy and adaptive simulated user, simulator opacity', async ({ page }) => {
+test('13. the realism plot puts GAP at Simulator and Adaptive simulated user, in the medium task-complexity color', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/#/evaluations');
+  const plot = page.getByTestId('realism-plot');
+  // Axes: setting (x) by people (y). Robot realism is not an axis.
+  await expect(plot.locator('[data-testid^="realism-x-"]')).toHaveText(['Simulator', 'VR', 'Lab', "Users' own homes"]);
+  await expect(plot.getByTestId('realism-y-recorded')).toHaveText('Recorded behavior');
+  await expect(plot.getByText('Task-specific policy')).toHaveCount(0);
+  await expect(plot.getByText(/^Robot:/)).toHaveCount(0);
+
   const dot = page.getByTestId('realism-dot-gap');
-  await expect(dot).toHaveAttribute('data-robot', 'task_specific');
   await expect(dot).toHaveAttribute('data-human', 'adaptive_sim');
   await expect(dot).toHaveAttribute('data-env', 'simulator');
-  await expect(dot).toHaveAttribute('data-opacity', '0.25');
+  await expect(dot).toHaveAttribute('data-complexity', 'medium');
+  // The dot sits in the Simulator column and the Adaptive simulated user row.
+  const box = (await dot.locator('.realism__fill').boundingBox())!;
+  const col = (await plot.getByTestId('realism-x-simulator').boundingBox())!;
+  const vr = (await plot.getByTestId('realism-x-vr').boundingBox())!;
+  const row = (await plot.getByTestId('realism-y-adaptive_sim').boundingBox())!;
+  expect(box.x + box.width / 2).toBeLessThan((col.x + col.width / 2 + vr.x + vr.width / 2) / 2);
+  expect(Math.abs(box.y + box.height / 2 - (row.y + row.height / 2))).toBeLessThan(28);
+  // Fully opaque, filled with the medium step of the ramp. GAP keeps its ring.
+  const fill = dot.locator('.realism__fill');
+  await expect(fill).toHaveCSS('fill', 'rgb(71, 134, 56)');
+  await expect(fill).toHaveCSS('fill-opacity', '1');
+  await expect(dot).toHaveCSS('opacity', '1');
+  await expect(dot.locator('.realism__ring')).toHaveCount(1);
+  // The dark theme has its own steps.
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(fill).toHaveCSS('fill', 'rgb(99, 170, 83)');
+  await page.emulateMedia({ colorScheme: 'light' });
+  // The legend names each level, with its definition on hover.
+  await expect(page.getByTestId('complexity-legend-medium')).toHaveAttribute('title', /object–destination/);
+  await expect(page.getByTestId('complexity-legend-none')).toContainText('Not assessed');
+
   await dot.hover();
   const card = page.getByTestId('realism-card');
   await expect(card).toBeVisible();
+  await expect(card.getByTestId('realism-card-complexity')).toHaveText('Medium');
+  await expect(card).toContainText('Task-specific policy');
   const link = card.getByRole('link', { name: 'Paper ↗' });
   await expect(link).toHaveAttribute('href', 'https://arxiv.org/abs/2609.28910');
   await link.hover();
   await expect(card).toBeVisible();
   await expect(page.getByText('Organization adapted from')).toHaveCount(0);
+
+  // ProAct states no setting, so it is not placed and the note counts it.
+  await expect(page.getByTestId('realism-dot-proact')).toHaveCount(0);
+  await expect(page.getByTestId('realism-skipped')).toHaveText(/^1 paper .* is not plotted\.$/);
 });
 
 test('14. a tangential work renders at 60% opacity, and unchecking Show tangential works removes it, its edges, and its category label', async ({ page }) => {

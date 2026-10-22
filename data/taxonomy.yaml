@@ -915,7 +915,7 @@ captures:                     # GAP paper Appendix I
   goal_adaptation: {label: Goal adaptation, definition: The user reallocates effort to new goals in response to the robot (Relaxation 2).}
   values: [yes, partial, no]
 
-realism:                      # drives the plot in SPEC §8.3. Levels ordered from far to close. Pending Maithili's review.
+realism:                      # the plot in SPEC §8.3: environment (x) by human (y). Robot shows only in its hover card. Levels ordered from far to close. Pending Maithili's review.
   robot:
     label: "Robot: closer to the target robot"
     levels:
@@ -932,13 +932,21 @@ realism:                      # drives the plot in SPEC §8.3. Levels ordered fr
       target_users:  {label: Target users, definition: "The people the robot is meant to assist."}
   environment:
     label: "Setting: closer to the target setting"
-    levels:                   # opacity rises with realism
-      simulator:     {label: Simulator, opacity: 0.25}
-      vr:            {label: VR, opacity: 0.5}
-      lab:           {label: Lab, opacity: 0.75}
-      own_home:      {label: "Users' own homes", opacity: 1.0}
+    levels:
+      simulator:     {label: Simulator}
+      vr:            {label: VR}
+      lab:           {label: Lab}
+      own_home:      {label: "Users' own homes"}
   # TODO(Maithili): set realism.source_url once the source paper is public (SPEC §16).
   source_url: null            # link to the paper this organization comes from, once it is public
+
+task_complexity:              # colors the dots in the realism plot (SPEC §8.3). Levels ordered from low to high, at most 3. Pending Maithili's review.
+  label: Task complexity
+  definition: The combinatorial complexity of the tasks or actions the evaluation asks for.
+  levels:
+    low:    {label: Low, definition: "Few options per decision: a trigger, a label, or one choice from a short list."}
+    medium: {label: Medium, definition: "One object–destination (or object–action) choice at a time, from the objects and places in the scene."}
+    high:   {label: High, definition: "Composed plans: sequences of actions or subgoals over many objects."}
 
 featured_comparison:          # drives the chart in §8.2
   title: Offline evaluation overstates performance

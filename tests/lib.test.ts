@@ -3,7 +3,8 @@ import { matchesGlobal, matchesQuery, parseYears, readGlobalFilters } from '../s
 import { ancestry, subproblemFlow } from '../src/lib/graph.ts';
 import { scorePaper, search } from '../src/lib/search.ts';
 import { categoryItems, itemServes, itemSummary, metricKeyMembers, termTags, unitText } from '../src/lib/metrics.ts';
-import { categoriesOf, closest, furthestLoop, mergePaper, rowMatches, strongest } from '../src/pages/evaluations/merge.ts';
+import { categoriesOf, closest, furthestLoop, mergePaper, mostComplex, rowMatches, strongest } from '../src/pages/evaluations/merge.ts';
+import { complexityFill } from '../src/pages/evaluations/RealismPlot.tsx';
 import { applyParams, toggleInList } from '../src/state/url.ts';
 import type { DbPaper } from '../src/schema.ts';
 
@@ -162,6 +163,30 @@ describe('protocols table rows', () => {
     expect(strongest([null, undefined])).toBeNull();
     expect(closest(['recorded', 'adaptive_sim', 'scripted'], R.human)).toBe('adaptive_sim');
     expect(closest([null], R.human)).toBeNull();
+  });
+  const TC = ['low', 'medium', 'high'];
+  it('takes the most complex task level across entries, and null when no entry has one', () => {
+    expect(mostComplex(['medium', null, 'high', 'low'], TC)).toBe('high');
+    expect(mostComplex(['low', undefined], TC)).toBe('low');
+    expect(mostComplex([null, undefined], TC)).toBeNull();
+    expect(mostComplex([], TC)).toBeNull();
+    const withLevels = P('p', 'P', {
+      evaluations: [
+        { id: 'a', loop: 'offline_replay', task_complexity: 'medium' },
+        { id: 'b', loop: 'closed_scripted', task_complexity: null },
+        { id: 'c', loop: 'closed_adaptive', task_complexity: 'low' },
+      ],
+    });
+    expect(mergePaper(withLevels, LOOPS, R, undefined, TC).complexity).toBe('medium');
+    // An entry with no level never lowers the merged one, and a paper with none stays null.
+    expect(row.complexity).toBeNull();
+    expect(mergePaper(paper, LOOPS, R, undefined, TC).complexity).toBeNull();
+  });
+  it('colors a complexity level by its ramp step, and gray when not assessed', () => {
+    expect(complexityFill('low', TC)).toBe('var(--complexity-1)');
+    expect(complexityFill('high', TC)).toBe('var(--complexity-3)');
+    expect(complexityFill(null, TC)).toBe('var(--complexity-none)');
+    expect(complexityFill('unknown', TC)).toBe('var(--complexity-none)');
   });
   it('matches filters when any entry matches', () => {
     const f = { loop: null, term: null, metric: null, dataset: null, metricTerms: (m: string) => (m === 'nas' ? ['dC_saved'] : ['dC_added']) };

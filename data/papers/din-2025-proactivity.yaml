@@ -72,3 +72,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
+    task_complexity: high  # draft: short sequences of (action, object) subgoals, scored as whole sequences. Borderline with medium

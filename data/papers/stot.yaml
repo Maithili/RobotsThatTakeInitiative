@@ -65,3 +65,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
+    task_complexity: medium  # draft: one predicted destination per object (used and unused object metrics)

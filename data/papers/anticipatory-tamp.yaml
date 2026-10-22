@@ -70,6 +70,7 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: simulator
+    task_complexity: high  # draft: sampled TAMP plans for goal-fluent tasks
   - id: anticipatory-tamp-fetch
     environment: null
     datasets: []
@@ -85,3 +86,4 @@ evaluations:
       robot: task_specific
       human: recorded
       environment: null
+    task_complexity: high  # draft: the same TAMP planner on a two-task sequence
