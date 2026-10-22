@@ -16,8 +16,10 @@ authors:
 venue: ICML
 year: 2023
 links:
-  paper: null
-provenance: Librarian Oct 2026, A-1 SGM A1–A12. Search tangent per Maithili, Oct 21 2026. SGM prints no landing page, arXiv id, or DOI
+  paper: https://arxiv.org/abs/2305.17537
+ids:
+  arxiv: "2305.17537"
+provenance: Librarian Oct 2026, A-1 SGM A1–A12. Search tangent per Maithili, Oct 21 2026. arXiv id from EvolvingNav's reference list
 tangent: search
 subproblems:
   G1:
