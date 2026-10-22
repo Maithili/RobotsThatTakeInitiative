@@ -71,7 +71,8 @@ export function labelYear(shortName: string, year: number): string | null {
   return shortName.includes(String(year)) ? null : `'${String(year).slice(-2)}`;
 }
 
-/** Text width estimate for the system UI font, slightly generous so estimated boxes never undercut real ones. */
+/** Text width estimate for the system UI font. The build-time layout spaces dots apart with it. Which labels show,
+ *  and where, uses the widths the browser measures instead, since real widths vary with the visitor's fonts. */
 export function textWidth(s: string, px = LABEL_PX): number {
   let em = 0;
   for (const ch of s) {
@@ -937,12 +938,16 @@ export function routePapers(papers: GraphPaper[], pos: Map<string, Point>, frame
   );
 }
 
+/** Top and bottom of a paper label's box, from its dot's center, in screen pixels. The browser measures them; this
+ *  default holds only where nothing has been measured. */
+export const LABEL_Y: readonly [number, number] = [-LABEL_H / 2, LABEL_H / 2];
+
 export interface LabelCandidate {
   id: string;
   x: number;
   y: number;
   r: number;
-  /** Label width in screen pixels. */
+  /** Label width in screen pixels, from LABEL_GAP past the dot's edge to the end of the text. */
   w: number;
   /** 0: always shown (hover, focus, selection, search). 1: preferred (neighbors of those). 2: the rest. */
   tier: 0 | 1 | 2;
@@ -961,15 +966,17 @@ export function labelMinRadius(radii: number[], k: number): number {
  * Chooses which labels to show at zoom k, in screen space. Tier 0 always shows. Others show in tier order, then
  * by dot size, when they overlap no shown label, no other dot, and no block (such as a family name, given in
  * screen pixels at zoom k). Soft dots (faded while hovering) block only tier 2. Below zoom 1, tier 2 needs a
- * larger dot.
+ * larger dot. A label's box runs from LABEL_GAP past its dot's edge for its width, and from `labelY` above and
+ * below its dot's center.
  */
 export function placeLabels(
   cands: LabelCandidate[],
   dots: { id: string; x: number; y: number; r: number; soft?: boolean }[],
   k: number,
-  opts: { minR?: number; blocks?: { x0: number; y0: number; x1: number; y1: number }[] } = {},
+  opts: { minR?: number; blocks?: { x0: number; y0: number; x1: number; y1: number }[]; labelY?: readonly [number, number] } = {},
 ): Set<string> {
   const minR = opts.minR ?? labelMinRadius(dots.map((d) => d.r), k);
+  const [ly0, ly1] = opts.labelY ?? LABEL_Y;
   const CELL = 48;
   type Box = { id: string; x0: number; x1: number; y0: number; y1: number; label: boolean; soft?: boolean };
   const grid = new Map<string, Box[]>();
@@ -996,7 +1003,7 @@ export function placeLabels(
   const shown = new Set<string>();
   for (const c of order) {
     const x0 = (c.x + c.r) * k + LABEL_GAP;
-    const box = { id: c.id, x0, x1: x0 + c.w, y0: c.y * k - LABEL_H / 2, y1: c.y * k + LABEL_H / 2, label: true };
+    const box = { id: c.id, x0, x1: x0 + c.w, y0: c.y * k + ly0, y1: c.y * k + ly1, label: true };
     if (c.tier > 0) {
       let hit = false;
       for (const cell of cellsOf(box.x0, box.y0, box.x1, box.y1)) {
@@ -1032,7 +1039,7 @@ export interface GroupLabelInput {
   /** Label width and height in screen pixels. */
   w: number;
   h: number;
-  /** The group's dots, at zoom 1. */
+  /** The group's dots, at zoom 1, with their label widths in screen pixels. */
   members: { x: number; y: number; r: number; labelW: number }[];
 }
 
@@ -1080,6 +1087,8 @@ export function placeGroupLabels(
     dots: { x: number; y: number; r: number }[];
     /** Node labels that may show at this zoom, as dot and label width; the label sits right of the dot. */
     labels?: { x: number; y: number; r: number; w: number }[];
+    /** Top and bottom of a node label, from its dot's center, in screen pixels. */
+    labelY?: readonly [number, number];
     /** Drawn edges as polylines, at zoom 1. */
     edges?: Pt[][];
     /** Family hulls, at zoom 1. */
@@ -1102,10 +1111,11 @@ export function placeGroupLabels(
         else grid.set(key(i, j), [it]);
       }
   };
+  const [ly0, ly1] = ctx.labelY ?? LABEL_Y;
   for (const d of ctx.dots) add({ kind: 'dot', box: { x0: (d.x - d.r) * k, x1: (d.x + d.r) * k, y0: (d.y - d.r) * k, y1: (d.y + d.r) * k }, mark: 0 });
   for (const l of ctx.labels ?? []) {
     const x0 = (l.x + l.r) * k + LABEL_GAP;
-    add({ kind: 'label', box: { x0, x1: x0 + l.w, y0: l.y * k - LABEL_H / 2, y1: l.y * k + LABEL_H / 2 }, mark: 0 });
+    add({ kind: 'label', box: { x0, x1: x0 + l.w, y0: l.y * k + ly0, y1: l.y * k + ly1 }, mark: 0 });
   }
   for (const b of ctx.blocks ?? []) add({ kind: 'block', box: b, mark: 0 });
   const segs = (ctx.edges ?? []).map((pts) => {
@@ -1162,7 +1172,7 @@ export function placeGroupLabels(
     const bx1 = Math.max(...ms.map((m) => m.x + m.r));
     const by0 = Math.min(...ms.map((m) => m.y - m.r));
     const by1 = Math.max(...ms.map((m) => m.y + m.r));
-    const below = Math.max(by1, ...ms.map((m) => m.y + LABEL_H / 2));
+    const below = Math.max(by1, ...ms.map((m) => m.y + ly1));
     const lx1 = Math.max(...ms.map((m) => m.x + m.r + LABEL_GAP + m.lw));
     const { w, h } = g;
     const gap = 4;

@@ -189,6 +189,19 @@ describe('tangential category labels', () => {
       for (const d of group.members) expect(hit(c, dotBox(d, k))).toBe(false);
     }
   });
+
+  it('keeps clear of node labels by their measured height', () => {
+    // A node label just above the group: clear of the spot above the group at the default height, not when taller.
+    const other = { x: -40, y: -35, r: 6 };
+    const ctx = { dots: [...group.members, other], labels: [{ ...other, w: 100 }] };
+    const tall = [-9, 9] as const;
+    const x0 = other.x + other.r + LABEL_GAP;
+    const tallLabel = { x0, x1: x0 + 100, y0: other.y + tall[0], y1: other.y + tall[1] };
+    expect(hit(placeGroupLabels([group], 1, ctx).get('g')!, tallLabel)).toBe(true);
+    const b = placeGroupLabels([group], 1, { ...ctx, labelY: tall }).get('g')!;
+    expect(hit(b, tallLabel)).toBe(false);
+    for (const d of ctx.dots) expect(hit(b, dotBox(d))).toBe(false);
+  });
 });
 
 describe('graph nodes and labels', () => {
@@ -237,5 +250,23 @@ describe('graph nodes and labels', () => {
     ];
     expect([...placeLabels(pair.map((d) => ({ ...d, w: 80, tier: 2 as const })), pair, 1)]).toEqual(['b']);
     expect([...placeLabels(pair.map((d) => ({ ...d, w: 80, tier: d.id === 'a' ? (0 as const) : (2 as const) })), pair, 1)]).toEqual(['a']);
+  });
+
+  it('places labels by their measured width and height', () => {
+    // Two dots 16 px apart, one above the other: their labels fit at the default height, not when taller.
+    const stack = [
+      { id: 'a', x: 0, y: 0, r: 7 },
+      { id: 'b', x: 0, y: 16, r: 7 },
+    ];
+    const cands = stack.map((d) => ({ ...d, w: 60, tier: 2 as const }));
+    expect([...placeLabels(cands, stack, 1)].sort()).toEqual(['a', 'b']);
+    expect([...placeLabels(cands, stack, 1, { labelY: [-9, 9] })]).toEqual(['a']);
+    // A label as wide as its text reaches the next dot to its right only when the text is that wide.
+    const row = [
+      { id: 'a', x: 0, y: 0, r: 7 },
+      { id: 'b', x: 80, y: 0, r: 7 },
+    ];
+    expect([...placeLabels(row.map((d) => ({ ...d, w: d.id === 'a' ? 60 : 40, tier: 2 as const })), row, 1)].sort()).toEqual(['a', 'b']);
+    expect([...placeLabels(row.map((d) => ({ ...d, w: d.id === 'a' ? 64 : 40, tier: 2 as const })), row, 1)]).toEqual(['b']);
   });
 });

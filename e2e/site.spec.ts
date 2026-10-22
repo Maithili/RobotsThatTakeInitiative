@@ -31,6 +31,48 @@ async function settleGraph(page: Page) {
     .toBe(true);
 }
 
+/** Overlaps in the graph as drawn, by screen box: dots with dots, paper labels with each other and with other papers'
+ *  dots, and category labels with dots, paper labels, and each other. Also counts the labels shown. */
+async function graphOverlaps(page: Page) {
+  return page.evaluate(() => {
+    const hit = (a: DOMRect, b: DOMRect) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+    const boxes = (sel: string, name: (e: Element) => string) => [...document.querySelectorAll(sel)].map((e) => ({ id: name(e), r: e.getBoundingClientRect() }));
+    const dots = boxes('.litg__node .litg__dot', (e) => `dot ${e.closest('[data-id]')!.getAttribute('data-id')}`);
+    const labels = boxes('.litg__label', (e) => `label ${e.getAttribute('data-id')}`);
+    const cats = boxes('.litg__cat-label', (e) => `category ${e.getAttribute('data-category')}`);
+    const out: string[] = [];
+    const among = (xs: typeof dots) => xs.forEach((a, i) => xs.slice(i + 1).forEach((b) => hit(a.r, b.r) && out.push(`${a.id} / ${b.id}`)));
+    const across = (xs: typeof dots, ys: typeof dots) => xs.forEach((a) => ys.forEach((b) => a.id.split(' ')[1] !== b.id.split(' ')[1] && hit(a.r, b.r) && out.push(`${a.id} / ${b.id}`)));
+    among(dots);
+    among(labels);
+    across(labels, dots);
+    across(cats, dots);
+    across(cats, labels);
+    among(cats);
+    return { overlaps: out, labels: labels.length, cats: cats.length };
+  });
+}
+
+/** Forces a font on the graph's text before the page's own scripts run, as if the visitor's system had it. */
+async function forceFont(page: Page, css: string) {
+  await page.addInitScript((text) => {
+    const add = () => {
+      const s = document.createElement('style');
+      s.textContent = text;
+      document.documentElement.append(s);
+    };
+    if (document.documentElement) add();
+    else new MutationObserver((_, o) => document.documentElement && (o.disconnect(), add())).observe(document, { childList: true });
+  }, css);
+}
+
+/** Zooms in twice with the buttons and waits for the zoom to settle. */
+async function zoomInTwice(page: Page) {
+  await page.getByTestId('zoom-in').click();
+  await page.getByTestId('zoom-in').click();
+  await settleGraph(page);
+}
+
 test('1. each page loads with no console errors', async ({ page }) => {
   const errors = trackErrors(page);
   for (const path of ['methods', 'evaluations', 'subproblems']) {
@@ -224,35 +266,56 @@ test('the literature graph lays out the synthetic fixture: 300 L2 papers in 4 cl
   await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
   await expect(page.locator('[data-testid^="node-synthetic-t"]')).toHaveCount(30);
   await expect(page.locator('path[data-testid^="hull-"]')).toHaveCount(4);
-  // Dots never overlap, and the labels shown at the fitted zoom overlap neither each other nor other dots.
-  const overlaps = await page.evaluate(() => {
-    const hit = (a: DOMRect, b: DOMRect) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
-    const dots = [...document.querySelectorAll('[data-testid^="node-synthetic-"] .litg__dot')].map((n) => n.getBoundingClientRect());
-    const labels = [...document.querySelectorAll('.litg__label')].map((n) => ({ id: n.getAttribute('data-id'), r: n.getBoundingClientRect() }));
-    const cats = [...document.querySelectorAll('.litg__cat-label')].map((n) => n.getBoundingClientRect());
-    let n = 0;
-    for (let i = 0; i < dots.length; i++) for (let j = i + 1; j < dots.length; j++) if (hit(dots[i], dots[j])) n++;
-    for (let i = 0; i < labels.length; i++) for (let j = i + 1; j < labels.length; j++) if (hit(labels[i].r, labels[j].r)) n++;
-    // Tangential category labels cover no dot, no paper label, and no other category label.
-    for (let i = 0; i < cats.length; i++) {
-      for (const d of dots) if (hit(cats[i], d)) n++;
-      for (const l of labels) if (hit(cats[i], l.r)) n++;
-      for (let j = i + 1; j < cats.length; j++) if (hit(cats[i], cats[j])) n++;
-    }
-    return { n, labels: labels.length, cats: cats.length };
-  });
-  expect(overlaps.n).toBe(0);
+  // Dots never overlap. The labels shown at the fitted zoom overlap neither each other nor other dots, and the
+  // tangential category labels cover no dot, no paper label, and no other category label.
+  const fitted = await graphOverlaps(page);
+  expect(fitted.overlaps).toEqual([]);
   // Every taxonomy category in the fixture gets its label; works of an unknown type get none.
-  expect(overlaps.cats).toBe(3);
-  // At the fitted zoom only the larger dots carry labels; zooming in reveals more.
-  expect(overlaps.labels).toBeGreaterThan(0);
-  expect(overlaps.labels).toBeLessThan(100);
-  await page.getByTestId('zoom-in').click();
-  await page.getByTestId('zoom-in').click();
-  await expect.poll(async () => page.locator('.litg__label').count()).toBeGreaterThan(overlaps.labels);
+  expect(fitted.cats).toBe(3);
+  // At the fitted zoom only the larger dots carry labels; zooming in reveals more, still without overlaps.
+  expect(fitted.labels).toBeGreaterThan(0);
+  expect(fitted.labels).toBeLessThan(100);
+  await zoomInTwice(page);
+  const zoomed = await graphOverlaps(page);
+  expect(zoomed.labels).toBeGreaterThan(fitted.labels);
+  expect(zoomed.overlaps).toEqual([]);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+// Label placement uses the text as the browser draws it, so it holds whatever the visitor's fonts. Each variant
+// forces a font on the graph's text: the wide one is DejaVu Sans (the Ubuntu CI runner's UI font) with its letters
+// spaced out, so text runs wider than the build-time estimates on any machine; the narrow one is condensed.
+const FONTS = {
+  wide: ':root { --font: "DejaVu Sans", Verdana, sans-serif !important; } .litg__text text { letter-spacing: 0.05em !important; }',
+  narrow: ':root { --font: "DejaVu Sans Condensed", "Arial Narrow", sans-serif !important; } .litg__text text { letter-spacing: -0.05em !important; }',
+};
+for (const [name, css] of Object.entries(FONTS)) {
+  test(`with a ${name} font, the synthetic fixture's labels overlap no label or dot`, async ({ page }) => {
+    const catWidths = () =>
+      page.locator('.litg__cat-label').evaluateAll((els) => Object.fromEntries(els.map((e) => [e.getAttribute('data-category')!, e.getBoundingClientRect().width])));
+    await page.goto('/#/methods?view=graph&synthetic=1');
+    await expect(page.locator('.litg__cat-label')).toHaveCount(3);
+    const usual = await catWidths();
+    await forceFont(page, css);
+    await page.reload();
+    await expect(page.locator('[data-testid^="node-synthetic-"]')).toHaveCount(330);
+    await expect(page.locator('.litg__cat-label')).toHaveCount(3);
+    // The forced font is in effect: every category label is wider (or narrower) than in this machine's own font.
+    const forced = await catWidths();
+    for (const [cat, w] of Object.entries(usual)) {
+      if (name === 'wide') expect(forced[cat], cat).toBeGreaterThan(w);
+      else expect(forced[cat], cat).toBeLessThan(w);
+    }
+    const fitted = await graphOverlaps(page);
+    expect(fitted.overlaps).toEqual([]);
+    expect(fitted.labels).toBeGreaterThan(0);
+    await zoomInTwice(page);
+    const zoomed = await graphOverlaps(page);
+    expect(zoomed.labels).toBeGreaterThan(fitted.labels);
+    expect(zoomed.overlaps).toEqual([]);
+  });
+}
 
 test('hovering a node in the synthetic fixture responds within 50 ms', async ({ page }) => {
   await page.goto('/#/methods?view=graph&synthetic=1');

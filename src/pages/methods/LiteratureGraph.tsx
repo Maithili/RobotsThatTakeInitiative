@@ -25,7 +25,6 @@ import {
   labelMinRadius,
   placeGroupLabels,
   placeLabels,
-  textWidth,
   type LabelCandidate,
   type ScreenBox,
 } from '../../lib/literatureLayout.ts';
@@ -33,6 +32,7 @@ import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
 import { familyHue, FOCUS_LEVELS, FRAMEWORK_HUE, NO_CATEGORY_HUE, tangentHue, TANGENTS_IN_GRAPH, type FamilyInfo } from './constants.ts';
 import { GraphLegend } from './GraphLegend.tsx';
+import { CAT_DY, HULL_DY, LABEL_DX, LABEL_DY, measureLabels, sameMetrics, YEAR_DX, type LabelMetrics, type MeasureInput } from './labelMetrics.ts';
 
 /** Screen margin kept around the content when fitting. */
 const FIT_MARGIN = 20;
@@ -42,9 +42,6 @@ const ZOOM_MIN = 0.12;
 const ZOOM_MAX = 4;
 const MIN_H = 220;
 const MOTION_MS = 280;
-/** Tangential category labels: font size and box height in screen pixels (SPEC §7.2). */
-const CAT_PX = 13;
-const CAT_H = 17;
 
 const hullPath = line<[number, number]>().curve(curveCatmullRomClosed.alpha(0.5));
 
@@ -56,6 +53,8 @@ interface GNode {
   r: number;
   /** Radius the edges stop at: the dot, or the ring around it. */
   rr: number;
+  /** Build-time label width estimate, as the layout used it: hulls and the fit bounds keep to it. Label placement
+   *  uses the measured width (LabelMetrics). */
   labelW: number;
   year: string | null;
   /** CSS hue slot: a family's ('0' to '3'), the framework paper's, a tangential category's, or gray ('none'). */
@@ -186,13 +185,19 @@ export function LiteratureGraph({
   const svgRef = useRef<SVGSVGElement>(null);
   const viewRef = useRef<SVGGElement>(null);
   const textRef = useRef<SVGGElement>(null);
+  const measureRef = useRef<SVGGElement>(null);
   const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const tRef = useRef<ZoomTransform>(zoomIdentity);
   const autoFit = useRef(true);
   const armed = useRef(false);
   const anim = useRef(0);
+  /** True while an animated zoom runs, up to its last frame. */
+  const animating = useRef(false);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  /** Zoom that labels are placed for: follows the zoom in steps while it moves, and exactly once it settles. */
   const [labelK, setLabelK] = useState(1);
+  /** Graph text as the browser draws it; null until measured. */
+  const [metrics, setMetrics] = useState<LabelMetrics | null>(null);
   const [tip, setTip] = useState<Tip>(null);
   const [searched, setSearched] = useState<string | null>(null);
   const [pulse, setPulse] = useState<{ id: string; n: number } | null>(null);
@@ -391,6 +396,7 @@ export function LiteratureGraph({
     const z = zoomRef.current;
     if (!svg || !z || !size) return;
     cancelAnimationFrame(anim.current);
+    animating.current = false;
     const sel = select(svg);
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
       z.transform(sel, t1);
@@ -407,6 +413,7 @@ export function LiteratureGraph({
       const k = Math.exp(Math.log(t0.k) + (Math.log(t1.k) - Math.log(t0.k)) * e);
       const x = a[0] + (b[0] - a[0]) * e;
       const y = a[1] + (b[1] - a[1]) * e;
+      animating.current = s < 1;
       z.transform(sel, zoomIdentity.translate(c[0] - k * x, c[1] - k * y).scale(k));
       if (s < 1) anim.current = requestAnimationFrame(step);
     };
@@ -478,9 +485,14 @@ export function LiteratureGraph({
         if (ev.sourceEvent) {
           autoFit.current = false;
           cancelAnimationFrame(anim.current);
+          animating.current = false;
           setTip(null);
         }
         applyTransform(ev.transform);
+      })
+      // Once the zoom settles, labels are placed for exactly that zoom, so none overlap there.
+      .on('end', () => {
+        if (!animating.current) setLabelK(tRef.current.k);
       });
     zoomRef.current = z;
     const sel = select(svg);
@@ -498,6 +510,7 @@ export function LiteratureGraph({
       svg.removeEventListener('wheel', onWheel);
       window.clearTimeout(timer);
       cancelAnimationFrame(anim.current);
+      animating.current = false;
     };
   }, [applyTransform]);
 
@@ -508,6 +521,42 @@ export function LiteratureGraph({
     if (!svg || !z || !size || !autoFit.current) return;
     z.transform(select(svg), fitTransform(size.w, size.h));
   }, [size, fitTransform]);
+
+  // ---- label sizes, measured in the browser with the fonts it draws them in (SPEC §7.2) ----
+  const measureInput = useMemo<MeasureInput>(() => {
+    const all = [...nodes.values()];
+    return {
+      labels: all.map((n) => ({ id: n.id, name: n.p.short_name, year: n.year })),
+      cats: Object.keys(tx.tangent_types).filter((t) => all.some((n) => n.cat === t)).map((t) => ({ id: t, text: tx.tangent_types[t].label })),
+      hulls: clusterOrder.map((c) => ({ id: c, text: families[c]?.name ?? c })),
+    };
+  }, [nodes, clusterOrder, families]);
+  const remeasure = useCallback(() => {
+    const host = measureRef.current;
+    if (!host || !wrap.current?.clientWidth) return;
+    const m = measureLabels(host, measureInput);
+    if (m) setMetrics((old) => (old && sameMetrics(old, m) ? old : m));
+  }, [measureInput]);
+  // Before the first paint once the graph has a size, so no label ever shows at an unmeasured size.
+  const sized = size !== null;
+  useLayoutEffect(() => {
+    if (sized) remeasure();
+  }, [sized, remeasure]);
+  // Again when fonts finish loading: a font that arrives late changes every width.
+  useEffect(() => {
+    const fonts = document.fonts as FontFaceSet | undefined;
+    if (!fonts) return;
+    let live = true;
+    const again = () => {
+      if (live) remeasure();
+    };
+    fonts.ready.then(again);
+    fonts.addEventListener('loadingdone', again);
+    return () => {
+      live = false;
+      fonts.removeEventListener('loadingdone', again);
+    };
+  }, [remeasure]);
 
   // Search: zoom to the paper and pulse it once (SPEC §6.3, §7.2).
   useEffect(() => {
@@ -541,22 +590,22 @@ export function LiteratureGraph({
     return () => window.removeEventListener('keydown', onKey);
   }, [focus, searched, url]);
 
+  // All label geometry below uses the measured text (metrics); until it is measured, no label shows.
   // ---- tangential category labels (SPEC §7.2): one per category, in its color, near its papers ----
   // Family names, in screen pixels at the label zoom: no other label covers them.
-  const hullNames = useMemo<ScreenBox[]>(
-    () =>
-      clusters.map((c) => {
-        const w = textWidth(families[c.id]?.name ?? c.id, 14) / 2 + 2;
-        return { x0: c.cx * labelK - w, x1: c.cx * labelK + w, y0: c.top * labelK - 20, y1: c.top * labelK - 2 };
-      }),
-    [clusters, families, labelK],
-  );
+  const hullNames = useMemo<ScreenBox[]>(() => {
+    if (!metrics) return [];
+    return clusters.flatMap((c) => {
+      const b = metrics.hulls.get(c.id);
+      return b ? [{ x0: c.cx * labelK + b.x0 - 2, x1: c.cx * labelK + b.x1 + 2, y0: c.top * labelK + b.y0, y1: c.top * labelK + b.y1 }] : [];
+    });
+  }, [clusters, metrics, labelK]);
   const catGroups = useMemo(
     () => Object.keys(tx.tangent_types).map((t) => ({ id: t, members: visible.filter((n) => n.cat === t) })).filter((g) => g.members.length),
     [visible],
   );
   const catBoxes = useMemo(() => {
-    if (!catGroups.length) return new Map<string, ScreenBox>();
+    if (!catGroups.length || !metrics) return new Map<string, ScreenBox>();
     // The edges drawn with the chosen edge types, as polylines; labels keep off them where they can.
     const lines = pairs.flatMap((e) => {
       const [a, b] = e.key.split('|');
@@ -564,17 +613,17 @@ export function LiteratureGraph({
       return r ? [geometry(r).pts] : [];
     });
     const minR = labelMinRadius(visible.map((n) => n.rr), labelK);
+    const lw = (n: GNode) => metrics.labelW.get(n.id) ?? 0;
     return placeGroupLabels(
-      catGroups.map((g) => ({
-        id: g.id,
-        w: Math.ceil(textWidth(tx.tangent_types[g.id].label, CAT_PX) * 1.06),
-        h: CAT_H,
-        members: g.members.map((n) => ({ x: n.x, y: n.y, r: n.rr, labelW: n.labelW })),
-      })),
+      catGroups.flatMap((g) => {
+        const b = metrics.cats.get(g.id);
+        return b ? [{ id: g.id, w: b.x1 - b.x0, h: b.y1 - b.y0, members: g.members.map((n) => ({ x: n.x, y: n.y, r: n.rr, labelW: lw(n) })) }] : [];
+      }),
       labelK,
       {
         dots: visible.map((n) => ({ x: n.x, y: n.y, r: n.rr })),
-        labels: visible.filter((n) => n.rr >= minR).map((n) => ({ x: n.x, y: n.y, r: n.rr, w: n.labelW })),
+        labels: visible.filter((n) => n.rr >= minR).map((n) => ({ x: n.x, y: n.y, r: n.rr, w: lw(n) })),
+        labelY: metrics.labelY,
         edges: lines,
         hulls: clusters.map((c) => c.hull),
         blocks: hullNames,
@@ -583,23 +632,25 @@ export function LiteratureGraph({
     );
     // geometry() reads the route cache for this zoom step.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [catGroups, visible, pairs, shown, isShown, labelK, step, geoCache, clusters, hullNames, bounds]);
+  }, [catGroups, metrics, visible, pairs, shown, isShown, labelK, step, geoCache, clusters, hullNames, bounds]);
 
   // ---- labels: always for hover, focus, selection, and search; otherwise by size, without overlaps ----
   const tier0 = useMemo(() => new Set([hovered, focus, openId, searched].filter((x): x is string => !!x && isShown(x))), [hovered, focus, openId, searched, isShown]);
   const labeled = useMemo(() => {
+    if (!metrics) return new Set<string>();
     const cands: LabelCandidate[] = [];
     for (const n of visible) {
       const tier = tier0.has(n.id) ? 0 : hl?.has(n.id) || (lit?.has(n.id) && lit.size <= 40) ? 1 : 2;
       if (tier === 2 && (!matches.has(n.id) || (lit && !lit.has(n.id)))) continue;
-      cands.push({ id: n.id, x: n.x, y: n.y, r: n.rr, w: n.labelW, tier });
+      const w = metrics.labelW.get(n.id);
+      if (w !== undefined) cands.push({ id: n.id, x: n.x, y: n.y, r: n.rr, w, tier });
     }
     // While hovering, faded dots do not block the labels of the hovered paper and its neighbors.
     const dots = visible.map((n) => ({ id: n.id, x: n.x, y: n.y, r: n.rr, soft: !!hl && !hl.has(n.id) }));
     // Family names and category labels block node labels.
     const blocks = [...hullNames, ...catBoxes.values()];
-    return placeLabels(cands, dots, labelK, { minR: labelMinRadius(visible.map((n) => n.rr), labelK), blocks });
-  }, [visible, tier0, hl, lit, matches, labelK, hullNames, catBoxes]);
+    return placeLabels(cands, dots, labelK, { minR: labelMinRadius(visible.map((n) => n.rr), labelK), blocks, labelY: metrics.labelY });
+  }, [metrics, visible, tier0, hl, lit, matches, labelK, hullNames, catBoxes]);
 
   // ---- hover cards ----
   const toScreen = (x: number, y: number) => tRef.current.apply([x, y]);
@@ -618,7 +669,7 @@ export function LiteratureGraph({
     const towardRight = nb.length ? nb.reduce((s, o) => s + o.x, 0) / nb.length > n.x : sx < size.w / 2;
     const CARD_W = 300;
     const left = sx - n.rr * t.k - 14 - CARD_W;
-    const right = sx + n.rr * t.k + LABEL_GAP + n.labelW + 14;
+    const right = sx + n.rr * t.k + LABEL_GAP + (metrics?.labelW.get(id) ?? n.labelW) + 14;
     let x = towardRight ? left : right;
     if (x < 6 || x + CARD_W > size.w - 6) x = towardRight ? right : left;
     if (x < 6 || x + CARD_W > size.w - 6) {
@@ -843,7 +894,7 @@ export function LiteratureGraph({
                   key={c.id}
                   x={c.cx}
                   y={c.top}
-                  dy="-0.5em"
+                  dy={HULL_DY}
                   textAnchor="middle"
                   className={`litg__hull-label litg__hull-label--${c.hue}${semiFamily(c.id) ? ' is-semi' : ''}`}
                   data-testid={`hull-label-${c.id}`}
@@ -870,14 +921,16 @@ export function LiteratureGraph({
               ))}
               {catGroups.map((g) => {
                 const b = catBoxes.get(g.id);
-                if (!b) return null;
+                const m = metrics?.cats.get(g.id);
+                if (!b || !m) return null;
                 const dim = !g.members.some((n) => matches.has(n.id) && (!lit || lit.has(n.id)));
+                // The anchor that puts the measured text box exactly on the placed box.
                 return (
                   <text
                     key={g.id}
-                    x={b.x0 / labelK}
-                    y={(b.y0 + b.y1) / 2 / labelK}
-                    dy="0.35em"
+                    x={(b.x0 - m.x0) / labelK}
+                    y={(b.y0 - m.y0) / labelK}
+                    dy={CAT_DY}
                     className={`litg__cat-label tan-ink--${tangentHue(tx.tangent_types, g.id)}${hotCat === g.id ? ' is-hl' : ''}${dim ? ' is-dim' : ''}`}
                     data-testid={`cat-label-${g.id}`}
                     data-category={g.id}
@@ -897,8 +950,8 @@ export function LiteratureGraph({
                     key={n.id}
                     x={n.x + n.rr}
                     y={n.y}
-                    dx="0.34em"
-                    dy="0.35em"
+                    dx={LABEL_DX}
+                    dy={LABEL_DY}
                     className={`litg__label${n.tangent ? ' is-tangent' : ''}${isSemi(n) ? ' is-semi' : ''}${hl?.has(n.id) ? ' is-hl' : ''}${
                       !tier0.has(n.id) && (!matches.has(n.id) || (lit && !lit.has(n.id))) ? ' is-dim' : ''
                     }`}
@@ -908,7 +961,7 @@ export function LiteratureGraph({
                   >
                     {n.p.short_name}
                     {n.year && (
-                      <tspan className="litg__label-year" dx="0.3em">
+                      <tspan className="litg__label-year" dx={YEAR_DX}>
                         {n.year}
                       </tspan>
                     )}
@@ -917,6 +970,8 @@ export function LiteratureGraph({
               )}
             </g>
           </g>
+          {/* Where graph text is measured: the text styles at the screen font size, never painted, empty between measurements. */}
+          <g ref={measureRef} className="litg__text" visibility="hidden" aria-hidden="true" style={{ fontSize: LABEL_PX }} />
         </svg>
         <div className="litg__controls" role="group" aria-label="Zoom">
           <button type="button" className="litg__ctl" aria-label="Zoom in" title="Zoom in" data-testid="zoom-in" onClick={() => zoomBy(1.6)}>
