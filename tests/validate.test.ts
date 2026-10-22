@@ -425,7 +425,7 @@ describe('metric categories, metric groups, and evaluations_exclude', () => {
     expect(t.metrics.relation_accuracy.category).toBeUndefined();
     expect(t.metrics.search_success_rate.category).toBeUndefined();
     for (const m of ['training_time', 'training_samples', 'inference_time', 'planning_time', 'saved_steps_rate', 'saved_steps']) expect(t.metrics[m]).toBeUndefined();
-    expect(realTaxonomy.evaluations_exclude).toEqual(['saavedra-2026-scene-graphs']);
+    expect(realTaxonomy.evaluations_exclude).toEqual(['saavedra-2026-scene-graphs', 'din-2025-proactivity']);
   });
 
   it('rejects a metric with an unknown category or group', () => {

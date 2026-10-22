@@ -65,6 +65,6 @@ evaluations:
     provenance: "Librarian Oct 2026, A-8a A9–A11; Talukder 2025 §V-B–C, Table I. Symbolic PDDL on ProcTHOR homes and a restaurant"
     realism:
       robot: task_specific
-      human: null  # no human. Tasks sampled from a fixed P(τ) curated from ALFRED
+      human: scripted  # Maithili, Oct 22 2026: fixed task distribution counts as scripted. Tasks sampled from a fixed P(τ) curated from ALFRED
       environment: simulator
     action_space_complexity: high  # tagged by Maithili, Oct 22 2026

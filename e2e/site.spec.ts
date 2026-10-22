@@ -173,11 +173,11 @@ test('4. hovering a timeline chip highlights the graph node; GAP sits outside bo
   expect(own).toBe(true);
 });
 
-test('5. clicking ΔC↑ counts 12 metrics, dims the rows that do not serve it, and keeps net actions saved, perturbed actions, and F1', async ({ page }) => {
+test('5. clicking ΔC↑ counts 10 metrics, dims the rows that do not serve it, and keeps net actions saved, perturbed actions, and F1', async ({ page }) => {
   await page.goto('/#/evaluations');
   const term = page.getByTestId('term-dC_added');
   // Only categorized metrics count (SPEC §8.1).
-  await expect(term.locator('.term__count')).toHaveText('12');
+  await expect(term.locator('.term__count')).toHaveText('10');
   await term.click();
   await expect.poll(() => params(page).get('term')).toBe('dC_added');
   // Every box stays. Rows that do not serve the term dim rather than hide (SPEC §8.6).
@@ -567,8 +567,8 @@ test('12. datasets table has no simulator rows; GAP has one shaded protocol row 
   await expect(ds.getByTestId('ds-row-homer-plus')).toContainText('VirtualHome');
   await expect(ds.getByTestId('ds-row-homer-llm-closed-loop')).toContainText('Setup');
   const table = page.getByTestId('protocol-table');
-  // 12 L2 papers with evaluations, PredictiveGraphs excluded.
-  await expect(table.locator('tbody tr')).toHaveCount(12);
+  // 11 L2 papers with evaluations, PredictiveGraphs and Din 2025 excluded.
+  await expect(table.locator('tbody tr')).toHaveCount(11);
   // Metric categories come right after Year (SPEC §8.4).
   await expect(table.locator('thead th')).toHaveText([/^Paper/, /^Year/, /^Metric categories/, /^Environment and datasets/, /^Loop types/, /^Human models/, /^Baselines/]);
   await expect(table.locator('tbody tr').first().locator('td').nth(2).locator('.chip--category')).toHaveText(['Change in user actions', 'Object movement prediction']);
@@ -687,9 +687,9 @@ test('13. the realism plot places each paper by interaction and human behavior f
   await expect(card).toBeVisible();
   await expect(page.getByText('Organization adapted from')).toHaveCount(0);
 
-  // Papers with no interaction or human behavior level are counted, not plotted. The table has 12 rows.
+  // Papers with no interaction or human behavior level are counted, not plotted. The table has 11 rows.
   const placed = await page.locator('[data-testid^="realism-dot-"]').count();
-  const left = 12 - placed;
+  const left = 11 - placed;
   if (left > 0) await expect(page.getByTestId('realism-skipped')).toHaveText(new RegExp(`^${left} papers? with evaluations but no interaction or human behavior level (is|are) not plotted\\.$`));
   else await expect(page.getByTestId('realism-skipped')).toHaveCount(0);
 });
@@ -798,7 +798,8 @@ test('15. the protocols table shows metric categories, never metric names; metri
   await expect(need).toBeInViewport();
   await expect(page.getByTestId('metric-box-task_performance')).not.toHaveClass(/is-on/);
   await expect(page.getByTestId('drawer')).toHaveCount(0);
-  await expect(table.locator('tbody tr')).toHaveCount(2);
+  // Only ProAct measures implicit need detection now that Din 2025 is off the page.
+  await expect(table.locator('tbody tr')).toHaveCount(1);
   // metric= marks its row and filters the table.
   await page.goto('/#/evaluations?metric=speedup');
   await expect(page.getByTestId('metric-row-speedup')).toHaveClass(/is-on/);
@@ -1104,8 +1105,8 @@ test('16. a bare URL starts with nothing filtered, dimmed, or highlighted on eve
   await page.goto('/#/evaluations');
   const table = page.getByTestId('protocol-table');
   // Every table row shows.
-  await expect(table.locator('tbody tr')).toHaveCount(12);
-  await expect(page.getByText('12 of 12 papers')).toBeVisible();
+  await expect(table.locator('tbody tr')).toHaveCount(11);
+  await expect(page.getByText('11 of 11 papers')).toBeVisible();
   // No filter chip, term, category, metric, or loop filter.
   await expect(page.locator('.filterbar .chip')).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Filters' })).toContainText('No filters');

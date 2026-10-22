@@ -186,7 +186,7 @@ metric_groups:                # metrics listed as one item in the metrics sectio
     label: Thread mixing and robot thread entropy
     definition: How user and robot actions mix across task threads, and how the robot's own actions spread, WAIT excluded.
 
-evaluations_exclude: [saavedra-2026-scene-graphs]   # object search papers stay off the Evaluations page (Maithili, Oct 22 2026)
+evaluations_exclude: [saavedra-2026-scene-graphs, din-2025-proactivity]   # object search papers and Din's MSc thesis stay off the Evaluations page (Maithili, Oct 22 2026)
 
 metric_kinds:                 # each metric also carries direction (higher or lower is better), unit, and a one-line `mapping_note` on why it serves its terms
   direct:    Measures one or more terms.

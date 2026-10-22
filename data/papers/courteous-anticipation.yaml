@@ -67,6 +67,6 @@ evaluations:
     provenance: "Librarian Oct 2026, A-8b A9–A11; Courteous §VI, Table II. Symbolic PDDL on ProcTHOR bases, 1 to 3 robots"
     realism:
       robot: task_specific
-      human: null  # no human. Each robot's tasks drawn from a fixed distribution
+      human: scripted  # Maithili, Oct 22 2026: fixed task distribution counts as scripted. Each robot's tasks drawn from a fixed distribution
       environment: simulator
     action_space_complexity: high  # tagged by Maithili, Oct 22 2026, as Talukder 2025 (same first author and focused-sampling planner)
