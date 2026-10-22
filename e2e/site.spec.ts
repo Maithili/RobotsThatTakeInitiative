@@ -671,6 +671,25 @@ test('13. the realism plot places each paper by interaction and human behavior f
   await expect(wah).toHaveAttribute('data-action-space', 'high');
   await expect(wah.locator('.realism__fill')).toHaveCSS('fill', ACTION_SPACE_FILL.light.high);
 
+  // Dots in a cell sit centered on its column, ordered by action space complexity (low first, not assessed last), then by year.
+  const rankOf = (l: string) => (l ? Object.keys(ACTION_SPACE_LABEL).indexOf(l) : Object.keys(ACTION_SPACE_LABEL).length);
+  const dots = await page.locator('[data-testid^="realism-dot-"]').evaluateAll((els) =>
+    els.map((el) => {
+      const b = el.querySelector('.realism__fill')!.getBoundingClientRect();
+      return { x: el.getAttribute('data-interaction')!, y: el.getAttribute('data-human')!, l: el.getAttribute('data-action-space') ?? '', cx: b.x + b.width / 2, cy: b.y + b.height / 2 };
+    }),
+  );
+  for (const k of new Set(dots.map((d) => `${d.x}|${d.y}`))) {
+    const cell = dots.filter((d) => `${d.x}|${d.y}` === k).sort((a, b) => a.cy - b.cy || a.cx - b.cx);
+    const ranks = cell.map((d) => rankOf(d.l));
+    expect(ranks, `${k} order`).toEqual([...ranks].sort((a, b) => a - b));
+    const col = (await plot.getByTestId(`realism-x-${cell[0].x}`).boundingBox())!;
+    for (const line of new Set(cell.map((d) => Math.round(d.cy)))) {
+      const xs = cell.filter((d) => Math.round(d.cy) === line).map((d) => d.cx);
+      expect(Math.abs((Math.min(...xs) + Math.max(...xs)) / 2 - (col.x + col.width / 2)), `${k} centered`).toBeLessThan(2);
+    }
+  }
+
   // The card lists interaction, human behavior, action space complexity, setting, and robot, in that order.
   await dot.hover();
   const card = page.getByTestId('realism-card');

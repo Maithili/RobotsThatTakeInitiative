@@ -53,9 +53,12 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
   const cellX = (i: number) => LEFT + i * CELL_W;
   const cellY = (j: number) => TOP + (RY.length - 1 - j) * CELL_H; // far at the bottom, close at the top
 
-  // Pack dots per cell in year order.
+  // Pack dots per cell, centered, by action space complexity (low first, not assessed last), then year.
+  const rank = (r: PaperEvalRow) => (r.actionSpaceComplexity ? AS_ORDER.indexOf(r.actionSpaceComplexity) : AS_ORDER.length);
   const byCell = new Map<string, PaperEvalRow[]>();
-  for (const r of [...placed].sort((a, b) => a.paper.year - b.paper.year || a.paper.short_name.localeCompare(b.paper.short_name))) {
+  for (const r of [...placed].sort(
+    (a, b) => rank(a) - rank(b) || a.paper.year - b.paper.year || a.paper.short_name.localeCompare(b.paper.short_name),
+  )) {
     const k = `${r.realism.interaction}|${r.realism.human}`;
     byCell.set(k, [...(byCell.get(k) ?? []), r]);
   }
@@ -64,7 +67,14 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
     const [rx, ry] = k.split('|');
     const i = RX.indexOf(rx);
     const j = RY.indexOf(ry);
-    return rs.map((r, n) => ({ r, x: cellX(i) + 10 + R + (n % perRow) * STEP, y: cellY(j) + 10 + R + Math.floor(n / perRow) * STEP }));
+    const rowsInCell = Math.ceil(rs.length / perRow);
+    const top = cellY(j) + CELL_H / 2 - ((rowsInCell - 1) * STEP) / 2;
+    return rs.map((r, n) => {
+      const line = Math.floor(n / perRow);
+      const inLine = Math.min(perRow, rs.length - line * perRow);
+      const left = cellX(i) + CELL_W / 2 - ((inLine - 1) * STEP) / 2;
+      return { r, x: left + (n % perRow) * STEP, y: top + line * STEP };
+    });
   });
   const order = [...dots].sort((a, b) => a.r.paper.year - b.r.paper.year || a.r.paper.short_name.localeCompare(b.r.paper.short_name));
 
