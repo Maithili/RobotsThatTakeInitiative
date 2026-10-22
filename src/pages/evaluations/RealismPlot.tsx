@@ -47,7 +47,7 @@ export function wrapLabel(s: string, max = TICK_CHARS): string[] {
 
 type Axis = 'robot' | 'human' | 'environment' | 'interaction';
 
-export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: Set<string> }) {
+export function RealismPlot({ rows }: { rows: PaperEvalRow[] }) {
   const url = useUrl();
   const RX = Object.keys(tx.realism.interaction.levels);
   const RY = Object.keys(tx.realism.human.levels);
@@ -194,13 +194,12 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
           </g>
           {/* dots */}
           {order.map(({ r, x, y }) => {
-            const dim = !matches.has(r.paper.id);
             const framework = r.paper.id === FRAMEWORK_PAPER;
             const assessed = !!r.actionSpaceComplexity && r.actionSpaceComplexity in AS.levels;
             return (
               <g
                 key={r.paper.id}
-                className={`realism__dot${dim ? ' is-dim' : ''}${framework ? ' is-framework' : ''}${assessed ? '' : ' is-unassessed'}`}
+                className={`realism__dot${framework ? ' is-framework' : ''}${assessed ? '' : ' is-unassessed'}`}
                 tabIndex={0}
                 role="button"
                 aria-label={`${r.paper.short_name}, ${r.paper.year}: ${levelLabel('interaction', r.realism.interaction)}, ${levelLabel('human', r.realism.human)}, ${

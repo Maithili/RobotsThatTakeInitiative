@@ -5,6 +5,7 @@ introduced_in: gap
 links:
   home: https://github.com/Maithili/GAP
 sim_or_real: sim
+span: Several weeks  # Maithili, Oct 22 2026
 environment: virtualhome
 based_on:
   - id: homer-plus

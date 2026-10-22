@@ -5,7 +5,7 @@ introduced_in: stot
 links:
   home: null
 sim_or_real: sim
-span: 50+ days
+span: Several weeks  # Maithili, Oct 22 2026
 households_or_users: 5
 observations:
   - object_movements

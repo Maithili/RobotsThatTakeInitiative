@@ -5,7 +5,7 @@ introduced_in: slate-pro
 links:
   home: null
 sim_or_real: sim
-span: Several weeks
+span: Several weeks  # Maithili, Oct 22 2026
 households_or_users: 3
 observations:
   - object_movements

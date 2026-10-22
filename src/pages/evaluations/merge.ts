@@ -114,32 +114,6 @@ export function furthestLoop(r: PaperEvalRow, loopOrder: string[]) {
   return Math.max(-1, ...r.loops.map((l) => loopOrder.indexOf(l)));
 }
 
-export interface RowFilters {
-  loop: string | null;
-  term: string | null;
-  metric: string | null;
-  dataset: string | null;
-  /** A metric category id (SPEC §8.4). Needs `metricCategory`. */
-  category?: string | null;
-  metricTerms: (m: string) => string[];
-  metricCategory?: (m: string) => string | null | undefined;
-  /** The metrics `metric` stands for, so a group id matches any of its members (SPEC §8.6). Defaults to `[metric]`. */
-  metricMembers?: (m: string) => string[];
-}
-
-/** A paper matches when any of its entries does. */
-export function rowMatches(r: PaperEvalRow, f: RowFilters): boolean {
-  const members = f.metric ? (f.metricMembers?.(f.metric) ?? [f.metric]) : [];
-  return r.entries.some(
-    (e) =>
-      (!f.loop || e.loop === f.loop) &&
-      (!f.term || (e.metrics ?? []).some((m) => f.metricTerms(m).includes(f.term!))) &&
-      (!f.metric || (e.metrics ?? []).some((m) => members.includes(m))) &&
-      (!f.category || (e.metrics ?? []).some((m) => f.metricCategory?.(m) === f.category)) &&
-      (!f.dataset || e.environment === f.dataset || (e.datasets ?? []).includes(f.dataset)),
-  );
-}
-
 /** Datasets table groups (SPEC §8.5): tangential datasets form their own group at the bottom. Order is kept. */
 export function datasetGroups<T extends { tangent?: boolean }>(rows: readonly T[]): { core: T[]; tangent: T[] } {
   return { core: rows.filter((d) => !d.tangent), tangent: rows.filter((d) => !!d.tangent) };

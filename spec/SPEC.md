@@ -442,6 +442,8 @@ evaluations:
 | `tangent` | boolean | Default false. A tangential dataset shows part-way transparent in its own group at the bottom of the datasets table (§8.5). Datasets introduced by tangential papers are tangential. |
 | `provenance` | string ≤ 140 | |
 
+The datasets table (§8.5) shows only some of these fields. `environment`, `based_on`, `households_or_users`, `goal_annotations`, and `executable` stay in the data and the schema (per Maithili, Oct 22 2026).
+
 ### 5.4 Validation and derived fields (`scripts/build-data.ts`)
 
 The build fails on any of these errors.
@@ -519,10 +521,6 @@ Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, th
 | `edges` | Methods | `builds,benchmarks,cites` | Edge types drawn for all papers. Absent means builds and benchmarks. Cites lines always show for the hovered or selected paper. |
 | `tangents` | Methods | `0` | Hides tangential works. Absent means shown. |
 | `focus` | Methods | `slate-pro` | Ancestry focus |
-| `term` | Evaluations | `dC_added` | Net value term |
-| `loop` | Evaluations | `closed_scripted,closed_adaptive` | Loop type filter |
-| `category` | Evaluations | `task_performance` | Metric category: highlights its box in the metrics list and filters the protocols table |
-| `metric` | Evaluations | `f1`, `goal_prf` | Metric filter. A metric group id matches any of its members. |
 | `sub` | Subproblems | `A2` | Selected subproblem |
 | `gaps` | Subproblems | `1` | Gaps mode in the matrix |
 
@@ -533,11 +531,12 @@ Rules.
   - Methods bottom half (graph and list) and the whole Evaluations page (protocols table, realism plot, dataset "used by" counts): only papers at a focus level. Papers with no level stay out, with one exception: tangential works stay in the graph and list (§7.2).
   - Subproblems page (lists, counts, matrix): papers at a focus level plus papers with no level, such as related works from other fields. Never L1 papers.
   - L1 papers otherwise appear only in the drawer, when opened from the L1 timeline row or from search.
-- Global filters apply on every page. A paper with no method block fails the `input` filter.
+- Global filters apply on Methods and Subproblems. A paper with no method block fails the `input` filter.
+- The Evaluations page has no filters since Oct 22, 2026, pending Maithili's redesign (§8, §16). It ignores the global filters and its old params (`loop`, `term`, `category`, `metric`, `dataset`), so an old link cannot leave it filtered.
 - The family, action type, and theme filters were removed on Oct 22, 2026 (§16). Their params (`family`, `action`, `theme`) are ignored, so an old link applies no hidden filter.
 - Page params stay in the URL when the reader switches pages, so coming back restores the view. Each page ignores params that are not its own.
 - Filter changes use `replaceState`. Opening a paper or switching pages uses `pushState`, so Back closes the drawer.
-- Every page has a filter bar that shows active global filters as removable chips, with "Clear all". Its Filters dropdown offers only Input (Object movements, Activity labels, Video, in taxonomy order) and, on Methods, Years. A text filter sits beside it.
+- Methods and Subproblems each have a filter bar that shows active global filters as removable chips, with "Clear all". Its Filters dropdown offers only Input (Object movements, Activity labels, Video, in taxonomy order) and, on Methods, Years. A text filter sits beside it.
 - On graphs, filters dim non-matching items to 20% opacity. In lists and tables, filters hide them.
 
 ### 6.3 Search
@@ -623,14 +622,15 @@ Left to right: level cards, then the condensed timeline across the remaining wid
 
 ## 8. Evaluations page
 
-Sections from top to bottom. A bare `#/evaluations` URL starts unfiltered: no term, category, metric, or loop type selected, every protocol row shown, and every metric row at full strength.
+Sections from top to bottom. The intro is the page title alone.
+
+The page has no filters: Maithili removed them on Oct 22, 2026, pending her redesign (§16). There is no filter bar, no loop-type select, no text filter, no term or metric selection, no category chip that filters, and no column filter. The page ignores the global filters and its old params (`loop`, `term`, `category`, `metric`, `dataset`), so every view shows every protocol row, every realism dot, and every metric row at full strength. Collapsing metric category boxes is not a filter and stays (§8.6).
 
 ### 8.1 Net value navigator
 
 - The headline ΔV − ΔC in KaTeX, with the `counterfactual` line under it.
-- Below, four focusable term buttons in order: ΔV, ΔC↓, ΔC↑, C_r. Each shows its label, its one-line definition on hover and focus, and a count of metrics that measure it.
-- Clicking a term sets `term=`. It dims the metric rows that do not measure that term (§8.6) and filters the protocol table to papers with a metric that measures it.
-- Hovering or focusing a metric anywhere on the page highlights its terms.
+- Below, four focusable term cards in order: ΔV, ΔC↓, ΔC↑, C_r. Each shows its label, its one-line definition on hover and focus, and a count of metrics that measure it. They are not buttons and filter nothing.
+- Hovering a metric row (§8.6) highlights its terms.
 - A term with no metrics shows "No metric in the database measures this term yet." With the seed data, ΔV and C_r show this.
 
 ### 8.2 Featured comparison
@@ -648,21 +648,20 @@ This plot shows how close each paper's evaluation is to the real target: how the
 - **One dot per paper, from its main evaluations.** An entry with `secondary: true` is not a main evaluation. A dot takes the closest level on each axis, and the most complex action space level, across the paper's other entries. Watch-And-Help and NOPA mark their user studies secondary, so they sit at Closed loop robot actions × Scripted behavior. Secondary entries still show in the protocols table and the drawer. The subtitle reads "One dot per paper, from its main evaluation. Click a dot for details." A paper appears only when it has both an x and a y level. A note under the plot counts the papers it leaves out.
 - Dots that share a cell pack into a small grid centered in it, ordered by action space complexity (low first, not assessed last) and then by year, so they never overlap. GAP's dot has a ring in the framework-paper color, and its fill follows action space complexity like every other dot.
 - **Hover or focus** on a dot shows a card with short name, year, title, Paper ↗ and Code ↗ links, then the interaction, human behavior, action space complexity, setting, and robot levels in words, in that order, then every loop type the paper uses ("All loops") and its datasets. The card stays open while the pointer moves into it, so its links can be clicked. Clicking a dot opens the drawer.
-- Filters dim dots. Dots are keyboard-focusable in year order.
+- Dots are keyboard-focusable in year order. No filter dims them (§8).
 - **Credit line.** When `realism.source_url` is set, the caption reads "Organization adapted from" with a link to that paper. It stays null until the paper is public.
-- The loop-type filter moves to the filter bar as a dropdown bound to `loop=`.
 
 ### 8.4 Evaluation protocols table
 
-One row per paper, GAP included, however many evaluation entries the paper has. The row merges them. Columns, in this order (per Maithili, Oct 22 2026): paper (short name), year, metric categories (one chip per distinct category label among the paper's metrics, in category order; never individual metric names), environment and datasets (union), loop types (one pill per distinct type, in scale order), human models (union), baselines (union, count, expandable). All columns sort. The table has no state drift or goal adaptation columns and no captures legend, per Maithili; `captures` stays in the data and shows only in the drawer. Loop type sorts by the paper's furthest type on the scale. A paper appears only if it is at a focus level (§6.2), is not in `evaluations_exclude`, and has at least one evaluation entry. A paper matches `loop=`, `term=`, `category=`, or `metric=` when any of its entries does. Clicking a row opens the drawer, which lists each evaluation entry separately.
+One row per paper, GAP included, however many evaluation entries the paper has. The row merges them. Columns, in this order (per Maithili, Oct 22 2026): paper (short name), year, metric categories (one plain chip per distinct category label among the paper's metrics, in category order; never individual metric names; the chips filter nothing), environment and datasets (union), loop types (one pill per distinct type, in scale order), human models (union), baselines (union, count, expandable). All columns sort. The table has no state drift or goal adaptation columns and no captures legend, per Maithili; `captures` stays in the data and shows only in the drawer. Loop type sorts by the paper's furthest type on the scale. A paper appears only if it is at a focus level (§6.2), is not in `evaluations_exclude`, and has at least one evaluation entry. The section title counts the papers. Clicking a row opens the drawer, which lists each evaluation entry separately.
 
-GAP's row sits at the top in a shaded band, since GAP is part of the paper the site is built on. It stays at the top under every sort and carries a small "Framework paper" tag linking to the arXiv page. Filters can still hide it. One constant names this paper (`FRAMEWORK_PAPER = 'gap'`).
+GAP's row sits at the top in a shaded band, since GAP is part of the paper the site is built on. It stays at the top under every sort and carries a small "Framework paper" tag linking to the arXiv page. One constant names this paper (`FRAMEWORK_PAPER = 'gap'`).
 
 ### 8.5 Datasets and evaluation setups table
 
-Rows are entries of kind `dataset` or `evaluation_setup`. Simulators never appear as rows. They show only in the environment column. Tangential datasets (`tangent: true`) form their own group at the bottom, drawn at 60% opacity, under a "Tangential" divider.
+Rows are entries of kind `dataset` or `evaluation_setup`. Simulators never appear as rows. They show only in the protocols table's environment and datasets column (§8.4). Tangential datasets (`tangent: true`) form their own group at the bottom, drawn at 60% opacity, under a "Tangential" divider.
 
-Columns: name, kind (Dataset or Setup), environment, based on (such as "Extends HOMER" or "Validated against HOMER", each linked to that row), sim or real, span, households or users, observations, goal annotations, executable, human models and loops (setups only), used by. Column filters for kind, sim or real, goal annotations, and executable. The name links to `links.home`. An info button opens a small panel with notes and the introducing paper. Clicking "used by" filters the protocol table to evaluations that use that dataset.
+Columns, in this order (per Maithili, Oct 22 2026): name, kind (Dataset or Setup), sim or real, span, modality (the dataset's `observations` as chips in the input vocabulary: Object movements, Activity labels, Video), human models and loops (setups only), used by. The environment, based on, households or users, goal annotations, and executable columns are gone, and their fields stay in the data (§5.3). There are no column filters. The section subtitle reads "What each one records, and the papers on this page that use it." The name links to `links.home`. An info button opens a small panel with the notes, the introducing paper, the datasets it is the basis of (each linked to its row), and the source. "Used by" lists the papers on this page that use the dataset, as short-name links that open the drawer.
 
 ### 8.6 Metrics list
 
@@ -673,9 +672,7 @@ A vertical list of category boxes, one per metric category in category order, al
 - Each row links to the papers that use it, as short-name links that open the drawer.
 - Static term tags sit in the row's bottom-right corner, with two labels and no arrows: ΔV for `dV`, and ΔC for `dC_saved`, `dC_added`, and `Cr`. A row shows the union over its metrics, and a row whose metrics serve no term shows none. Rows have no hover card.
 
-Clicking a category header collapses its box to the header line, and clicking again expands it. Boxes start expanded, and one "Collapse all / Expand all" control acts on every box. Collapse state stays out of the URL. It persists per viewer in `localStorage` (inside try/catch), and a selected category or metric opens its box.
-
-Clicking a category chip in the protocols table sets `category=`, filters the table, and scrolls to and highlights that box. Clicking a metric row sets `metric=`. A group row sets the group id, which matches papers that use any of its members. When a term is selected (§8.1), rows whose metrics do not measure it dim rather than hide.
+Clicking a category header collapses its box to the header line, and clicking again expands it. Boxes start expanded, and one "Collapse all / Expand all" control acts on every box. Collapse state stays out of the URL. It persists per viewer in `localStorage` (inside try/catch). Collapsing is the section's only control: rows and category chips select and filter nothing (§8). Hovering a row highlights its terms in the navigator (§8.1).
 
 Metrics with no category never show on this page. That covers metrics used only by tangential or excluded papers (object search, persistence, emergencies) and Din 2025's relation accuracy. Computational metrics (training time, training samples, inference time, planning time) and ProAct's saved steps metrics are out of the data entirely, per Maithili: ProAct's evaluation is activity prediction, not closed loop.
 
@@ -738,7 +735,7 @@ None. The theme chips left with the theme filter on Oct 22, 2026 (§16). Themes 
 
 **npm scripts**: `dev`, `build` (runs `build-data` first), `validate`, `test`, `e2e`, `new-paper`, `preview`.
 
-**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, an `evaluations_exclude` id that is not a paper, an unknown `action_space_complexity` level, an `action_space_complexity` scale with no levels or more than four, an `opacity` on a realism level, an old human level, a loop type with no or an unknown `interaction`, an `interaction` filled on an evaluation, a non-boolean `secondary`, and an input or observation modality listed twice), the `evaluations_exclude` scope, the loop type to interaction mapping, the realism dot taken from main entries only (secondary entries stay in the row), the most complex action space level across a paper's entries and its ramp color, metric box rows (a group as one row, at its first member, dimmed only when no member measures the selected term, tagged ΔV or ΔC by the union of its members' terms), the category filter, `metric=` with a group id, URL state round trip, removed `family`, `action`, and `theme` params applying no filter, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
+**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, an `evaluations_exclude` id that is not a paper, an unknown `action_space_complexity` level, an `action_space_complexity` scale with no levels or more than four, an `opacity` on a realism level, an old human level, a loop type with no or an unknown `interaction`, an `interaction` filled on an evaluation, a non-boolean `secondary`, and an input or observation modality listed twice), the `evaluations_exclude` scope, the loop type to interaction mapping, the realism dot taken from main entries only (secondary entries stay in the row), the most complex action space level across a paper's entries and its ramp color, metric box rows (a group as one row, at its first member, tagged ΔV or ΔC by the union of its members' terms), URL state round trip, removed `family`, `action`, and `theme` params applying no filter, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
 
 **End-to-end tests (Playwright)** on the seed data:
 
@@ -746,18 +743,18 @@ None. The theme chips left with the theme filter on Oct 22, 2026 (§16). Themes 
 2. Setting the Object movements input filter on Methods and switching to Subproblems keeps the filter. Back restores the previous view. No L1 paper appears in the graph, the list view, the protocols table, the realism plot, or the Subproblems page.
 3. `?paper=gap` opens the drawer, and Esc closes it.
 4. Hovering a timeline chip highlights the same node in the graph. GAP's node sits outside both cluster hulls.
-5. ΔC↑ counts 10 metrics, all categorized. Clicking it keeps all seven metric boxes, dims every row in the Implicit need detection and Coordination fluency boxes, and hides the protocol rows of papers with no ΔC↑ metric, such as ProAct and Anticipatory TAMP. Net actions saved, perturbed actions, and F1 stay at full strength.
+5. ΔC↑ counts 10 metrics, all categorized. Its card is not a button: clicking it sets no param and leaves all seven metric boxes, every metric row, and all 11 protocol rows in place.
 6. The featured chart shows 6 bars at load, with no toggle.
 7. Selecting A2 lists NOPA, highlights G1, G2, and A1 upstream, and highlights P2 downstream.
 8. In matrix view, clicking a filled cell opens the drawer. Selecting goal inference does not list SLaTe-PRO, which skips it.
 9. Pinning two papers puts both ids in `compare=`.
 10. At 375 px wide, no page scrolls horizontally.
 11. On Methods, the STOT to SLaTe-PRO edge is solid. With "Show all citation lines" off, no dotted edge shows until a node is hovered. The fit button brings every node into view. No drawn edge, in the seed data or the synthetic fixture, passes within clearance of a node that isn't one of its ends. A unit test over the edge geometry checks this; it would catch Watch-And-Help to NOPA passing through ProAct.
-12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table's columns run paper, year, metric categories, environment and datasets, loop types, human models, baselines. It has 11 rows and exactly one GAP row, shaded and first, showing three loop-type pills and the categories Change in user actions and Object movement prediction, and it stays first after sorting by year, name, metric categories, and loop type.
+12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the protocols table's environment and datasets column. The datasets table's columns run name, kind, sim or real, span, modality, human models and loops, used by, with no column filter. HOMER+ shows the modalities Object movements and Activity labels, the four HOMER datasets show the span "Several weeks", and a "used by" paper name opens the drawer without setting a param. The protocols table's columns run paper, year, metric categories, environment and datasets, loop types, human models, baselines. It has 11 rows and exactly one GAP row, shaded and first, showing three loop-type pills and the categories Change in user actions and Object movement prediction, and it stays first after sorting by year, name, metric categories, and loop type. Old `loop=` links do not hide it.
 13. The realism plot's axes are interaction (x: Open loop, Closed loop robot actions, Adaptive humans) and human behavior (y: Scripted behavior, Generated behavior from crowdsourced data, Real humans), with no setting or robot axis. NOPA and Watch-And-Help sit at Closed loop robot actions × Scripted behavior, so their user studies do not move them. GAP's dot sits in the cell its main evaluations give, fully opaque, in its action-space-complexity color in both themes (gray with a dashed edge while not assessed), with its ring. The legend shows the Low-to-High gradient and Not assessed. Hovering GAP's dot shows a card with a working Paper link and its interaction, human behavior, action space complexity, setting, and robot rows, in that order. The note under the plot counts the papers with no dot.
 14. With a fixture tangential paper, its graph node renders in its category's color at 60% opacity, and unchecking "Show tangential works" removes it and its edges.
-15. The protocols table shows category labels, one chip per category in category order, and no metric names. The metrics list has no tabs, and every category box is visible at once, in category order. The Task performance box shows "Goal precision, recall, and F1 ↑ fraction" as one row, with links to Watch-And-Help and NOPA and no hover card. Clicking a paper link opens the drawer. Clicking the row sets `metric=goal_prf` and filters the table to those two papers. Clicking a category chip in the table sets `category=`, filters the table, and scrolls to and highlights its box. `metric=speedup` marks its row and filters the table. PredictiveGraphs has no row and no realism dot but stays on the graph and the Subproblems page. ProAct has no closed-loop pill.
-16. A bare `#/evaluations` URL has no active filter chip, shows all 12 protocol rows, and dims no metric row. Bare `#/methods` and `#/subproblems` URLs also start with nothing selected or dimmed. Category headers show their ΔV and ΔC tags, collapsing a box hides its rows, and no "↕" appears on the page.
+15. The protocols table shows category labels, one chip per category in category order, and no metric names. The metrics list has no tabs, and every category box is visible at once, in category order. The Task performance box shows "Goal precision, recall, and F1 ↑ fraction" as one row, with links to Watch-And-Help and NOPA and no hover card. Clicking a paper link opens the drawer. Clicking the row or a category chip in the table sets no param and filters nothing, and an old `metric=` or `category=` link marks nothing. PredictiveGraphs has no row and no realism dot but stays on the graph and the Subproblems page. ProAct has no closed-loop pill.
+16. The Evaluations page has no filter bar, no lede, and no filter control. A bare `#/evaluations` URL and one carrying every old param (`loop`, `term`, `category`, `metric`, `dataset`, `q`, `input`, `years`) show the same 11 protocol rows, every realism dot, and no dimmed metric row. Bare `#/methods` and `#/subproblems` URLs also start with nothing selected or dimmed. Category headers show their ΔV and ΔC tags, collapsing a box hides its rows, and no "↕" appears on the page.
 
 **CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes: `npm ci`, validate, typecheck, unit tests, build, end-to-end tests.
 
@@ -809,9 +806,12 @@ Subproblems page, per Maithili (Oct 22, 2026): a subproblem lists only works tha
 
 Inputs and filters, per Maithili (Oct 22, 2026): "for inputs combine object relocations and scene graphs into object movements. remove language. add activity labels. remove the action. remove the family and action filters and theme; they aren't doing anything." The input vocabulary is now Object movements, Activity labels, Video. STOT, SLaTe-PRO, STREAK and GAP take object movements. HOMER, HOMER+, HOMER-Noise and EvoWorld-Bench record object movements, and HOMER+ and HOMER-Noise also record activity labels, as their notes state. A paper gets `activity_labels` only when its file or its dataset files say the method takes them in at run time, and no paper file says so yet. COIN's dataset lost `language` and has no observation modality left. The Family, Action and Theme filters, their URL params, and the Subproblems theme chips are gone. They did filter correctly (the graph dimmed and the list, matrix and protocols table hid non-matching papers), but most options matched no paper in the graph: no L2 paper is tagged Times, Initiates, Informs or Asks, and only Continual learning has papers among the themes. Families still set the graph clusters, and action types still show in the drawer, hover cards, list and compare view.
 
+Evaluations page, per Maithili (Oct 22, 2026): "remove 'How methods are scored: which terms of the net value each metric measures, and how close each evaluation comes to real use.' remove theme and family filters from the evals page too. in fact remove all filters from the evals for now. in datasets, remove columns: Environment, Based on, , Households or users, Observations becomes modality (object movements, activity labels), Goal annotations, Executable; Span is several weeks for all homer datasets." The intro is now the title alone. Filters are removed for now, pending her redesign: the filter bar with its loop-type select and text filter, the clickable term cards, metric rows and category chips, the datasets table's column filters, and its "used by" filter buttons, which became paper links. The page ignores the global filters and its old params (§8). The datasets table keeps name, kind, sim or real, span, modality, human models and loops, and used by; the fields behind the removed columns stay in the data. HOMER, HOMER+, HOMER-Noise and the HOMER + LLM closed-loop setup have the span "Several weeks" (HOMER's was "50+ days", from STOT §5). COIN's dataset keeps "Seven days" from its own paper.
+
 
 1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them.
 2. **Action space complexity.** Levels set on Oct 22, 2026. STOT, STREAK, SLaTe-PRO, GAP and NOPA are high, derived from counts the papers state (HOMER's 108 objects; HOMER+'s 59 dynamic objects × 93 entities; NOPA uses Watch-And-Help's action space of 167 actions per step on average). Watch-And-Help's help and user-study entries are high from that stated count. Maithili tagged the rest: GLOBE low, ProAct low, the Watch-And-Help watch stage medium, and Talukder 2025, Anticipatory TAMP and Courteous Anticipation high. Din 2025 and the SLaTe-PRO query setting stay null.
 3. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.
 4. **Tangential works.** Maithili lists them. Candidates from the GAP paper references that fit the two tangent types: Peng et al. 2019 [16] (a CHI design and evaluation of service-robot proactivity), and the works that ask questions [17] and [18]. Both left the database earlier. ADAPT [19] stays on the Subproblems page only and is not tangential, per Maithili.
 5. **"Remove the action."** The action type filter is gone. Action types still show in the drawer, the graph hover card, the Methods list column, and the compare view. Maithili confirms whether those go too. She also confirms the papers left without `activity_labels` whose files mention activities (SLaTe-PRO's activity queries, GLOBE, GAP).
+6. **Evaluations filters.** Removed on Oct 22, 2026, pending Maithili's redesign. She decides which, if any, come back.

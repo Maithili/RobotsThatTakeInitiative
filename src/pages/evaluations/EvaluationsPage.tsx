@@ -1,27 +1,16 @@
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
+// Evaluations page (SPEC §8). It has no filters: Maithili removed them on Oct 22 2026, pending her redesign (§16).
+// The page ignores the global filters and its old params (loop, term, category, metric, dataset).
+import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { LoopPill, TermDot } from '../../components/Chip.tsx';
 import { EmptyState } from '../../components/EmptyState.tsx';
-import { FilterBar } from '../../components/FilterBar.tsx';
 import { Math as TeX } from '../../components/Math.tsx';
 import { datasetById, db, FRAMEWORK_PAPER, onEvaluations, paperById, paperLabel, papers, PAPER_URL, tx } from '../../data.ts';
-import { matchesGlobal } from '../../lib/filters.ts';
-import {
-  categoryItems,
-  DIRECTION,
-  itemServes,
-  itemSummary,
-  metricKeyMembers,
-  termTags,
-  unitText,
-  type MetricDirection,
-  type MetricItem,
-  type TermTag,
-} from '../../lib/metrics.ts';
+import { categoryItems, DIRECTION, itemSummary, termTags, unitText, type MetricDirection, type MetricItem, type TermTag } from '../../lib/metrics.ts';
 import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
 import { DatasetTable } from './DatasetTable.tsx';
 import { FeaturedChart } from './FeaturedChart.tsx';
-import { furthestLoop, interactionOf, mergePaper, rowMatches, type PaperEvalRow, type RealismOrder } from './merge.ts';
+import { furthestLoop, interactionOf, mergePaper, type PaperEvalRow, type RealismOrder } from './merge.ts';
 import { RealismPlot } from './RealismPlot.tsx';
 
 const TERMS = Object.keys(tx.net_value.terms);
@@ -38,8 +27,6 @@ const REALISM_ORDER: RealismOrder = {
 const ACTION_SPACE_ORDER = Object.keys(tx.action_space_complexity.levels);
 
 const categoryOf = (m: string) => tx.metrics[m]?.category;
-/** Uncategorized metrics never show on this page (SPEC §8.6), so they count toward no term. */
-const shownTerms = (m: string) => (categoryOf(m) ? tx.metrics[m].terms : []);
 
 /** Level scope (SPEC §6.2) and `evaluations_exclude` (§8.4): this page counts and shows only these papers. */
 const inScope = (r: { paper: string }) => {
@@ -66,29 +53,6 @@ const ROW_PAPERS = new Map<string, DbPaper[]>(
   }),
 );
 
-/** The metrics a `metric=` value stands for (a group id stands for its members), and their shared category. */
-const keyMembers = (k: string) => metricKeyMembers(k, tx.metrics);
-const keyCategory = (k: string) => categoryOf(keyMembers(k)[0]);
-const keyLabel = (k: string) => tx.metrics[k]?.label ?? tx.metric_groups[k]?.label ?? k;
-
-/** This page's own URL params (SPEC §6.2), shown as chips in the filter bar. */
-const PAGE_PARAMS = ['loop', 'term', 'category', 'metric', 'dataset'] as const;
-type PageParam = (typeof PAGE_PARAMS)[number];
-const has = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
-const KNOWN: Record<PageParam, (v: string) => boolean> = {
-  loop: (v) => has(tx.loop_types, v),
-  term: (v) => has(tx.net_value.terms, v),
-  category: (v) => has(tx.metric_categories, v),
-  metric: (v) => has(tx.metrics, v) || has(tx.metric_groups, v),
-  dataset: (v) => datasetById.has(v),
-};
-/** A page param, or null when it names nothing in the taxonomy or data. A stale id in a shared link is ignored,
- *  rather than emptying the table while the loop control reads "All loop types" or dimming every metric row. */
-function pageParam(url: ReturnType<typeof useUrl>, k: PageParam): string | null {
-  const v = url.get(k);
-  return v && KNOWN[k](v) ? v : null;
-}
-
 function metricsForTerm(term: string) {
   return METRICS.filter((m) => LISTED.has(m) && tx.metrics[m].terms.includes(term));
 }
@@ -96,8 +60,6 @@ function metricsForTerm(term: string) {
 // ---------- 8.1 net value navigator ----------
 
 function NetValueNavigator({ hoverTerms }: { hoverTerms: Set<string> }) {
-  const url = useUrl();
-  const term = pageParam(url, 'term');
   return (
     <section className="card netvalue" aria-labelledby="nv-title">
       <h2 id="nv-title" className="sr-only">
@@ -111,17 +73,9 @@ function NetValueNavigator({ hoverTerms }: { hoverTerms: Set<string> }) {
         {TERMS.map((t) => {
           const T = tx.net_value.terms[t];
           const n = metricsForTerm(t).length;
-          const on = term === t;
+          // Not a button: terms filter nothing (SPEC §8.1). Focus still shows the definition.
           return (
-            <button
-              key={t}
-              type="button"
-              className={`term term--${t}${on ? ' is-on' : ''}${hoverTerms.has(t) ? ' is-hot' : ''}`}
-              aria-pressed={on}
-              aria-describedby={`term-def-${t}`}
-              data-testid={`term-${t}`}
-              onClick={() => url.set({ term: on ? null : t })}
-            >
+            <div key={t} className={`term term--${t}${hoverTerms.has(t) ? ' is-hot' : ''}`} tabIndex={0} aria-describedby={`term-def-${t}`} data-testid={`term-${t}`}>
               <span className="term__top">
                 <TermDot term={t} />
                 <TeX tex={T.tex} />
@@ -132,7 +86,7 @@ function NetValueNavigator({ hoverTerms }: { hoverTerms: Set<string> }) {
                 {T.definition}
               </span>
               {n === 0 && <span className="term__none">No metric in the database measures this term yet.</span>}
-            </button>
+            </div>
           );
         })}
       </div>
@@ -177,7 +131,6 @@ function compareRows(va: string | number, vb: string | number, dir: 1 | -1): num
 
 function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
   const url = useUrl();
-  const category = pageParam(url, 'category');
   const [sort, setSort] = useState<{ key: PSort; dir: 1 | -1 }>({ key: 'loop', dir: 1 });
   const [open, setOpen] = useState<Set<string>>(new Set());
   const sorted = [...rows].sort((a, b) => {
@@ -196,7 +149,7 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
     ['human', 'Human models'],
     ['baselines', 'Baselines'],
   ];
-  if (!rows.length) return <EmptyState>No evaluation matches these filters.</EmptyState>;
+  if (!rows.length) return <EmptyState>No evaluation in the database yet.</EmptyState>;
   return (
     <div className="scroll-x">
       <table className="table" data-testid="protocol-table">
@@ -250,26 +203,11 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
                 <td>
                   <span className="chips">
                     {r.categories.length ? (
-                      r.categories.map((c) => {
-                        const on = category === c;
-                        return (
-                          <button
-                            key={c}
-                            type="button"
-                            className={`chip chip--category${on ? ' chip--on' : ''}`}
-                            aria-pressed={on}
-                            data-category={c}
-                            title={on ? 'Clear the category filter' : 'Filter protocols by this category and highlight its metrics'}
-                            onClick={(ev) => {
-                              ev.stopPropagation();
-                              selectCategory(url, on ? null : c);
-                              if (!on) revealBox(c);
-                            }}
-                          >
-                            {tx.metric_categories[c].label}
-                          </button>
-                        );
-                      })
+                      r.categories.map((c) => (
+                        <span key={c} className="chip chip--category" data-category={c}>
+                          {tx.metric_categories[c].label}
+                        </span>
+                      ))
                     ) : (
                       <span className="muted">—</span>
                     )}
@@ -352,26 +290,6 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
 
 // ---------- 8.6 metrics: one box per category, one row per metric or group ----------
 
-/** Sets `category=`, and drops a `metric=` outside that category, so the two filters never contradict. */
-function selectCategory(url: ReturnType<typeof useUrl>, c: string | null) {
-  const metric = pageParam(url, 'metric');
-  url.set({ category: c, ...(c && metric && keyCategory(metric) !== c ? { metric: null } : {}) });
-}
-
-/** Scrolls a category's box into view and pulses it once (SPEC §8.6). */
-function revealBox(c: string) {
-  window.requestAnimationFrame(() => {
-    const el = document.getElementById(`metric-box-${c}`);
-    if (!el) return;
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
-    el.classList.remove('pulse');
-    void el.offsetWidth;
-    el.classList.add('pulse');
-    window.setTimeout(() => el.classList.remove('pulse'), 1200);
-  });
-}
-
 /** ↑ or ↓. There is no mixed arrow: a group whose members differ gives each member its own (SPEC §8.6). */
 function Direction({ direction, testId }: { direction: MetricDirection; testId: string }) {
   const d = DIRECTION[direction];
@@ -421,36 +339,18 @@ function TermTags({ tags, className, testId }: { tags: TermTag[]; className: str
 
 function MetricRow({ item, onHoverTerms }: { item: MetricItem; onHoverTerms: (t: string[]) => void }) {
   const url = useUrl();
-  const metric = pageParam(url, 'metric');
-  const category = pageParam(url, 'category');
-  const term = pageParam(url, 'term');
   const key = item.id;
   const { label, definition } = item.group ? tx.metric_groups[key] : tx.metrics[key];
   const sum = itemSummary(item, tx.metrics, TERMS);
   const users = ROW_PAPERS.get(key) ?? [];
-  const on = metric === key;
   // A group whose members differ in direction lists its members, each with its own arrow, and with its own unit
   // when the units differ too. Otherwise the units follow the row's name and arrow.
   const mixed = sum.direction === null;
   const oneUnit = sum.units.length === 1;
-  // Under a term filter, rows that do not serve it dim rather than hide (SPEC §8.6).
-  const dim = !itemServes(item, tx.metrics, term);
-  const enter = () => onHoverTerms(sum.terms);
-  const leave = () => onHoverTerms([]);
-  const pick = () => {
-    const c = keyCategory(key);
-    url.set({ metric: on ? null : key, ...(!on && category && category !== c ? { category: null } : {}) });
-  };
+  // Hovering a row highlights its terms in the navigator (SPEC §8.1). The row filters nothing.
   return (
-    <li
-      className={`metric-row${on ? ' is-on' : ''}${dim ? ' is-dim' : ''}`}
-      onClick={pick}
-      onMouseEnter={enter}
-      onMouseLeave={leave}
-      data-testid={`metric-row-${key}`}
-      data-dim={dim ? 'true' : 'false'}
-    >
-      <button type="button" className="metric-row__main" aria-pressed={on} onFocus={enter} onBlur={leave}>
+    <li className="metric-row" onMouseEnter={() => onHoverTerms(sum.terms)} onMouseLeave={() => onHoverTerms([])} data-testid={`metric-row-${key}`}>
+      <div className="metric-row__main">
         <span className="metric-row__name">
           <NameLine label={label} strong>
             {sum.direction && (
@@ -486,19 +386,12 @@ function MetricRow({ item, onHoverTerms }: { item: MetricItem; onHoverTerms: (t:
           )}
         </span>
         <span className="metric-row__def">{definition}</span>
-      </button>
+      </div>
       <span className="metric-row__papers" role="group" aria-label={`Papers that use ${label}`}>
         {users.map((p, i) => (
           <Fragment key={p.id}>
             {i > 0 && ', '}
-            <button
-              type="button"
-              className="linkish metric-row__paper"
-              onClick={(ev) => {
-                ev.stopPropagation();
-                url.openPaper(p.id);
-              }}
-            >
+            <button type="button" className="linkish metric-row__paper" onClick={() => url.openPaper(p.id)}>
               {p.short_name}
             </button>
           </Fragment>
@@ -534,10 +427,6 @@ function writeCollapsed(s: Set<string>) {
 const BOX_TAGS = new Map(BOXES.map((c) => [c, termTags((ITEMS.get(c) ?? []).flatMap((it) => it.members.flatMap((m) => tx.metrics[m].terms)))]));
 
 function MetricsList({ onHoverTerms }: { onHoverTerms: (t: string[]) => void }) {
-  const url = useUrl();
-  const term = pageParam(url, 'term');
-  const category = pageParam(url, 'category');
-  const metric = pageParam(url, 'metric');
   const [collapsed, setCollapsed] = useState<Set<string>>(readCollapsed);
   useEffect(() => writeCollapsed(collapsed), [collapsed]);
   const toggle = (c: string) =>
@@ -548,22 +437,11 @@ function MetricsList({ onHoverTerms }: { onHoverTerms: (t: string[]) => void }) 
       return next;
     });
   const allCollapsed = BOXES.length > 0 && BOXES.every((c) => collapsed.has(c));
-  // A selected category or metric opens its box, so the highlight is never hidden.
-  const selectedBox = category ?? (metric ? (keyCategory(metric) ?? null) : null);
-  useEffect(() => {
-    if (!selectedBox) return;
-    setCollapsed((s) => {
-      if (!s.has(selectedBox)) return s;
-      const next = new Set(s);
-      next.delete(selectedBox);
-      return next;
-    });
-  }, [selectedBox]);
   return (
     <section aria-labelledby="metrics-title" className="stack-sm">
       <div className="section-title">
         <h2 id="metrics-title">Metrics</h2>
-        <span className="small muted">Metrics by category, with the papers that use them and the terms of ΔV − ΔC they serve. Click a metric to filter the protocols.</span>
+        <span className="small muted">Metrics by category, with the papers that use them and the terms of ΔV − ΔC they serve.</span>
         {BOXES.length > 0 && (
           <button type="button" className="linkish small section-title__end" data-testid="metric-collapse-all" onClick={() => setCollapsed(new Set(allCollapsed ? [] : BOXES))}>
             {allCollapsed ? 'Expand all' : 'Collapse all'}
@@ -576,14 +454,12 @@ function MetricsList({ onHoverTerms }: { onHoverTerms: (t: string[]) => void }) 
         <div className="metric-boxes" data-testid="metric-boxes">
           {BOXES.map((c) => {
             const items = ITEMS.get(c) ?? [];
-            const on = category === c;
-            const dim = !items.some((it) => itemServes(it, tx.metrics, term));
             const open = !collapsed.has(c);
             return (
               <section
                 key={c}
                 id={`metric-box-${c}`}
-                className={`metric-box${on ? ' is-on' : ''}${dim ? ' is-dim' : ''}${open ? '' : ' is-collapsed'}`}
+                className={`metric-box${open ? '' : ' is-collapsed'}`}
                 aria-labelledby={`metric-box-title-${c}`}
                 data-testid={`metric-box-${c}`}
               >
@@ -622,92 +498,25 @@ function MetricsList({ onHoverTerms }: { onHoverTerms: (t: string[]) => void }) 
 // ---------- page ----------
 
 export function EvaluationsPage() {
-  const url = useUrl();
   const [hover, setHover] = useState<string[]>([]);
   const hoverTerms = new Set(hover);
-  const loop = pageParam(url, 'loop');
-  const term = pageParam(url, 'term');
-  const metric = pageParam(url, 'metric');
-  const category = pageParam(url, 'category');
-  const dataset = pageParam(url, 'dataset');
-  const active = { loop, term, category, metric, dataset };
-
-  const rows = paperRows.filter(
-    (r) =>
-      matchesGlobal(r.paper, url.filters) &&
-      rowMatches(r, { loop, term, metric, category, dataset, metricTerms: shownTerms, metricCategory: categoryOf, metricMembers: keyMembers }),
-  );
-  const matches = useMemo(() => new Set(rows.map((r) => r.paper.id)), [rows]);
 
   return (
     <div className="page">
       <div className="page__intro">
         <h1>Evaluations</h1>
-        <p className="lede">How methods are scored: which terms of the net value each metric measures, and how close each evaluation comes to real use.</p>
       </div>
       <div className="eval-top">
         <NetValueNavigator hoverTerms={hoverTerms} />
         <FeaturedChart />
       </div>
-      <RealismPlot rows={paperRows} matches={matches} />
-      <FilterBar
-        pageFilters={PAGE_PARAMS.filter((k) => active[k])}
-        extra={
-          <span className="filterbar__extra chips">
-            <label className="colfilter">
-              <span className="sr-only">Loop type</span>
-              <select value={loop ?? ''} onChange={(e) => url.set({ loop: e.target.value || null })} data-testid="loop-filter" aria-label="Loop type">
-                <option value="">All loop types</option>
-                {LOOPS.map((l) => (
-                  <option key={l} value={l}>
-                    {tx.loop_types[l].label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {term && (
-              <span className="chip">
-                <span className="muted">Term:</span> <TeX tex={tx.net_value.terms[term]?.tex ?? term} />
-                <button type="button" className="chip__x" aria-label="Remove term filter" onClick={() => url.set({ term: null })}>
-                  ×
-                </button>
-              </span>
-            )}
-            {category && (
-              <span className="chip">
-                <span className="muted">Category:</span> {tx.metric_categories[category]?.label ?? category}
-                <button type="button" className="chip__x" aria-label="Remove category filter" onClick={() => url.set({ category: null })}>
-                  ×
-                </button>
-              </span>
-            )}
-            {metric && (
-              <span className="chip">
-                <span className="muted">Metric:</span> {keyLabel(metric)}
-                <button type="button" className="chip__x" aria-label="Remove metric filter" onClick={() => url.set({ metric: null })}>
-                  ×
-                </button>
-              </span>
-            )}
-            {dataset && (
-              <span className="chip">
-                <span className="muted">Uses:</span> {datasetById.get(dataset)?.name}
-                <button type="button" className="chip__x" aria-label="Remove dataset filter" onClick={() => url.set({ dataset: null })}>
-                  ×
-                </button>
-              </span>
-            )}
-          </span>
-        }
-      />
+      <RealismPlot rows={paperRows} />
       <section aria-labelledby="proto-title" className="stack-sm">
         <div className="section-title">
           <h2 id="proto-title">Evaluation protocols</h2>
-          <span className="small muted">
-            {rows.length} of {paperRows.length} papers
-          </span>
+          <span className="small muted">{paperRows.length} papers</span>
         </div>
-        <ProtocolTable rows={rows} />
+        <ProtocolTable rows={paperRows} />
       </section>
       <MetricsList onHoverTerms={setHover} />
       <DatasetTable />

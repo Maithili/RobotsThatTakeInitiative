@@ -73,16 +73,3 @@ export function termTags(terms: Iterable<string>): TermTag[] {
 export function unitText(unit: string): string {
   return unit === 'not stated' ? 'unit not stated' : unit;
 }
-
-/** Whether a row serves a net value term: any member measures it. With no term, every row does (SPEC §8.1, §8.6). */
-export function itemServes(item: MetricItem, metrics: Record<string, CategorizedMetric>, term: string | null): boolean {
-  return !term || item.members.some((id) => metrics[id]?.terms.includes(term));
-}
-
-/** The metrics a `metric=` value stands for: a metric id is itself, and a group id is its members in taxonomy order.
- *  A metric id wins over a group id of the same name. */
-export function metricKeyMembers(key: string, metrics: Record<string, CategorizedMetric>): string[] {
-  if (Object.prototype.hasOwnProperty.call(metrics, key)) return [key];
-  const members = Object.keys(metrics).filter((id) => metrics[id].group === key);
-  return members.length ? members : [key];
-}

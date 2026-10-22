@@ -221,32 +221,25 @@ test('4. hovering a timeline chip highlights the graph node; GAP sits outside bo
   expect(own).toBe(true);
 });
 
-test('5. clicking ΔC↑ counts 10 metrics, dims the rows that do not serve it, and keeps net actions saved, perturbed actions, and F1', async ({ page }) => {
+test('5. ΔC↑ counts 10 metrics; its card is not a button and filters nothing', async ({ page }) => {
   await page.goto('/#/evaluations');
   const term = page.getByTestId('term-dC_added');
   // Only categorized metrics count (SPEC §8.1).
   await expect(term.locator('.term__count')).toHaveText('10');
+  // The card still explains itself on hover, but filters nothing (SPEC §8, Oct 22 2026).
+  await expect(page.getByTestId('term-dV').getByRole('tooltip')).toBeHidden();
+  await term.hover();
+  await expect(term.getByRole('tooltip')).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Net value terms' }).getByRole('button')).toHaveCount(0);
   await term.click();
-  await expect.poll(() => params(page).get('term')).toBe('dC_added');
-  // Every box stays. Rows that do not serve the term dim rather than hide (SPEC §8.6).
+  expect(new URL(page.url()).hash).toBe('#/evaluations');
   await expect(page.getByTestId('metric-boxes').locator('.metric-box')).toHaveCount(7);
-  for (const c of ['implicit_need_detection', 'coordination_fluency']) {
-    const box = page.getByTestId(`metric-box-${c}`);
-    await expect(box).toBeVisible();
-    await expect(box).toHaveClass(/is-dim/);
-    await expect(box.locator('.metric-row[data-dim="false"]')).toHaveCount(0);
-  }
-  const user = page.getByTestId('metric-box-change_in_user_actions');
-  await expect(user.locator('.metric-row[data-dim="false"] .metric-row__name')).toHaveText([/Net actions saved/, /Perturbed actions/]);
-  await expect(page.getByTestId('metric-box-object_movement_prediction').locator('.metric-row[data-dim="false"]')).toHaveCount(3);
-  await expect(page.getByTestId('metric-row-f1')).toHaveAttribute('data-dim', 'false');
-  const dimmed = page.getByTestId('metric-row-task_success_rate');
-  await expect(dimmed).toBeVisible();
-  await expect(dimmed).toHaveAttribute('data-dim', 'true');
-  // Papers with no ΔC↑ metric leave the table.
-  const table = page.getByTestId('protocol-table');
-  for (const id of ['gap', 'slate-pro', 'nopa']) await expect(table.getByTestId(`protocol-${id}`)).toHaveCount(1);
-  for (const id of ['proact', 'anticipatory-tamp']) await expect(table.getByTestId(`protocol-${id}`)).toHaveCount(0);
+  await expect(page.locator('.metric-row.is-dim, .metric-box.is-dim, .metric-row[data-dim]')).toHaveCount(0);
+  await expect(page.getByTestId('protocol-table').locator('tbody tr')).toHaveCount(11);
+  // Hovering a metric row still highlights the terms it serves.
+  await page.getByTestId('metric-row-perturbed_actions').hover();
+  await expect(term).toHaveClass(/is-hot/);
+  await expect(page.getByTestId('term-dV')).not.toHaveClass(/is-hot/);
 });
 
 test('6. the featured chart shows all 6 bars at load, offline next to closed loop, with no toggle', async ({ page }) => {
@@ -608,9 +601,11 @@ test('12. datasets table has no simulator rows; GAP has one shaded protocol row 
   await page.goto('/#/evaluations');
   const ds = page.getByTestId('dataset-table');
   await expect(ds.getByTestId('ds-row-virtualhome')).toHaveCount(0);
-  await expect(ds.getByTestId('ds-row-homer-plus')).toContainText('VirtualHome');
+  await expect(ds).not.toContainText('VirtualHome');
   await expect(ds.getByTestId('ds-row-homer-llm-closed-loop')).toContainText('Setup');
   const table = page.getByTestId('protocol-table');
+  // Simulators show only in the protocols table's environment and datasets column.
+  await expect(table.getByTestId('protocol-gap').locator('td').nth(3)).toContainText('VirtualHome');
   // 11 L2 papers with evaluations, PredictiveGraphs and Din 2025 excluded.
   await expect(table.locator('tbody tr')).toHaveCount(11);
   // Metric categories come right after Year (SPEC §8.4).
@@ -627,11 +622,47 @@ test('12. datasets table has no simulator rows; GAP has one shaded protocol row 
     await page.getByTestId(`psort-${k}`).click();
     await expect(table.locator('tbody tr').first()).toHaveAttribute('data-testid', 'protocol-gap');
   }
-  // Filters can still hide it.
-  await page.getByTestId('loop-filter').selectOption('offline_replay');
-  await expect.poll(() => params(page).get('loop')).toBe('offline_replay');
+  // No filter can hide it: an old loop= link is ignored (SPEC §8, Oct 22 2026).
   await page.goto('/#/evaluations?loop=user_study_short');
-  await expect(page.getByTestId('protocol-gap')).toHaveCount(0);
+  await expect(page.getByTestId('protocol-gap')).toHaveCount(1);
+  await expect(page.getByTestId('protocol-table').locator('tbody tr')).toHaveCount(11);
+});
+
+test('the datasets table keeps name, kind, sim or real, span, modality, setup, and used by, with no column filters; a used-by name opens the drawer', async ({ page }) => {
+  // Per Maithili, Oct 22 2026 (SPEC §8.5, §16).
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/#/evaluations');
+  const ds = page.getByTestId('dataset-table');
+  await expect(ds.locator('thead th')).toHaveText(['Name', 'Kind', 'Sim or real', 'Span', 'Modality', 'Human models and loops', 'Used by']);
+  await expect(ds.locator('select, .filter-row')).toHaveCount(0);
+  await expect(page.getByText(/Closed-loop evaluation needs executable/)).toHaveCount(0);
+  const cell = (id: string, i: number) => ds.getByTestId(`ds-row-${id}`).locator('td').nth(i);
+  // Modality uses the input vocabulary.
+  await expect(cell('homer', 4).locator('.chip--input')).toHaveText(['Object movements']);
+  for (const id of ['homer-plus', 'homer-noise']) await expect(cell(id, 4).locator('.chip--input')).toHaveText(['Object movements', 'Activity labels']);
+  await expect(cell('evoworld-bench', 4).locator('.chip--input')).toHaveText(['Object movements', 'Video']);
+  await expect(cell('coin-ownership', 4)).toHaveText('—');
+  // Span is "Several weeks" for every HOMER dataset. COIN keeps its own.
+  for (const id of ['homer', 'homer-plus', 'homer-noise', 'homer-llm-closed-loop']) await expect(cell(id, 3), id).toHaveText('Several weeks');
+  await expect(cell('coin-ownership', 3)).toHaveText('Seven days');
+  // Used by lists paper names that open the drawer, and sets no filter.
+  const users = ds.getByTestId('ds-users-homer-plus');
+  await expect(users.getByRole('button')).toHaveText(['GAP', 'GLOBE', 'SLaTe-PRO']);
+  await expect(users.locator('[aria-pressed]')).toHaveCount(0);
+  await users.getByRole('button', { name: 'GLOBE', exact: true }).click();
+  await expect.poll(() => params(page).get('paper')).toBe('globe');
+  expect(params(page).get('dataset')).toBeNull();
+  await expect(page.getByTestId('drawer')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('protocol-table').locator('tbody tr')).toHaveCount(11);
+  // The info panel keeps the notes, the introducing paper, what it is the basis of, and the source.
+  await page.getByRole('button', { name: 'About HOMER', exact: true }).click();
+  const panel = page.locator('.info-panel');
+  await expect(panel).toContainText('108 objects per household');
+  await expect(panel).toContainText('Introduced in: STOT');
+  await expect(panel).toContainText('Basis of');
+  await expect(panel.getByRole('button', { name: 'HOMER+', exact: true })).toBeVisible();
+  await expect(panel).toContainText('Source:');
 });
 
 /** Action space complexity fills (SPEC §8.3), as computed CSS colors, per theme. */
@@ -844,29 +875,19 @@ test('15. the protocols table shows metric categories, never metric names; metri
   await page.keyboard.press('Escape');
   await expect(drawer).toBeHidden();
 
-  // Clicking the row sets metric= to the group, which filters the table to papers that use any member.
+  // Rows and category chips select and filter nothing (SPEC §8, Oct 22 2026).
+  await expect(page.getByTestId('metric-boxes').locator('.metric-row__main button, button.metric-row__main')).toHaveCount(0);
+  await expect(table.locator('button.chip--category')).toHaveCount(0);
   await goal.locator('.metric-row__main').click();
-  await expect.poll(() => params(page).get('metric')).toBe('goal_prf');
-  await expect(goal).toHaveClass(/is-on/);
-  await expect(table.locator('tbody tr')).toHaveCount(2);
-  for (const id of ['watch-and-help', 'nopa']) await expect(table.getByTestId(`protocol-${id}`)).toHaveCount(1);
-
-  // A category chip in the table sets category=, filters the table, and scrolls to and highlights its box.
-  await page.goto('/#/evaluations');
-  const need = page.getByTestId('metric-box-implicit_need_detection');
-  await expect(need).not.toHaveClass(/is-on/);
-  await page.getByTestId('protocol-proact').locator('.chip--category', { hasText: 'Implicit need detection' }).click();
-  await expect.poll(() => params(page).get('category')).toBe('implicit_need_detection');
-  await expect(need).toHaveClass(/is-on/);
-  await expect(need).toBeInViewport();
-  await expect(page.getByTestId('metric-box-task_performance')).not.toHaveClass(/is-on/);
-  await expect(page.getByTestId('drawer')).toHaveCount(0);
-  // Only ProAct measures implicit need detection now that Din 2025 is off the page.
-  await expect(table.locator('tbody tr')).toHaveCount(1);
-  // metric= marks its row and filters the table.
-  await page.goto('/#/evaluations?metric=speedup');
-  await expect(page.getByTestId('metric-row-speedup')).toHaveClass(/is-on/);
-  await expect(page.getByTestId('protocol-table').locator('tbody tr')).toHaveCount(2);
+  await page.getByTestId('protocol-proact').locator('.chip--category', { hasText: 'Implicit need detection' }).click({ position: { x: 4, y: 4 } });
+  await expect.poll(() => params(page).get('paper')).toBe('proact');
+  await page.keyboard.press('Escape');
+  for (const k of ['metric', 'category']) expect(params(page).get(k)).toBeNull();
+  await expect(table.locator('tbody tr')).toHaveCount(11);
+  // Old metric= and category= links mark and filter nothing.
+  await page.goto('/#/evaluations?metric=speedup&category=implicit_need_detection');
+  await expect(page.locator('.metric-row.is-on, .metric-box.is-on')).toHaveCount(0);
+  await expect(page.getByTestId('protocol-table').locator('tbody tr')).toHaveCount(11);
 
   // PredictiveGraphs stays on the graph and the Subproblems page.
   await page.goto('/#/methods?view=graph');
@@ -1145,14 +1166,15 @@ test('category boxes show ΔV and ΔC tags by their headers and collapse to the 
   await all.click();
   await expect(page.locator('.metric-row:visible')).toHaveCount(0);
   await expect(all).toHaveText('Expand all');
-  // The state persists per viewer, and a selected category still opens its box.
+  // The state persists per viewer, and an old category= link opens no box.
   await page.reload();
   await expect(page.locator('.metric-row:visible')).toHaveCount(0);
   await page.goto('/#/evaluations?category=task_performance');
-  await expect(rows.first()).toBeVisible();
-  await expect(page.getByTestId('metric-row-net_actions_saved')).toBeHidden();
+  await expect(page.locator('.metric-row:visible')).toHaveCount(0);
   // With one box open, the control collapses all; then it expands all.
   await page.goto('/#/evaluations');
+  await toggle.click();
+  await expect(rows.first()).toBeVisible();
   await expect(all).toHaveText('Collapse all');
   await all.click();
   await expect(page.locator('.metric-box:not(.is-collapsed)')).toHaveCount(0);
@@ -1167,15 +1189,14 @@ test('16. a bare URL starts with nothing filtered, dimmed, or highlighted on eve
   const table = page.getByTestId('protocol-table');
   // Every table row shows.
   await expect(table.locator('tbody tr')).toHaveCount(11);
-  await expect(page.getByText('11 of 11 papers')).toBeVisible();
-  // No filter chip, term, category, metric, or loop filter.
-  await expect(page.locator('.filterbar .chip')).toHaveCount(0);
-  await expect(page.getByRole('region', { name: 'Filters' })).toContainText('No filters');
-  await expect(page.getByTestId('loop-filter')).toHaveValue('');
+  await expect(page.getByText('11 papers', { exact: true })).toBeVisible();
+  // No filter bar, term, category, metric, or loop filter: the page has no filters (SPEC §8, Oct 22 2026).
+  await expect(page.locator('.filterbar')).toHaveCount(0);
+  await expect(page.getByTestId('loop-filter')).toHaveCount(0);
   await expect(page.locator('[aria-pressed="true"], .chip--on, .term.is-on, .term.is-hot')).toHaveCount(0);
   // Every metric row at full strength, every box expanded, nothing highlighted.
   expect(await page.locator('.metric-row').count()).toBeGreaterThan(0);
-  await expect(page.locator('.metric-row[data-dim="true"], .metric-row.is-dim, .metric-row.is-on')).toHaveCount(0);
+  await expect(page.locator('.metric-row.is-dim, .metric-row.is-on')).toHaveCount(0);
   await expect(page.locator('.metric-box.is-dim, .metric-box.is-on, .metric-box.is-collapsed')).toHaveCount(0);
   await expect(page.locator('.metric-row:visible').first()).toHaveCSS('opacity', '1');
   await expect(page.locator('.metric-row__main').first()).toHaveCSS('opacity', '1');
@@ -1247,24 +1268,28 @@ test('GAP cites NOPA: the drawer lists it, and hovering GAP draws its dotted cit
 
 // QA: Evaluations
 test.describe('QA: Evaluations', () => {
-  test('page filters count as active: no "No filters" beside them, and Clear all clears them', async ({ page }) => {
-    await page.goto('/#/evaluations?loop=offline_replay&term=dC_saved');
-    const bar = page.getByRole('region', { name: 'Filters' });
-    await expect(bar.getByRole('button', { name: 'Remove term filter' })).toBeVisible();
-    await expect(bar).not.toContainText('No filters');
-    await bar.getByRole('button', { name: 'Clear all' }).click();
-    await expect.poll(() => [params(page).get('loop'), params(page).get('term')]).toEqual([null, null]);
-    await expect(bar).toContainText('No filters');
-    await expect(page.getByTestId('loop-filter')).toHaveValue('');
-    await expect(page.getByTestId('protocol-table').locator('tbody tr')).toHaveCount(11);
-  });
-
-  test('unknown page param values are ignored rather than emptying the table or dimming every metric', async ({ page }) => {
-    await page.goto('/#/evaluations?loop=bogus&term=bogus&category=bogus&metric=bogus&dataset=bogus');
-    await expect(page.getByTestId('protocol-table').locator('tbody tr')).toHaveCount(11);
-    await expect(page.getByRole('region', { name: 'Filters' })).toContainText('No filters');
-    await expect(page.locator('.filterbar .chip')).toHaveCount(0);
-    await expect(page.locator('.metric-row[data-dim="true"], .metric-box.is-dim')).toHaveCount(0);
+  test('the page has no lede and no filters, and old params or global filters leave it unfiltered', async ({ page }) => {
+    // Per Maithili, Oct 22 2026: "remove all filters from the evals for now" (SPEC §8, §16).
+    await page.goto('/#/evaluations');
+    await expect(page.locator('.page__intro')).toHaveText('Evaluations');
+    await expect(page.getByText(/How methods are scored/)).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Filters' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Filters/ })).toHaveCount(0);
+    await expect(page.locator('select, input[type="search"]:not(.search__input), .filterbar')).toHaveCount(0);
+    const dots = await page.locator('[data-testid^="realism-dot-"]').count();
+    const metricRows = await page.locator('.metric-row').count();
+    for (const qs of [
+      'loop=offline_replay&term=dC_saved&category=task_performance&metric=speedup&dataset=homer',
+      'loop=bogus&term=bogus&category=bogus&metric=bogus&dataset=bogus',
+      'q=zzz&input=video&years=2025-2026&family=goal_inference&theme=continual_learning',
+    ]) {
+      await page.goto(`/#/evaluations?${qs}`);
+      await expect(page.getByTestId('protocol-table').locator('tbody tr'), qs).toHaveCount(11);
+      await expect(page.locator('[data-testid^="realism-dot-"]'), qs).toHaveCount(dots);
+      await expect(page.locator('.realism__dot.is-dim, .metric-row.is-dim, .metric-box.is-dim, .metric-row.is-on, .metric-box.is-on'), qs).toHaveCount(0);
+      await expect(page.locator('.metric-row'), qs).toHaveCount(metricRows);
+      await expect(page.getByTestId('featured-bar'), qs).toHaveCount(6);
+    }
   });
 
   test('at 390 px the realism plot and featured chart keep readable text, and every realism card stays on screen', async ({ page }) => {
@@ -1296,7 +1321,7 @@ test.describe('QA: Evaluations', () => {
     await expect(card).toBeHidden();
     await page.getByTestId('realism-dot-globe').focus();
     await expect(card).toBeVisible();
-    await page.getByTestId('loop-filter').focus();
+    await page.getByTestId('psort-paper').focus();
     await expect(card).toBeHidden();
   });
 

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { hasActiveFilters, matchesGlobal, matchesQuery, parseYears, readGlobalFilters } from '../src/lib/filters.ts';
 import { ancestry, subproblemFlow } from '../src/lib/graph.ts';
 import { scorePaper, search } from '../src/lib/search.ts';
-import { categoryItems, itemServes, itemSummary, metricKeyMembers, termTags, unitText } from '../src/lib/metrics.ts';
-import { categoriesOf, closest, furthestLoop, interactionOf, mainEntries, mergePaper, mostComplex, rowMatches, strongest, type RealismOrder } from '../src/pages/evaluations/merge.ts';
+import { categoryItems, itemSummary, termTags, unitText } from '../src/lib/metrics.ts';
+import { categoriesOf, closest, furthestLoop, interactionOf, mainEntries, mergePaper, mostComplex, strongest, type RealismOrder } from '../src/pages/evaluations/merge.ts';
 import { actionSpaceFill, wrapLabel } from '../src/pages/evaluations/RealismPlot.tsx';
 import { applyParams, toggleInList } from '../src/state/url.ts';
 import type { DbPaper } from '../src/schema.ts';
@@ -209,8 +209,6 @@ describe('protocols table rows', () => {
     expect(r.entries).toHaveLength(3);
     expect(r.loops).toEqual(['offline_replay', 'closed_scripted', 'user_study_short']);
     expect(r.humans).toEqual(['12 participants']);
-    const f = { loop: 'user_study_short', term: null, metric: null, dataset: null, metricTerms: () => [] };
-    expect(rowMatches(r, f)).toBe(true);
     // A paper whose entries are all secondary has no dot levels.
     const onlySecondary = P('s', 'S', { evaluations: [{ id: 'x', loop: 'user_study_short', secondary: true, realism: { human: 'real_humans' } }] });
     expect(mergePaper(onlySecondary, LOOPS, R).realism).toEqual({ robot: null, human: null, environment: null, interaction: null });
@@ -248,15 +246,6 @@ describe('protocols table rows', () => {
     expect(wrapLabel('Generated behavior from crowdsourced data')).toEqual(['Generated behavior', 'from crowdsourced data']);
     expect(wrapLabel('Open loop')).toEqual(['Open loop']);
   });
-  it('matches filters when any entry matches', () => {
-    const f = { loop: null, term: null, metric: null, dataset: null, metricTerms: (m: string) => (m === 'nas' ? ['dC_saved'] : ['dC_added']) };
-    expect(rowMatches(row, { ...f, loop: 'closed_scripted' })).toBe(true);
-    expect(rowMatches(row, { ...f, loop: 'user_study_short' })).toBe(false);
-    expect(rowMatches(row, { ...f, term: 'dC_saved' })).toBe(true);
-    expect(rowMatches(row, { ...f, dataset: 'sim' })).toBe(true);
-    // Both conditions must hold in the same entry.
-    expect(rowMatches(row, { ...f, loop: 'offline_replay', metric: 'nas' })).toBe(false);
-  });
 
   const CATS = ['user_actions', 'object_movement', 'task'];
   const CAT_OF: Record<string, string> = { f1: 'object_movement', nas: 'user_actions' };
@@ -266,19 +255,6 @@ describe('protocols table rows', () => {
     expect(categoriesOf(['f1', 'relation_accuracy'], CATS, catOf)).toEqual(['object_movement']);
     expect(categoriesOf(['relation_accuracy'], CATS, catOf)).toEqual([]);
     expect(row.categories).toEqual([]);
-  });
-  it('matches a category when any entry has a metric in it', () => {
-    const f = { loop: null, term: null, metric: null, dataset: null, metricTerms: () => [], metricCategory: catOf };
-    expect(rowMatches(row, { ...f, category: 'user_actions' })).toBe(true);
-    expect(rowMatches(row, { ...f, category: 'task' })).toBe(false);
-    expect(rowMatches(row, { ...f, category: 'user_actions', loop: 'offline_replay' })).toBe(false);
-  });
-  it('matches a metric group when any entry uses any of its members', () => {
-    const f = { loop: null, term: null, metric: null, dataset: null, metricTerms: () => [] };
-    const members = (m: string) => (m === 'grp' ? ['nas', 'other'] : [m]);
-    expect(rowMatches(row, { ...f, metric: 'grp', metricMembers: members })).toBe(true);
-    expect(rowMatches(row, { ...f, metric: 'grp', metricMembers: members, loop: 'offline_replay' })).toBe(false);
-    expect(rowMatches(row, { ...f, metric: 'grp' })).toBe(false);
   });
 });
 
@@ -333,17 +309,5 @@ describe('metric category boxes', () => {
     expect(unitText('%')).toBe('%');
     expect(unitText('1–7 rating')).toBe('1–7 rating');
     expect(unitText('not stated')).toBe('unit not stated');
-  });
-  it('dims a row only when no member serves the term', () => {
-    const [f1, used, objectF1] = categoryItems('obj', metrics);
-    expect(itemServes(used, metrics, 'dC_saved')).toBe(true);
-    expect(itemServes(objectF1, metrics, 'dC_saved')).toBe(false);
-    expect(itemServes(f1, metrics, 'Cr')).toBe(false);
-    expect(itemServes(f1, metrics, null)).toBe(true);
-  });
-  it('reads metric= as a metric id or a group id', () => {
-    expect(metricKeyMembers('f1', metrics)).toEqual(['f1']);
-    expect(metricKeyMembers('used', metrics)).toEqual(['used_correct', 'used_wrong']);
-    expect(metricKeyMembers('ghost', metrics)).toEqual(['ghost']);
   });
 });
