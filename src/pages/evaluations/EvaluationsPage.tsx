@@ -3,7 +3,7 @@ import { LoopPill, TermDot } from '../../components/Chip.tsx';
 import { EmptyState } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
 import { Math as TeX } from '../../components/Math.tsx';
-import { datasetById, db, FRAMEWORK_PAPER, onEvaluations, paperById, paperLabel, papers, RTI_URL, tx } from '../../data.ts';
+import { datasetById, db, FRAMEWORK_PAPER, onEvaluations, paperById, paperLabel, papers, PAPER_URL, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
 import { categoryItems, DIRECTION, itemServes, itemSummary, metricKeyMembers, type MetricItem } from '../../lib/metrics.ts';
 import type { DbPaper } from '../../schema.ts';
@@ -200,7 +200,7 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
                     {r.paper.short_name}
                   </button>
                   {framework && (
-                    <a className="tag tag--framework" href={RTI_URL} target="_blank" rel="noreferrer" onClick={(ev) => ev.stopPropagation()}>
+                    <a className="tag tag--framework" href={PAPER_URL} target="_blank" rel="noreferrer" onClick={(ev) => ev.stopPropagation()}>
                       Framework paper ↗
                     </a>
                   )}

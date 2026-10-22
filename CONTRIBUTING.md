@@ -11,7 +11,7 @@ There are two ways to help:
 
 1. **Landing pages only.** `links.paper` must be a DOI page, a publisher or proceedings page, an arXiv abstract page, or an OpenReview forum. Never a `.pdf` link. Do not add PDF files to the repo. The validator rejects both.
 2. **Tag only what the source states.** Do not infer a level, family, lineage edge, modality, or metric from a title or abstract. If you are not sure, leave the field empty. Empty fields show as "—" on the site with a link to suggest a value.
-3. **Provenance is required.** Every paper has a `provenance` line saying where its tags come from, such as `RTI §III-B, Table I` or `Read by MP, Oct 2026`.
+3. **Provenance is required.** Every paper has a `provenance` line saying where its tags come from, such as `GAP paper §III-B, Table I` or `Read by MP, Oct 2026`.
 4. **Run `npm run fetch-citations`** after adding papers, so the thin dotted "cites" edges stay current. It needs network access and works best with `S2_API_KEY` set. Citations it misses go in [`data/citations-manual.yaml`](data/citations-manual.yaml) as `{from, to, source, where?}`, where `from` cites `to`, `source` names who checked it against the reference list, and `where` gives the location in `from`'s text.
 5. **Run `npm run validate`** before you open the pull request.
 
@@ -33,7 +33,7 @@ The id is the method's own name if it has one (`slate-pro`), otherwise `firstaut
 
 ## Fields
 
-Every id below is defined in [`data/taxonomy.yaml`](data/taxonomy.yaml), which follows the RTI paper. Only the maintainer changes its definitions; you can propose new observation modalities or metrics in a pull request.
+Every id below is defined in [`data/taxonomy.yaml`](data/taxonomy.yaml), which follows the GAP paper. Only the maintainer changes its definitions; you can propose new observation modalities or metrics in a pull request.
 
 | Field | What to put | Defined in |
 |---|---|---|

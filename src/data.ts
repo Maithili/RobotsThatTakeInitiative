@@ -26,7 +26,7 @@ export const LEVELS_TOP_DOWN: LevelId[] = ['L2', 'L1', 'L0'];
 export const SUBS: readonly SubproblemId[] = SUBPROBLEM_IDS;
 
 export const REPO = 'https://github.com/Maithili/RobotsThatTakeInitiative';
-export const RTI_URL = 'https://arxiv.org/abs/2609.28910';
+export const PAPER_URL = 'https://arxiv.org/abs/2609.28910';
 
 /** The paper the site is built on (SPEC §8.3, §8.4). Defined with the level scope so the build can use it too. */
 export { FRAMEWORK_PAPER } from './lib/scope.ts';

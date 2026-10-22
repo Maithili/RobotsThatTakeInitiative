@@ -16,7 +16,7 @@ links:
   paper: https://arxiv.org/abs/2605.00121
 ids:
   arxiv: "2605.00121"
-provenance: RTI §II, §III-A3, §III-B, Table I, §IV
+provenance: GAP paper §II, §III-A3, §III-B, Table I, §IV
 method:
   knowns:
     goal: unknown

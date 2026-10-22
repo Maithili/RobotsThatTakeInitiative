@@ -11,7 +11,7 @@ venue: NeurIPS
 year: 2016
 links:
   paper: https://papers.nips.cc/paper_files/paper/2016/hash/c3395dd46c34fa7fd8d729d8cf88b7a8-Abstract.html
-provenance: RTI Table I, App. II-A
+provenance: GAP paper Table I, App. II-A
 subproblems:
   P2:
     status: addresses

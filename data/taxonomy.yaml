@@ -12,7 +12,7 @@ levels:                       # ordered by increasing unknowns
     knowns: {goal: unknown, human_policy: unknown}
     definition: The robot acts towards predicted needs without being prompted at all.
 
-families:                     # L2 only, from RTI §III-B. Graph hues follow this order: teal, coral, blue, green (SPEC §7.2)
+families:                     # L2 only, from GAP paper §III-B. Graph hues follow this order: teal, coral, blue, green (SPEC §7.2)
   goal_inference:
     name: Goal Inference
     definition: Online goal inference followed by goal-conditioned planning.
@@ -33,7 +33,7 @@ families:                     # L2 only, from RTI §III-B. Graph hues follow thi
     definition: Reacts to implicit cues in the scene or from people, without a stated goal.
     semi_tangential: true     # per Maithili, Oct 21 2026. Drawn part-way transparent (SPEC §7.2).
 
-action_types:                 # RTI §II
+action_types:                 # GAP paper §II
   act:      {label: Acts, definition: Executes actions that serve anticipated needs.}
   timing:   {label: Times, definition: Decides the precise timing of an action.}
   initiate: {label: Initiates, definition: Chooses to initiate an interaction.}
@@ -51,7 +51,7 @@ stages:
   anticipation: {name: Anticipation, definition: Reasons over temporal user behavior to provide an anticipated need, goal, or action.}
   planning:     {name: Planning,     definition: Predicts robot actions by optimizing toward an anticipated variable.}
 
-subproblems:                  # RTI Table I and §III-A. input/output are TeX.
+subproblems:                  # GAP paper Table I and §III-A. input/output are TeX.
   G1:
     name: Goal-space representation
     short: Goal space
@@ -116,7 +116,7 @@ subproblems:                  # RTI Table I and §III-A. input/output are TeX.
     depends_on: [P1, A1, A2, A3]   # A2 -> P2 pending confirmation (see §15)
     approaches: {cirl: Cooperative inverse RL, proactive_communication: Proactive communication, hedging: Hedging under uncertainty}
 
-themes:                       # cross-cutting, RTI §III-A
+themes:                       # cross-cutting, GAP paper §III-A
   joint_optimization: {label: Joint optimization, definition: Optimizing across subproblems instead of solving each alone.}
   personalization:    {label: Personalization, definition: Learning user-specific patterns.}
   continual_learning: {label: Continual learning, definition: Adapting to drifting needs without forgetting.}
@@ -136,7 +136,7 @@ relations:
   direct:   {label: Direct, definition: Works on this subproblem in a proactivity setting.}
   adjacent: {label: Adjacent, definition: A starting point from an adjacent field.}
 
-net_value:                    # RTI §II-A
+net_value:                    # GAP paper §II-A
   headline: '\Delta V - \Delta C'
   counterfactual: Effectiveness compares the trajectory ξ with the robot against the trajectory ξ′ that would unfold without it.
   terms:
@@ -193,7 +193,7 @@ metric_kinds:                 # each metric also carries direction (higher or lo
   proxy:     Mixes terms or measures them indirectly.
   unrelated: Does not map to ΔV − ΔC.
 
-metrics:                      # RTI §IV-A2. Add more as papers come in.
+metrics:                      # GAP paper §IV-A2. Add more as papers come in.
   net_actions_saved:
     label: Net actions saved
     category: change_in_user_actions
@@ -910,7 +910,7 @@ loop_types:                   # ordered
     label: User study, longitudinal
     definition: Real users live or work with the robot over weeks or longer.
 
-captures:                     # RTI Appendix I
+captures:                     # GAP paper Appendix I
   state_drift:     {label: State drift, definition: Robot errors shift the state, which compounds cost (Relaxation 1).}
   goal_adaptation: {label: Goal adaptation, definition: The user reallocates effort to new goals in response to the robot (Relaxation 2).}
   values: [yes, partial, no]
@@ -945,7 +945,7 @@ featured_comparison:          # drives the chart in §8.2
   metric: f1
   methods: [slate-pro, streak]
   columns:
-    - {evaluation: rti-offline,         label: Offline}
-    - {evaluation: rti-closed-llm,      label: "Closed loop, LLM user"}
-    - {evaluation: rti-closed-scripted, label: "Closed loop, scripted user"}
-  source: RTI paper, Table II
+    - {evaluation: gap-offline,         label: Offline}
+    - {evaluation: gap-closed-llm,      label: "Closed loop, LLM user"}
+    - {evaluation: gap-closed-scripted, label: "Closed loop, scripted user"}
+  source: GAP paper, Table II

@@ -1,5 +1,5 @@
-id: rti-closed-loop
-name: RTI closed-loop setup
+id: homer-llm-closed-loop
+name: HOMER + LLM closed-loop setup
 kind: evaluation_setup
 introduced_in: gap
 links:
@@ -16,4 +16,4 @@ human_models:
 loops:
   - closed_adaptive
   - closed_scripted
-provenance: RTI §IV-A
+provenance: GAP paper §IV-A

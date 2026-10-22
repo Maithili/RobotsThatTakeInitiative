@@ -2,13 +2,13 @@
 
 Implementation spec, draft of Oct 21, 2026.
 Owner: Maithili Patel. Builder: coding agent.
-Companion file: `spec/SEED.md` lists the initial data, drawn from the RTI paper.
+Companion file: `spec/SEED.md` lists the initial data, drawn from the GAP paper.
 
 ---
 
 ## 1. Goal
 
-Build an interactive static website that organizes the literature on robot proactivity through the framework in Patel and Chernova, *Robots That Take Initiative: A Framework for Building and Evaluating Proactive Robots* (https://arxiv.org/abs/2609.28910). This spec calls it **the RTI paper**.
+Build an interactive static website that organizes the literature on robot proactivity through the framework in Patel and Chernova, *Robots That Take Initiative: A Framework for Building and Evaluating Proactive Robots* (https://arxiv.org/abs/2609.28910). This spec calls it **the GAP paper**.
 
 Readers come to find papers. The site gives them three entry points, one per page.
 
@@ -19,7 +19,7 @@ Readers come to find papers. The site gives them three entry points, one per pag
 ## 2. Principles
 
 - **One database, three lenses.** The site stores each paper once. The three pages are views of the same data. Clicking a paper on any page opens the same detail drawer.
-- **The formalism is the schema.** Levels, families, subproblems, net value terms, and loop types come from the RTI paper and live in one taxonomy file.
+- **The formalism is the schema.** Levels, families, subproblems, net value terms, and loop types come from the GAP paper and live in one taxonomy file.
 - **Lists and visuals, not prose.** Every text field has a length cap. No page shows a paragraph longer than two lines. Each definition is one line.
 - **Links only.** The site links to paper landing pages (DOI, publisher or proceedings page, arXiv abstract, OpenReview). The repo never stores PDF files, and no link points to a PDF file.
 - **No guessed data.** A field is either filled from a stated source or left empty. Empty fields render as "—" with a link to suggest a value. The builder never infers a level, a lineage edge, a modality, or a metric from a title or abstract. Graph edges come only from the three sources in §5.5.
@@ -79,7 +79,7 @@ Replace the current Java `.gitignore` with Node entries (`node_modules`, `dist`,
 
 ### 5.1 `data/taxonomy.yaml`
 
-Create this file with the content below. The definitions come from the RTI paper. Keep their wording.
+Create this file with the content below. The definitions come from the GAP paper. Keep their wording.
 
 ```yaml
 levels:                       # ordered by increasing unknowns
@@ -96,7 +96,7 @@ levels:                       # ordered by increasing unknowns
     knowns: {goal: unknown, human_policy: unknown}
     definition: The robot acts towards predicted needs without being prompted at all.
 
-families:                     # L2 only, from RTI §III-B
+families:                     # L2 only, from GAP paper §III-B
   goal_inference:
     name: Goal Inference
     definition: Online goal inference followed by goal-conditioned planning.
@@ -117,7 +117,7 @@ families:                     # L2 only, from RTI §III-B
     definition: Reacts to implicit cues in the scene or from people, without a stated goal.
     semi_tangential: true     # per Maithili, Oct 21 2026. Drawn part-way transparent (§7.2).
 
-action_types:                 # RTI §II
+action_types:                 # GAP paper §II
   act:      {label: Acts, definition: Executes actions that serve anticipated needs.}
   timing:   {label: Times, definition: Decides the precise timing of an action.}
   initiate: {label: Initiates, definition: Chooses to initiate an interaction.}
@@ -135,7 +135,7 @@ stages:
   anticipation: {name: Anticipation, definition: Reasons over temporal user behavior to provide an anticipated need, goal, or action.}
   planning:     {name: Planning,     definition: Predicts robot actions by optimizing toward an anticipated variable.}
 
-subproblems:                  # RTI Table I and §III-A. input/output are TeX.
+subproblems:                  # GAP paper Table I and §III-A. input/output are TeX.
   G1:
     name: Goal-space representation
     short: Goal space
@@ -205,7 +205,7 @@ tangent_types:                # works next to the algorithmic core. Maithili add
   conversational: {label: Conversational proactivity, definition: Proactivity in conversational settings.}
   search:         {label: Dynamic mapping and object search, definition: Models how homes change over time and finds objects or people in them, given what to find.}
 
-themes:                       # cross-cutting, RTI §III-A
+themes:                       # cross-cutting, GAP paper §III-A
   joint_optimization: {label: Joint optimization, definition: Optimizing across subproblems instead of solving each alone.}
   personalization:    {label: Personalization, definition: Learning user-specific patterns.}
   continual_learning: {label: Continual learning, definition: Adapting to drifting needs without forgetting.}
@@ -220,7 +220,7 @@ relations:
   direct:   {label: Direct, definition: Works on this subproblem in a proactivity setting.}
   adjacent: {label: Adjacent, definition: A starting point from an adjacent field.}
 
-net_value:                    # RTI §II-A
+net_value:                    # GAP paper §II-A
   headline: '\Delta V - \Delta C'
   counterfactual: Effectiveness compares the trajectory ξ with the robot against the trajectory ξ′ that would unfold without it.
   terms:
@@ -248,7 +248,7 @@ metric_kinds:                 # each metric also carries direction (higher or lo
   proxy:     Mixes terms or measures them indirectly.
   unrelated: Does not map to ΔV − ΔC.
 
-metrics:                      # RTI §IV-A2. Add more as papers come in.
+metrics:                      # GAP paper §IV-A2. Add more as papers come in.
   net_actions_saved:
     label: Net actions saved
     definition: Skipped user actions minus undo actions, as a percentage of baseline user actions.
@@ -289,7 +289,7 @@ loop_types:                   # ordered
     label: User study, longitudinal
     definition: Real users live or work with the robot over weeks or longer.
 
-captures:                     # RTI Appendix I
+captures:                     # GAP paper Appendix I
   state_drift:     {label: State drift, definition: Robot errors shift the state, which compounds cost (Relaxation 1).}
   goal_adaptation: {label: Goal adaptation, definition: The user reallocates effort to new goals in response to the robot (Relaxation 2).}
   values: [yes, partial, no]
@@ -323,10 +323,10 @@ featured_comparison:          # drives the chart in §8.2
   metric: f1
   methods: [slate-pro, streak]
   columns:
-    - {evaluation: rti-offline,         label: Offline}
-    - {evaluation: rti-closed-llm,      label: "Closed loop, LLM user"}
-    - {evaluation: rti-closed-scripted, label: "Closed loop, scripted user"}
-  source: RTI paper, Table II
+    - {evaluation: gap-offline,         label: Offline}
+    - {evaluation: gap-closed-llm,      label: "Closed loop, LLM user"}
+    - {evaluation: gap-closed-scripted, label: "Closed loop, scripted user"}
+  source: GAP paper, Table II
 ```
 
 ### 5.2 `data/papers/<id>.yaml`
@@ -344,7 +344,7 @@ featured_comparison:          # drives the chart in §8.2
 | `links.code`, `links.project` | URL | no | |
 | `ids.doi`, `ids.arxiv` | string | no | `fetch-citations` uses these to find the paper (§5.5). Fill them whenever the landing page shows them. |
 | `bibtex` | string | no | |
-| `provenance` | string ≤ 140 | yes | Where the tags come from, such as "RTI §III-B, Table I" or "Read by MP, Oct 2026". |
+| `provenance` | string ≤ 140 | yes | Where the tags come from, such as "GAP paper §III-B, Table I" or "Read by MP, Oct 2026". |
 | `method` | object | no | Its presence puts the paper on the Methods page. |
 | `method.knowns` | `{goal, human_policy}`, each `known` or `unknown` | yes, in a method block | Level is derived (§5.4). A paper without a level gets no method block, so the Methods page shows only classified works. |
 | `method.family` | family id | no | L2 only. |
@@ -384,7 +384,7 @@ authors: [M. Patel, A. G. Prakash, S. Chernova]
 venue: CoRL
 year: 2023
 links: {paper: null}
-provenance: RTI §II, §III-B, Table I, §IV
+provenance: GAP paper §II, §III-B, Table I, §IV
 method:
   knowns: {goal: unknown, human_policy: unknown}
   family: temporal_imitation
@@ -398,7 +398,7 @@ subproblems:
 evaluations:
   - id: slate-pro-original
     loop: offline_replay
-    provenance: RTI §I, §IV
+    provenance: GAP paper §I, §IV
 ```
 
 ### 5.3 `data/datasets/<id>.yaml`
@@ -483,7 +483,7 @@ Rules.
 
 ### 6.1 Header
 
-Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, the search box, a "Contribute" button, and a "Paper ↗" link to the RTI arXiv page. The active tab is marked. Switching tabs keeps the query string.
+Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, the search box, a "Contribute" button, and a "Paper ↗" link to the GAP paper arXiv page. The active tab is marked. Switching tabs keeps the query string.
 
 ### 6.2 URL state
 
@@ -532,7 +532,7 @@ A 420 px right-side panel, and a bottom sheet under 640 px. Sections in order, w
 
 1. Short name, year, venue. Title. Authors, truncated after six with "+n".
 2. Links as buttons: Paper ↗, Code ↗, Project ↗ (only those present). "Copy BibTeX" if present.
-3. Level: knowns chips in the style of the RTI Fig. 1 right panel ("g known · π^h unknown → L1"), then family.
+3. Level: knowns chips in the style of the GAP paper Fig. 1 right panel ("g known · π^h unknown → L1"), then family.
 4. Core strength (one line). Inputs → action types as chips.
 5. Subproblems: a strip of seven cells labeled with subproblem short names and status glyphs, then one row per tagged subproblem with note and relation.
 6. Evaluations: per entry, a loop-type pill, datasets, metric chips colored by net value term, and captures glyphs.
@@ -619,7 +619,7 @@ Sections from top to bottom.
 
 ### 8.2 Featured comparison
 
-A grouped bar chart built from `featured_comparison`. It starts with the Offline bars only. An "Add closed loop" toggle brings in the two closed-loop bars per method in 300 ms (instant under `prefers-reduced-motion`). Bars carry value labels. The caption names the source ("RTI paper, Table II"). Clicking a bar opens that method's drawer.
+A grouped bar chart built from `featured_comparison`. It starts with the Offline bars only. An "Add closed loop" toggle brings in the two closed-loop bars per method in 300 ms (instant under `prefers-reduced-motion`). Bars carry value labels. The caption names the source ("GAP paper, Table II"). Clicking a bar opens that method's drawer.
 
 ### 8.3 Evaluation realism plot
 
@@ -665,7 +665,7 @@ This page shows the different methodologies for each subproblem, so it lists onl
 
 ### 9.1 Navigator
 
-An interactive version of RTI Fig. 2. It runs left to right on wide screens and top to bottom under 900 px: ξ₀:ₜ → Grounding (goal space, action-goal association) → Anticipation (human policy, goal inference, goal anticipation) → Planning (cost model, action selection) → aʳₜ. Each node shows its name and a badge counting works that address it under the current filters. Edges come from `depends_on`.
+An interactive version of GAP paper Fig. 2. It runs left to right on wide screens and top to bottom under 900 px: ξ₀:ₜ → Grounding (goal space, action-goal association) → Anticipation (human policy, goal inference, goal anticipation) → Planning (cost model, action selection) → aʳₜ. Each node shows its name and a badge counting works that address it under the current filters. Edges come from `depends_on`.
 
 Selecting a node sets `sub=`. Its upstream dependencies (all transitive ancestors through `depends_on`) take one highlight color, its downstream dependents (all transitive descendants) another, and the rest dim.
 
@@ -748,7 +748,7 @@ Work on `main`. Commit at the end of each milestone and push to `origin main` ri
 | | Milestone | Done when |
 |---|---|---|
 | M1 | Data foundation: taxonomy, schemas, validator, `build-data`, `new-paper` | `npm run validate` passes on an empty `papers/` folder, and each §5.4 rule has a failing fixture |
-| M2 | Seed data from `spec/SEED.md` | Every SEED entry has a file. Links come only from confirmed landing pages. `data/SEED_REPORT.md` lists missing links and every difference between the RTI reference list and the landing page. Baselines are recorded per SEED rule 7. `data/citations.json` exists. Validate passes. |
+| M2 | Seed data from `spec/SEED.md` | Every SEED entry has a file. Links come only from confirmed landing pages. `data/SEED_REPORT.md` lists missing links and every difference between the GAP paper reference list and the landing page. Baselines are recorded per SEED rule 7. `data/citations.json` exists. Validate passes. |
 | M3 | Shell: routing, header, URL state, search, drawer, compare tray, theme toggle | E2E tests 3 and 9 pass |
 | M4 | Methods page | E2E tests 2, 4, 11, and 14 pass. Graph readable with seed data and with the 330-node synthetic fixture from §7.2. |
 | M5 | Evaluations page | E2E tests 5, 6, 12, and 13 pass |
@@ -780,4 +780,4 @@ The three anticipatory planning papers (Anticipatory TAMP, Talukder 2025, Courte
 
 1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them.
 2. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.
-3. **Tangential works.** Maithili lists them. Candidates from the RTI references that fit the two tangent types: Peng et al. 2019 [16] (a CHI design and evaluation of service-robot proactivity), and the works that ask questions [17] and [18]. Both left the database earlier. ADAPT [19] stays on the Subproblems page only and is not tangential, per Maithili.
+3. **Tangential works.** Maithili lists them. Candidates from the GAP paper references that fit the two tangent types: Peng et al. 2019 [16] (a CHI design and evaluation of service-robot proactivity), and the works that ask questions [17] and [18]. Both left the database earlier. ADAPT [19] stays on the Subproblems page only and is not tangential, per Maithili.

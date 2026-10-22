@@ -10,7 +10,7 @@ venue: CoRL
 year: 2023
 links:
   paper: https://proceedings.mlr.press/v229/mascaro23a.html
-provenance: RTI §II, §II-B
+provenance: GAP paper §II, §II-B
 method:
   knowns:
     goal: known

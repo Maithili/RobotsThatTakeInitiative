@@ -15,7 +15,7 @@ links:
   paper: https://arxiv.org/abs/1808.05249
 ids:
   arxiv: "1808.05249"
-provenance: RTI App. II-A
+provenance: GAP paper App. II-A
 subproblems:
   A2:
     status: addresses

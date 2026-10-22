@@ -1,6 +1,6 @@
 # Seed report
 
-Written while seeding `data/` from `spec/SEED.md` (milestone M2), updated on the second pass and on the HOMER-lineage pass (both Oct 21, 2026, see the last two sections). Section and reference numbers point into the RTI paper unless a section names another paper.
+Written while seeding `data/` from `spec/SEED.md` (milestone M2), updated on the second pass and on the HOMER-lineage pass (both Oct 21, 2026, see the last two sections). Section and reference numbers point into the GAP paper unless a section names another paper.
 
 ## Open questions for Maithili (from SEED.md §9)
 
@@ -49,7 +49,7 @@ None. Every entry has a confirmed landing page. Pages behind bot protection (IEE
 - `watch-and-help`: OpenReview forum `w_7JMpGZRh0` (from the ML Anthology ICLR 2021 entry; the arXiv page confirms ICLR 2021).
 - `levy-2019-hierarchies`: arXiv abstract used because the OpenReview forum (`ryzECoAcY7`) could not be loaded.
 
-## Differences between the RTI reference list and the landing pages
+## Differences between the GAP paper reference list and the landing pages
 
 Capitalization-only differences are not listed.
 
@@ -131,7 +131,7 @@ Only baselines that are papers in the database go into `baselines`. The rest go 
 | PredictiveGraphs | STOT (listed as "HOMER [22]", reference [22] is the STOT paper) | PredictiveGraphs §VI-B |
 | NOPA | Watch-And-Help (HPGPN, "the best performing approach in the original Watch-And-Help challenge") | NOPA §V-A |
 | GLOBE | SLaTe-PRO, STOT | GLOBE §IV |
-| GAP | SLaTe-PRO, STREAK | RTI Table II (seed) |
+| GAP | SLaTe-PRO, STREAK | GAP paper Table II (seed) |
 
 No baseline in the database: Watch-And-Help (own planner and RL variants, WAH §5.2), ProAct (MLLMs, ProAct §6), MESH (`zhao-2022-strategy-matching`, §V–VI), Nemlekar 2023 (ablations and a reactive condition, §4–7), HOI4ABOT (§4.2–4.3), Koppula 2016 (§8.2–8.3), HIT (§VI-A), COIN (§5.3), Singh et al. (data validation only).
 
@@ -165,9 +165,9 @@ Rule 7 says a new entry gets `loop: null`. Where the experiments section states 
 ### Datasets and lineage
 
 - **HOMER** (new entry, from STOT §5): five simulated households in VirtualHome, 50+ days, 108 objects each, routines from crowdsourced schedules (21 workers) and action scripts (23 participants). STOT does not say whether activity labels are released, so `goal_annotations` is null.
-- **HOMER+ extends HOMER.** SLaTe-PRO §6: "We create HOMER+, by modifying the HOMER dataset." HOMER+ has 3 households, 24 activities, and 93 entities, with activity labels per step (App. A.3). SLaTe-PRO names no simulator. VirtualHome comes from RTI §IV-A1.
+- **HOMER+ extends HOMER.** SLaTe-PRO §6: "We create HOMER+, by modifying the HOMER dataset." HOMER+ has 3 households, 24 activities, and 93 entities, with activity labels per step (App. A.3). SLaTe-PRO names no simulator. VirtualHome comes from GAP paper §IV-A1.
 - **HOMER-Noise extends HOMER+, not HOMER.** GLOBE §I and §III-D: "a noisy extension of HOMER+". An LLM adds person, pet, and toddler disturbances. Size is not stated.
-- **RTI closed-loop setup** uses HOMER+ (SEED §8).
+- **HOMER + LLM closed-loop setup** uses HOMER+ (SEED §8).
 
 ### Papers added from Maithili's list (SEED §8.1)
 

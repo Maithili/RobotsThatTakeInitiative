@@ -15,7 +15,7 @@ links:
   paper: https://doi.org/10.1109/IJCNN.2018.8489653
 ids:
   doi: "10.1109/IJCNN.2018.8489653"
-provenance: RTI App. II-A
+provenance: GAP paper App. II-A
 subproblems:
   A2:
     status: addresses

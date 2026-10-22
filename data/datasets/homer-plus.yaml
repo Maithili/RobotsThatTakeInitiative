@@ -16,4 +16,4 @@ based_on:
   - id: homer
     relation: extends
 notes: Modifies HOMER; 24 activities and 93 entities; activity labels per step
-provenance: RTI §IV-A1; SLaTe-PRO §6, App. A.3
+provenance: GAP paper §IV-A1; SLaTe-PRO §6, App. A.3

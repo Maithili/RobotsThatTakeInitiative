@@ -12,7 +12,7 @@ links:
   code: https://github.com/Maithili/GAP
 ids:
   arxiv: "2609.28910"
-provenance: RTI paper §V–VI
+provenance: GAP paper §V–VI
 method:
   knowns:
     goal: unknown
@@ -55,7 +55,7 @@ subproblems:
     relation: direct
     note: A planner proposes and selects candidate object placements
 evaluations:
-  - id: rti-offline
+  - id: gap-offline
     datasets:
       - homer-plus
     loop: offline_replay
@@ -68,7 +68,7 @@ evaluations:
     captures:
       state_drift: "no"
       goal_adaptation: "no"
-    provenance: RTI Table II
+    provenance: GAP paper Table II
     realism:
       robot: task_specific
       human: recorded
@@ -80,11 +80,11 @@ evaluations:
       - method: streak
         metric: f1
         value: 0.677
-  - id: rti-closed-llm
+  - id: gap-closed-llm
     environment: virtualhome
     datasets:
       - homer-plus
-      - rti-closed-loop
+      - homer-llm-closed-loop
     loop: closed_adaptive
     human_model: LLM (gpt-4o-mini)
     metrics:
@@ -100,7 +100,7 @@ evaluations:
     captures:
       state_drift: "yes"
       goal_adaptation: partial
-    provenance: RTI §IV-A, Table II, App. I-C
+    provenance: GAP paper §IV-A, Table II, App. I-C
     realism:
       robot: task_specific
       human: adaptive_sim
@@ -112,11 +112,11 @@ evaluations:
       - method: streak
         metric: f1
         value: 0.002
-  - id: rti-closed-scripted
+  - id: gap-closed-scripted
     environment: virtualhome
     datasets:
       - homer-plus
-      - rti-closed-loop
+      - homer-llm-closed-loop
     loop: closed_scripted
     human_model: Scripted
     metrics:
@@ -132,7 +132,7 @@ evaluations:
     captures:
       state_drift: "yes"
       goal_adaptation: "no"
-    provenance: RTI §IV-A, Table II
+    provenance: GAP paper §IV-A, Table II
     realism:
       robot: task_specific
       human: scripted

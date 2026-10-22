@@ -14,7 +14,7 @@ venue: COLM
 year: 2025
 links:
   paper: https://openreview.net/forum?id=Z8vtD1egtI
-provenance: RTI App. II-A
+provenance: GAP paper App. II-A
 subproblems:
   P2:
     status: addresses

@@ -18,7 +18,7 @@ venue: ICML
 year: 2021
 links:
   paper: https://proceedings.mlr.press/v139/chebotar21a.html
-provenance: RTI App. II-A
+provenance: GAP paper App. II-A
 subproblems:
   G2:
     status: addresses

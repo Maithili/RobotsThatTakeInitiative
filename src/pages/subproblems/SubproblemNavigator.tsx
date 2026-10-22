@@ -84,7 +84,7 @@ function edgePath(a: Box, b: Box, horizontal: boolean): string {
   return `M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2 - 3}`;
 }
 
-/** Interactive RTI Fig. 2: ξ → Grounding → Anticipation → Planning → aʳ. */
+/** Interactive GAP paper Fig. 2: ξ → Grounding → Anticipation → Planning → aʳ. */
 export function SubproblemNavigator({ selected, onSelect, counts }: { selected: SubproblemId | null; onSelect: (s: SubproblemId | null) => void; counts: Record<string, number> }) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(1000);

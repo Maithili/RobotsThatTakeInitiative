@@ -15,7 +15,7 @@ links:
   paper: https://doi.org/10.1109/IROS51168.2021.9636080
 ids:
   doi: "10.1109/IROS51168.2021.9636080"
-provenance: RTI App. II-A
+provenance: GAP paper App. II-A
 subproblems:
   A1:
     status: addresses

@@ -15,7 +15,7 @@ year: 2019
 links:
   paper: https://proceedings.mlr.press/v100/lynch20a.html
   project: https://learning-from-play.github.io
-provenance: RTI Table I, App. II-A
+provenance: GAP paper Table I, App. II-A
 subproblems:
   A2:
     status: addresses

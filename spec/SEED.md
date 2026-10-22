@@ -1,13 +1,13 @@
-# Seed data from the RTI paper
+# Seed data from the GAP paper
 
-This file lists the initial entries for `data/`. Every tag below comes from what the RTI paper (https://arxiv.org/abs/2609.28910) says about the cited work. Section and reference numbers point into the RTI paper.
+This file lists the initial entries for `data/`. Every tag below comes from what the GAP paper (https://arxiv.org/abs/2609.28910) says about the cited work. Section and reference numbers point into the GAP paper.
 
 ## Rules for the builder
 
 1. Create one file per entry. Fill only the fields this file gives, plus title, authors, venue, year, and links.
-2. Citations below are copied as printed in the RTI reference list. Check each one against the paper's landing page. If the landing page differs (title, venue, year, authors), use the landing page value and record the difference in `data/SEED_REPORT.md`.
+2. Citations below are copied as printed in the GAP paper reference list. Check each one against the paper's landing page. If the landing page differs (title, venue, year, authors), use the landing page value and record the difference in `data/SEED_REPORT.md`.
 3. `links.paper` must be a landing page: DOI, publisher or proceedings page, arXiv abstract page, or OpenReview forum. Never a `.pdf` URL. If you cannot confirm the right page, leave it null and list it in the report.
-4. `short_name`: use the name the paper gives its method or system, taken from its landing page or abstract. Otherwise use "FirstAuthor Year". The names below that come from the RTI paper are final.
+4. `short_name`: use the name the paper gives its method or system, taken from its landing page or abstract. Otherwise use "FirstAuthor Year". The names below that come from the GAP paper are final.
 5. Use the provenance given for each group.
 6. Add nothing else. No levels, modalities, metrics, lineage, or core strengths beyond what is written here. Leave the rest empty. Rules 7 and 8 are the only exceptions.
 7. **Baselines.** For each paper with a `method` block, read its experiments section if the full text is openly available (arXiv, OpenReview, open-access proceedings). Put every compared method that is in the database into `baselines` of that paper's evaluation entry (never the paper's own ablations), with the section in its `provenance`. Use the entry this file gives, or create `<id>-original` with `loop: null`. If the full text is not open, list the paper in the report. List compared methods that are not in the database under "Candidate additions" in the report.
@@ -19,7 +19,7 @@ Statuses: `addresses`, `assumes`, `skips`. Relations: `direct`, `adjacent`.
 
 ---
 
-## 1. GAP (the RTI paper)
+## 1. GAP (the GAP paper)
 
 Write this file as given.
 
@@ -33,7 +33,7 @@ year: 2026
 links:
   paper: https://arxiv.org/abs/2609.28910
   code: https://github.com/Maithili/GAP
-provenance: RTI paper §V–VI
+provenance: GAP paper §V–VI
 method:
   knowns: {goal: unknown, human_policy: unknown}
   action_types: [act]
@@ -50,19 +50,19 @@ subproblems:
   P1: {status: addresses, relation: direct, note: Heuristic utility over preconditions, timing, and learned user acceptance. Assumes uniform action cost.}
   P2: {status: addresses, relation: direct, note: A planner proposes and selects candidate object placements}
 evaluations:
-  - id: rti-offline
+  - id: gap-offline
     datasets: [homer-plus]
     loop: offline_replay
     human_model: Recorded HOMER+ behavior
     metrics: [f1]
     baselines: [slate-pro, streak]
     captures: {state_drift: no, goal_adaptation: no}
-    provenance: RTI Table II
+    provenance: GAP paper Table II
     realism: {robot: task_specific, human: recorded, environment: simulator}
     results:
       - {method: slate-pro, metric: f1, value: 0.634}
       - {method: streak, metric: f1, value: 0.677}
-  - id: rti-closed-llm
+  - id: gap-closed-llm
     environment: virtualhome
     datasets: [homer-plus]
     loop: closed_adaptive
@@ -72,11 +72,11 @@ evaluations:
     other_baselines: [Plain LLM, Oracle]
     captures: {state_drift: yes, goal_adaptation: partial}
     realism: {robot: task_specific, human: adaptive_sim, environment: simulator}
-    provenance: RTI §IV-A, Table II, App. I-C
+    provenance: GAP paper §IV-A, Table II, App. I-C
     results:
       - {method: slate-pro, metric: f1, value: 0.216}
       - {method: streak, metric: f1, value: 0.002}
-  - id: rti-closed-scripted
+  - id: gap-closed-scripted
     environment: virtualhome
     datasets: [homer-plus]
     loop: closed_scripted
@@ -86,7 +86,7 @@ evaluations:
     other_baselines: [Plain LLM, Oracle]
     captures: {state_drift: yes, goal_adaptation: no}
     realism: {robot: task_specific, human: scripted, environment: simulator}
-    provenance: RTI §IV-A, Table II
+    provenance: GAP paper §IV-A, Table II
     results:
       - {method: slate-pro, metric: f1, value: 0.264}
       - {method: streak, metric: f1, value: 0.296}
@@ -98,7 +98,7 @@ All have `knowns: {goal: unknown, human_policy: unknown}`.
 
 ### 2.1 Temporal Imitation family
 
-Provenance: RTI §II, §III-A3, §III-B, Table I, §IV.
+Provenance: GAP paper §II, §III-A3, §III-B, Table I, §IV.
 
 Apply these family tags to all four papers in this group (from §III-B).
 
@@ -111,14 +111,14 @@ P1: {status: assumes, relation: direct, note: Assumes uniform cost across action
 
 | id | Citation as printed | Extra fields |
 |---|---|---|
-| `slate-pro` | [9] M. Patel, A. G. Prakash, S. Chernova, "Predicting Routine Object Usage for Proactive Robot Assistance," CoRL 2023. | short_name SLaTe-PRO. builds_on [stot]. action_types [act]. inputs [scene_graph]. A3: addresses, direct, temporal_sequence, "Extracts habitual patterns from a history of observed actions". Evaluation `slate-pro-original`: loop offline_replay, provenance "RTI §I, §IV". |
-| `streak` | [10] E. Bartoli, F. I. Doğan, I. Leite, "Streak: Streaming network for continual learning of object relocations under household context drifts," IEEE RO-MAN 2025. | short_name STREAK. builds_on [stot]. inputs [scene_graph]. themes [continual_learning]. A3 as for slate-pro. Evaluation `streak-original`: loop offline_replay, provenance "RTI §I, §IV". |
-| `stot` | [20] M. Patel, S. Chernova, "Proactive Robot Assistance via Spatio-Temporal Object Modeling," CoRL 2023. The correct year is 2022 (CoRL 2022), per Maithili. | short_name STOT. venue CoRL. year 2022. action_types [act]. inputs [scene_graph]. A3 as for slate-pro. Evaluation `stot-original`: loop offline_replay, provenance "RTI §IV". |
+| `slate-pro` | [9] M. Patel, A. G. Prakash, S. Chernova, "Predicting Routine Object Usage for Proactive Robot Assistance," CoRL 2023. | short_name SLaTe-PRO. builds_on [stot]. action_types [act]. inputs [scene_graph]. A3: addresses, direct, temporal_sequence, "Extracts habitual patterns from a history of observed actions". Evaluation `slate-pro-original`: loop offline_replay, provenance "GAP paper §I, §IV". |
+| `streak` | [10] E. Bartoli, F. I. Doğan, I. Leite, "Streak: Streaming network for continual learning of object relocations under household context drifts," IEEE RO-MAN 2025. | short_name STREAK. builds_on [stot]. inputs [scene_graph]. themes [continual_learning]. A3 as for slate-pro. Evaluation `streak-original`: loop offline_replay, provenance "GAP paper §I, §IV". |
+| `stot` | [20] M. Patel, S. Chernova, "Proactive Robot Assistance via Spatio-Temporal Object Modeling," CoRL 2023. The correct year is 2022 (CoRL 2022), per Maithili. | short_name STOT. venue CoRL. year 2022. action_types [act]. inputs [scene_graph]. A3 as for slate-pro. Evaluation `stot-original`: loop offline_replay, provenance "GAP paper §IV". |
 | proposed `saavedra-2026-scene-graphs` | [42] M. Saavedra-Ruiz, C. Gauthier, K. Gupta, S. Shahfar, K. Ellis, S. Parkison, L. Paull, "Predictive spatio-temporal scene graphs for semi-static scenes," arXiv:2605.00121, 2026. | A3: addresses, direct, probabilistic_filtering, "Filters over how long items persist in and return to locations". No evaluation. |
 
 ### 2.2 Goal inference family
 
-Provenance: RTI §III-B, Table I, Appendix II-A.
+Provenance: GAP paper §III-B, Table I, Appendix II-A.
 
 Apply these family tags to all three papers in this group (from §III-B).
 
@@ -131,12 +131,12 @@ A3: {status: skips, relation: direct, note: Does not predict future goals}
 | id | Citation as printed | Extra fields |
 |---|---|---|
 | `nopa` | [21] X. Puig, T. Shu, J. B. Tenenbaum, A. Torralba, "NOPA: Neurally-guided Online Probabilistic Assistance for Building Socially Intelligent Home Assistants," IEEE ICRA 2023. | short_name NOPA. builds_on [watch-and-help]. action_types [act] (§IV-A, object relocation action space). G2: assumes, direct, "Assumes ground-truth action-goal association". A2: addresses, direct, symbolic, "Belief over goals with actions as likelihoods. Infers goals only for tasks already begun". |
-| `watch-and-help` | [29] X. Puig, T. Shu, S. Li, Z. Wang, Y.-H. Liao, J. B. Tenenbaum, S. Fidler, A. Torralba, "Watch-And-Help: A Challenge for Social Perception and Human-AI Collaboration," 2021. | short_name Watch-And-Help. G2: addresses, direct, symbolic, "Predicts goals from observed actions with symbolic models" (Table I, see report item 1). A2: addresses, direct, "Online goal inference followed by goal-conditioned planning". Evaluation `watch-and-help-original`: loop offline_replay, provenance "RTI §IV" (see report item 2). |
+| `watch-and-help` | [29] X. Puig, T. Shu, S. Li, Z. Wang, Y.-H. Liao, J. B. Tenenbaum, S. Fidler, A. Torralba, "Watch-And-Help: A Challenge for Social Perception and Human-AI Collaboration," 2021. | short_name Watch-And-Help. G2: addresses, direct, symbolic, "Predicts goals from observed actions with symbolic models" (Table I, see report item 1). A2: addresses, direct, "Online goal inference followed by goal-conditioned planning". Evaluation `watch-and-help-original`: loop offline_replay, provenance "GAP paper §IV" (see report item 2). |
 | `proact` | [30] X. Zhu, F. Zhu, W. Zhou, Y. Tian, Z. Hu, Y. Huang, Y. Guo, X. Wu, Z. Zhang, F. Lin, et al., "Proact: A benchmark and multimodal framework for structure-aware proactive response," arXiv 2026. | short_name ProAct. G2: assumes, direct, "Assumes ground-truth action-goal association". A2: addresses, direct, learned, "Belief over goals with actions as likelihoods. Infers goals only for tasks already begun". |
 
 ## 3. L1 methods
 
-All have `knowns: {goal: known, human_policy: unknown}`. Provenance: RTI §II, §II-B. Use the text in the last column as `core_strength`.
+All have `knowns: {goal: known, human_policy: unknown}`. Provenance: GAP paper §II, §II-B. Use the text in the last column as `core_strength`.
 
 | id (proposed) | Citation as printed | action_types | core_strength |
 |---|---|---|---|
@@ -149,7 +149,7 @@ All have `knowns: {goal: known, human_policy: unknown}`. Provenance: RTI §II, �
 
 ## 4. ADAPT
 
-The Methods page shows only works with a level. The RTI paper assigns no level to the §II works [14]–[19], so they get no method block. Per Maithili, [14]–[18] are out of the database. ADAPT stays for its P2 tag.
+The Methods page shows only works with a level. The GAP paper assigns no level to the §II works [14]–[19], so they get no method block. Per Maithili, [14]–[18] are out of the database. ADAPT stays for its P2 tag.
 
 | id | Citation as printed | Fields |
 |---|---|---|
@@ -157,7 +157,7 @@ The Methods page shows only works with a level. The RTI paper assigns no level t
 
 ## 5. Subproblem works
 
-These papers have no `method` block, only `subproblems`. Provenance: "RTI Table I, App. II-A" for direct works, "RTI App. II-A" for adjacent works. All statuses are `addresses`.
+These papers have no `method` block, only `subproblems`. Provenance: "GAP paper Table I, App. II-A" for direct works, "GAP paper App. II-A" for adjacent works. All statuses are `addresses`.
 
 | Sub | id (proposed) | Citation as printed | relation | approach | note |
 |---|---|---|---|---|---|
@@ -205,13 +205,13 @@ Also add these A3 tags to the temporal family (§2.1): `slate-pro`, `streak`, an
 
 | id (proposed) | Citation as printed | Fields |
 |---|---|---|
-| `koch-2024-proactive-hri-review` | [22] M. Koch van den Broek, T. B. Moeslund, "What is proactive human-robot interaction? a review of a progressive field and its definitions," ACM/IEEE HRI 2024. | `type: survey`, `tangent: hri`, provenance "RTI §II". No other blocks. Per Maithili, it sits with the HRI tangential works in the literature graph. |
+| `koch-2024-proactive-hri-review` | [22] M. Koch van den Broek, T. B. Moeslund, "What is proactive human-robot interaction? a review of a progressive field and its definitions," ACM/IEEE HRI 2024. | `type: survey`, `tangent: hri`, provenance "GAP paper §II". No other blocks. Per Maithili, it sits with the HRI tangential works in the literature graph. |
 
 ## 7. Evaluation methodology
 
 | id | Citation as printed | Fields |
 |---|---|---|
-| `zhang-2023-llm-human-models` | [44] B. Zhang, H. Soh, "Large language models as zero-shot human models for human-robot interaction," IROS 2023. | provenance "RTI §VII". No blocks. Referenced from `loop_types.closed_adaptive.refs`. |
+| `zhang-2023-llm-human-models` | [44] B. Zhang, H. Soh, "Large language models as zero-shot human models for human-robot interaction," IROS 2023. | provenance "GAP paper §VII". No blocks. Referenced from `loop_types.closed_adaptive.refs`. |
 
 ## 8. Datasets, evaluation setups, and simulators
 
@@ -230,7 +230,7 @@ goal_annotations: null
 executable: yes
 environment: virtualhome
 notes: Routine behavior sampled from crowdsourced patterns, executable in VirtualHome
-provenance: RTI §IV-A1
+provenance: GAP paper §IV-A1
 ```
 
 Add `based_on: [{id: homer, relation: extends}]` to HOMER+ once the SLaTe-PRO paper confirms that HOMER+ extends HOMER. Record what it says in the report.
@@ -247,9 +247,9 @@ provenance: Maithili, Oct 2026. Fill the other fields from the STOT paper.
 ```
 
 ```yaml
-# data/datasets/rti-closed-loop.yaml
-id: rti-closed-loop
-name: RTI closed-loop setup
+# data/datasets/homer-llm-closed-loop.yaml
+id: homer-llm-closed-loop
+name: HOMER + LLM closed-loop setup
 kind: evaluation_setup
 introduced_in: gap
 links: {home: https://github.com/Maithili/GAP}
@@ -259,10 +259,10 @@ based_on: [{id: homer-plus, relation: uses}]
 executable: yes
 human_models: [LLM (gpt-4o-mini), Scripted]
 loops: [closed_adaptive, closed_scripted]
-provenance: RTI §IV-A
+provenance: GAP paper §IV-A
 ```
 
-Add `rti-closed-loop` to the `datasets` of `rti-closed-llm` and `rti-closed-scripted`.
+Add `homer-llm-closed-loop` to the `datasets` of `gap-closed-llm` and `gap-closed-scripted`.
 
 ```yaml
 # data/datasets/virtualhome.yaml
@@ -274,7 +274,7 @@ kind: simulator
 introduced_in: null
 links: {home: null}        # landing page of the CVPR paper or the project site
 sim_or_real: sim
-provenance: RTI §IV-A1
+provenance: GAP paper §IV-A1
 ```
 
 ### 8.1 Papers and datasets added by Maithili (Oct 21, 2026)
@@ -293,7 +293,7 @@ Find each paper's landing page and fill bibliographic fields from it. Read each 
 
 ### 8.2 Realism levels for other papers
 
-For every paper with an evaluation entry, fill `realism` from what its experiments section states: who or what chose the robot's actions, who the human side was, and where the evaluation ran. Cite the section in provenance. Leave a level null when the paper does not say. For the offline evaluations of SLaTe-PRO, STREAK, and STOT, `human: recorded` follows from RTI §I and §IV.
+For every paper with an evaluation entry, fill `realism` from what its experiments section states: who or what chose the robot's actions, who the human side was, and where the evaluation ran. Cite the section in provenance. Leave a level null when the paper does not say. For the offline evaluations of SLaTe-PRO, STREAK, and STOT, `human: recorded` follows from GAP paper §I and §IV.
 
 ## 9. Items for `data/SEED_REPORT.md`
 

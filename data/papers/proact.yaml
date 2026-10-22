@@ -20,7 +20,7 @@ links:
   paper: https://arxiv.org/abs/2602.03430
 ids:
   arxiv: "2602.03430"
-provenance: RTI §III-B, Table I, App. II-A
+provenance: GAP paper §III-B, Table I, App. II-A
 method:
   knowns:
     goal: unknown

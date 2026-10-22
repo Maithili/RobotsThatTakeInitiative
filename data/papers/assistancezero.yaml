@@ -18,7 +18,7 @@ links:
   code: https://github.com/cassidylaidlaw/minecraft-building-assistance-game
 ids:
   arxiv: "2504.07091"
-provenance: RTI App. II-A
+provenance: GAP paper App. II-A
 subproblems:
   P2:
     status: addresses

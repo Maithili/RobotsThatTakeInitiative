@@ -16,7 +16,7 @@ year: 2021
 links:
   paper: https://openreview.net/forum?id=w_7JMpGZRh0
   code: https://github.com/xavierpuigf/watch_and_help
-provenance: RTI §III-B, Table I, App. II-A
+provenance: GAP paper §III-B, Table I, App. II-A
 method:
   knowns:
     goal: unknown
@@ -54,7 +54,7 @@ evaluations:
     metrics:
       - goal_predicate_precision
       - goal_predicate_recall
-    provenance: RTI §IV; WAH §5.3 (the watch stage scores goal inference offline); Librarian Oct 2026, B-7
+    provenance: GAP paper §IV; WAH §5.3 (the watch stage scores goal inference offline); Librarian Oct 2026, B-7
     realism:
       robot: task_specific
       human: recorded

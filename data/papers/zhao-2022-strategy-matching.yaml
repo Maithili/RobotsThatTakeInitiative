@@ -12,7 +12,7 @@ links:
   paper: https://doi.org/10.1109/IROS47612.2022.9982277
 ids:
   doi: "10.1109/IROS47612.2022.9982277"
-provenance: RTI §II, §II-B
+provenance: GAP paper §II, §II-B
 method:
   knowns:
     goal: known

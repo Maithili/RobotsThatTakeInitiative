@@ -15,7 +15,7 @@ links:
   code: https://github.com/ztangent/Plinf.jl
 ids:
   arxiv: "2006.07532"
-provenance: RTI Table I, App. II-A
+provenance: GAP paper Table I, App. II-A
 subproblems:
   G2:
     status: addresses

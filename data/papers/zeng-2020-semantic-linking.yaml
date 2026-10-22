@@ -12,7 +12,7 @@ links:
   paper: https://doi.org/10.1109/ICRA40945.2020.9196830
 ids:
   doi: "10.1109/ICRA40945.2020.9196830"
-provenance: RTI App. II-A
+provenance: GAP paper App. II-A
 subproblems:
   A3:
     status: addresses

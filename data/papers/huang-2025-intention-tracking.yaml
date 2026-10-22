@@ -13,7 +13,7 @@ links:
   paper: https://arxiv.org/abs/2506.07004
 ids:
   arxiv: "2506.07004"
-provenance: RTI §II, §II-B
+provenance: GAP paper §II, §II-B
 method:
   knowns:
     goal: known

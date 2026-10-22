@@ -12,7 +12,7 @@ links:
   paper: https://doi.org/10.1177/0954406219838568
 ids:
   doi: "10.1177/0954406219838568"
-provenance: RTI Table I, App. II-A
+provenance: GAP paper Table I, App. II-A
 subproblems:
   P1:
     status: addresses

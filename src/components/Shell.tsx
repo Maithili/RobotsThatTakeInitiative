@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { issueUrl, REPO, RTI_URL } from '../data.ts';
+import { issueUrl, REPO, PAPER_URL } from '../data.ts';
 import { Search } from './Search.tsx';
 
 type Theme = 'light' | 'dark' | null;
 
 function readTheme(): Theme {
   try {
-    const t = localStorage.getItem('rti-theme');
+    const t = localStorage.getItem('site-theme');
     return t === 'light' || t === 'dark' ? t : null;
   } catch {
     return null;
@@ -21,8 +21,8 @@ function ThemeToggle() {
     if (theme) el.dataset.theme = theme;
     else delete el.dataset.theme;
     try {
-      if (theme) localStorage.setItem('rti-theme', theme);
-      else localStorage.removeItem('rti-theme');
+      if (theme) localStorage.setItem('site-theme', theme);
+      else localStorage.removeItem('site-theme');
     } catch {
       /* storage unavailable: theme lasts for this visit */
     }
@@ -122,7 +122,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <div className="header__tools">
             <Search />
             <Contribute />
-            <a className="header__paper" href={RTI_URL} target="_blank" rel="noreferrer">
+            <a className="header__paper" href={PAPER_URL} target="_blank" rel="noreferrer">
               Paper ↗
             </a>
             <ThemeToggle />

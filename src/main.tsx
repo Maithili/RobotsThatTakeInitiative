@@ -8,7 +8,7 @@ import { App } from './App.tsx';
 
 // Apply a saved theme before first paint.
 try {
-  const t = localStorage.getItem('rti-theme');
+  const t = localStorage.getItem('site-theme');
   if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
 } catch {
   /* storage unavailable */

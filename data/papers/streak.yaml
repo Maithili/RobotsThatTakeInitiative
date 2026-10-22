@@ -12,7 +12,7 @@ links:
   paper: https://doi.org/10.1109/RO-MAN63969.2025.11217699
 ids:
   doi: "10.1109/RO-MAN63969.2025.11217699"
-provenance: RTI §II, §III-A3, §III-B, Table I, §IV. Lineage from MP, Oct 2026
+provenance: GAP paper §II, §III-A3, §III-B, Table I, §IV. Lineage from MP, Oct 2026
 method:
   knowns:
     goal: unknown
@@ -61,7 +61,7 @@ evaluations:
       - unused_wrong
     baselines:
       - stot
-    provenance: "RTI §I, §IV; STREAK §V–VI (baselines are the STOT model, fine-tuned and jointly trained); Librarian Oct 2026, B-3"
+    provenance: "GAP paper §I, §IV; STREAK §V–VI (baselines are the STOT model, fine-tuned and jointly trained); Librarian Oct 2026, B-3"
     realism:
       robot: task_specific
       human: recorded

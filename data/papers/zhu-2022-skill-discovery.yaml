@@ -12,7 +12,7 @@ links:
   paper: https://doi.org/10.1109/LRA.2022.3146589
 ids:
   doi: "10.1109/LRA.2022.3146589"
-provenance: RTI App. II-A
+provenance: GAP paper App. II-A
 subproblems:
   G1:
     status: addresses

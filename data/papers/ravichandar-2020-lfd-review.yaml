@@ -13,7 +13,7 @@ links:
   paper: https://doi.org/10.1146/annurev-control-100819-063206
 ids:
   doi: "10.1146/annurev-control-100819-063206"
-provenance: RTI App. II-A
+provenance: GAP paper App. II-A
 subproblems:
   A1:
     status: addresses

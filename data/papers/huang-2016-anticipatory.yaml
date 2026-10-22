@@ -11,7 +11,7 @@ links:
   paper: https://doi.org/10.1109/HRI.2016.7451737
 ids:
   doi: "10.1109/HRI.2016.7451737"
-provenance: RTI §II, §II-B
+provenance: GAP paper §II, §II-B
 method:
   knowns:
     goal: known

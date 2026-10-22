@@ -9,7 +9,7 @@ venue: CoRL
 year: 2022
 links:
   paper: https://proceedings.mlr.press/v205/patel23a.html
-provenance: RTI §II, §III-A3, §III-B, Table I, §IV. Year and name per MP, Oct 2026
+provenance: GAP paper §II, §III-A3, §III-B, Table I, §IV. Year and name per MP, Oct 2026
 method:
   knowns:
     goal: unknown
@@ -60,7 +60,7 @@ evaluations:
       - zeng-2020-semantic-linking
     other_baselines:
       - FreMEn
-    provenance: RTI §IV; STOT §5–7.2, Table 1, Fig. 4–5; Librarian Oct 2026, B-1 S1–S2
+    provenance: GAP paper §IV; STOT §5–7.2, Table 1, Fig. 4–5; Librarian Oct 2026, B-1 S1–S2
     realism:
       robot: task_specific
       human: recorded

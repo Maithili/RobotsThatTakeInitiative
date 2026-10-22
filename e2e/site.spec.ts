@@ -464,7 +464,7 @@ test('selecting a level card highlights its timeline row only; L0 is a baseline 
 });
 
 test('no subproblem codes appear as visible text', async ({ page }) => {
-  // Codes (G1 to P2) stay in data files and URLs only (SPEC §11). RTI section references such as
+  // Codes (G1 to P2) stay in data files and URLs only (SPEC §11). GAP paper section references such as
   // "§III-A3" in provenance lines are section numbers, not subproblem codes, so they are skipped.
   const CODE = /\b[GAP][1-3]\b/;
   const views = [
@@ -496,7 +496,7 @@ test('12. datasets table has no simulator rows; GAP has one shaded protocol row 
   const ds = page.getByTestId('dataset-table');
   await expect(ds.getByTestId('ds-row-virtualhome')).toHaveCount(0);
   await expect(ds.getByTestId('ds-row-homer-plus')).toContainText('VirtualHome');
-  await expect(ds.getByTestId('ds-row-rti-closed-loop')).toContainText('Setup');
+  await expect(ds.getByTestId('ds-row-homer-llm-closed-loop')).toContainText('Setup');
   const table = page.getByTestId('protocol-table');
   // 12 L2 papers with evaluations, PredictiveGraphs excluded.
   await expect(table.locator('tbody tr')).toHaveCount(12);
