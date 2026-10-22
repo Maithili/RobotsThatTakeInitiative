@@ -229,6 +229,20 @@ net_value:                    # RTI §II-A
     dC_added: {label: "ΔC↑ · human cost added", tex: '\Delta C_h\uparrow',   definition: An incorrect robot action forces the user to undo or redo actions.}
     Cr:       {label: "C_r · robot cost",       tex: 'C_r',             definition: Physical wear and charge consumption, often assumed zero.}
 
+metric_categories:            # per Maithili, Oct 22 2026. Ordered. Each metric has a `category` (or none, see §8.6) and an optional `group`.
+  change_in_user_actions:     {label: Change in user actions}
+  object_movement_prediction: {label: Object movement prediction}
+  activity_label_prediction:  {label: Activity label prediction}
+  task_performance:           {label: Task performance}
+  end_user_perceptions:       {label: End-user perceptions}
+  implicit_need_detection:    {label: Implicit need detection}
+  coordination_fluency:       {label: Coordination fluency}
+
+metric_groups:                # metrics listed as one item in the metrics section, with one short definition
+  # e.g. goal_prf: {label: "Goal precision, recall, and F1", definition: ...}
+
+evaluations_exclude: [saavedra-2026-scene-graphs]   # object search papers stay off the Evaluations page (Maithili, Oct 22 2026)
+
 metric_kinds:                 # each metric also carries direction (higher or lower is better), unit, and a one-line `mapping_note` on why it serves its terms
   direct:    Measures one or more terms.
   proxy:     Mixes terms or measures them indirectly.
@@ -609,7 +623,7 @@ This plot shows how close each paper's evaluation is to the real target, on thre
 
 ### 8.4 Evaluation protocols table
 
-One row per paper, GAP included, however many evaluation entries the paper has. The row merges them. Columns: paper (short name and year), environment and datasets (union), loop types (one pill per distinct type, in scale order), human models (union), metrics (union, as chips with term color dots), state drift and goal adaptation (the strongest value across the paper's entries, yes over partial over no), baselines (union, count, expandable). All columns sort. Loop type sorts by the paper's furthest type on the scale. A paper matches `loop=`, `term=`, or `metric=` when any of its entries does. Clicking a row opens the drawer, which lists each evaluation entry separately.
+One row per paper, GAP included, however many evaluation entries the paper has. The row merges them. Columns: paper (short name and year), environment and datasets (union), loop types (one pill per distinct type, in scale order), human models (union), metric categories (one chip per distinct category label among the paper's metrics, in category order; never individual metric names), state drift and goal adaptation (the strongest value across the paper's entries, yes over partial over no), baselines (union, count, expandable). All columns sort. Loop type sorts by the paper's furthest type on the scale. A paper appears only if it is at a focus level (§6.2), is not in `evaluations_exclude`, and has at least one evaluation entry. A paper matches `loop=`, `term=`, `category=`, or `metric=` when any of its entries does. Clicking a row opens the drawer, which lists each evaluation entry separately.
 
 GAP's row sits at the top in a shaded band, since GAP is part of the paper the site is built on. It stays at the top under every sort and carries a small "Framework paper" tag linking to the arXiv page. Filters can still hide it. One constant names this paper (`FRAMEWORK_PAPER = 'gap'`).
 
@@ -621,7 +635,9 @@ Columns: name, kind (Dataset or Setup), environment, based on (such as "Extends 
 
 ### 8.6 Metrics list
 
-Rows show metric label, one-line definition, term chips, kind, and used-by count. Clicking a row sets `metric=`.
+One tab per metric category, in category order, showing only categories that a paper on the page uses. Each tab lists that category's metrics by their exact names, each with a short definition (one line), direction (↑ or ↓), unit, small term dots, and a used-by count. Metrics that share a `group` show as one item with the group's label and definition, with the member names listed. Clicking a category chip in the table or a tab sets `category=`. Clicking a metric sets `metric=`.
+
+Metrics with no category never show on this page. That covers metrics used only by tangential or excluded papers (object search, persistence, emergencies) and Din 2025's relation accuracy. Computational metrics (training time, training samples, inference time, planning time) and ProAct's saved steps metrics are out of the data entirely, per Maithili: ProAct's evaluation is activity prediction, not closed loop.
 
 ## 9. Subproblems page
 
