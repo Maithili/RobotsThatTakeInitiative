@@ -199,16 +199,22 @@ export function RealismPlot({ rows, matches }: { rows: PaperEvalRow[]; matches: 
         <li className="muted" title={AS.definition}>
           {AS.label}:
         </li>
-        {AS_ORDER.map((id) => (
-          <li key={id} title={AS.levels[id].definition} data-testid={`action-space-legend-${id}`}>
-            <svg width="16" height="16" aria-hidden="true">
-              <circle cx="8" cy="8" r="6" className="realism__fill" style={{ fill: actionSpaceFill(id, AS_ORDER) }} />
-              <circle cx="8" cy="8" r="6" className="realism__outline" />
-            </svg>
-            {AS.levels[id].label}
-            <span className="sr-only">: {AS.levels[id].definition}</span>
-          </li>
-        ))}
+        <li
+          className="realism__ramp-item"
+          title={AS_ORDER.map((id) => `${AS.levels[id].label}: ${AS.levels[id].definition}`).join('\n')}
+          data-testid="action-space-legend-ramp"
+        >
+          Low
+          <span
+            className="realism__ramp"
+            aria-hidden="true"
+            style={{ background: `linear-gradient(90deg, ${AS_ORDER.map((id) => actionSpaceFill(id, AS_ORDER)).join(', ')})` }}
+          />
+          High
+          <span className="sr-only">
+            {AS_ORDER.map((id) => ` ${AS.levels[id].label}: ${AS.levels[id].definition}`).join('')}
+          </span>
+        </li>
         <li className="is-unassessed" title="No level recorded for this paper's evaluations yet." data-testid="action-space-legend-none">
           <svg width="16" height="16" aria-hidden="true">
             <circle cx="8" cy="8" r="6" className="realism__fill" style={{ fill: actionSpaceFill(null, AS_ORDER) }} />

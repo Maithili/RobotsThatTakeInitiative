@@ -2915,6 +2915,16 @@ label.lgd__item {
 .realism__levels dd {
   margin: 0;
 }
+.realism__ramp-item {
+  gap: 6px;
+}
+.realism__ramp {
+  display: inline-block;
+  flex: none;
+  width: 56px;
+  height: 10px;
+  border-radius: 5px;
+}
 .realism__legend svg {
   vertical-align: middle;
 }
