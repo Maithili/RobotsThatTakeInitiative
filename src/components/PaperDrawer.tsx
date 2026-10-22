@@ -148,8 +148,9 @@ function DrawerBody({ p }: { p: DbPaper }) {
         </div>
       </header>
 
-      <Section title="Level">
-        {m ? (
+      {/* Tangential works carry their category instead of a level (per Maithili, Oct 22 2026). */}
+      <Section title={p.tangent ? 'Category' : 'Level'}>
+        {p.tangent ? null : m ? (
           <div className="drawer__level">
             <KnownsChips knowns={m.knowns} />
             {m.knowns && (

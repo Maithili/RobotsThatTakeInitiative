@@ -85,7 +85,7 @@ function NodeCard({ p }: { p: DbPaper }) {
   return (
     <>
       <div className="hovercard__top">
-        <strong>{p.short_name}</strong> <span className="muted">{p.year}</span> {p.level && <LevelChip level={p.level} />}
+        <strong>{p.short_name}</strong> <span className="muted">{p.year}</span> {p.level && !p.tangent && <LevelChip level={p.level} />}
         {p.tangent && <TangentTag type={p.tangent} />}
       </div>
       <div className="one-line small">{p.title}</div>

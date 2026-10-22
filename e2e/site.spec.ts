@@ -1841,3 +1841,21 @@ test('QA: hovering an edge highlights it; a hidden focused tangential work dims 
   await expect(row.locator('.title-cell')).toHaveCSS('font-variant-numeric', 'normal');
   await expect(row.locator('td.num').first()).toHaveCSS('font-variant-numeric', 'tabular-nums');
 });
+
+test('tangential works show their category, not a level: no L2 chip on their hover card or drawer; GAP sits under "Framework paper" in the list', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  await page.getByTestId('node-anticipatory-tamp').hover();
+  const card = page.locator('.hovercard');
+  await expect(card).toContainText('Anticipatory task planning');
+  await expect(card.locator('.level-chip')).toHaveCount(0);
+  await page.getByTestId('node-gap').hover();
+  await expect(page.locator('.hovercard .level-chip')).toHaveText('L2');
+  await page.goto('/#/methods?paper=anticipatory-tamp');
+  const drawer = page.getByTestId('drawer');
+  await expect(drawer.getByTestId('drawer-tangent')).toContainText('Anticipatory task planning');
+  await expect(drawer.locator('.level-chip')).toHaveCount(0);
+  await expect(drawer).not.toContainText('Unprompted proactive assistance');
+  await page.goto('/#/methods?view=list');
+  await expect(page.getByTestId('methods-list')).toContainText('Framework paper');
+  await expect(page.getByTestId('methods-list')).not.toContainText('Family not set');
+});

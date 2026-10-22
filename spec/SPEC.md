@@ -553,7 +553,7 @@ A 420 px right-side panel, and a bottom sheet under 640 px. Sections in order, w
 
 1. Short name, year, venue. Title. Authors, truncated after six with "+n".
 2. Links as buttons: Paper ↗, Code ↗, Project ↗ (only those present). "Copy BibTeX" if present.
-3. Level: knowns chips in the style of the GAP paper Fig. 1 right panel ("g known · π^h unknown → L1"), then family.
+3. Level: knowns chips in the style of the GAP paper Fig. 1 right panel ("g known · π^h unknown → L1"), then family. A tangential work shows a "Category" section instead, with its tangential category and no level chip; its graph hover card has no level chip either (per Maithili, Oct 22 2026: graph papers are either L2 core or tangential).
 4. Core strength (one line). Inputs → action types as chips.
 5. Subproblems: a strip of seven cells (four per row, so names never break mid-word) labeled with subproblem short names and status glyphs, then one row per tagged subproblem with note and relation.
 6. Evaluations: per entry, a loop-type pill, datasets, metric chips colored by net value term, and captures glyphs.
@@ -801,6 +801,8 @@ Core and tangential works, per Maithili (Oct 22, 2026): "the grey ones anticipat
 Confirmed by Maithili (Oct 22, 2026): the Koch van den Broek review sits under "User perceptions of proactivity". Purple is only for GAP, and papers that fit no category are gray. Every relevant paper appears on the Subproblems page, including the object search papers. Courteous Anticipation gets no "benchmarks against" line to Talukder 2025; its "Selfish A.P." baseline stays text in `other_baselines`.
 
 The three anticipatory planning papers (Anticipatory TAMP, Talukder 2025, Courteous Anticipation) are open loop, per Maithili: their task streams are fixed and never respond to the robot. Their entries use `offline_replay`, so they sit at Open loop on the realism plot's x axis. Their human side was `recorded` on the old scale and has no human behavior level on the new one (see below).
+
+Taxonomy text in YAML flow mappings must quote any value with a comma: an unquoted comma cut five definitions short (object movements, the anticipation stage, ΔV, C_r, state drift). They are quoted now, and the validator rejects a stray key with no value. The Methods list calls the L2 group with no family "Framework paper" when it holds only GAP, and "No family" otherwise.
 
 Methods layout, per Maithili (Oct 22, 2026): the literature graph comes first, and the band with the L2 and L1 level cards and the timeline sits below it. The L0 card is removed so it is not confusing.
 

@@ -59,6 +59,11 @@ describe('level derivation', () => {
 });
 
 describe('validator', () => {
+  it('rejects a taxonomy definition cut short by an unquoted comma in a flow mapping', () => {
+    const t = bareTaxonomy() as Record<string, Record<string, unknown>>;
+    t.stages = { ...t.stages, anticipation: yaml.load('{name: Anticipation, definition: Reasons over need, goal, or action.}') };
+    expectError(run([], { taxonomy: t }), /stages\.anticipation: "or action\." looks like text cut off by an unquoted comma/);
+  });
   it('passes on an empty papers folder', () => {
     const r = run([], { datasets: [] });
     expect(r.errors).toEqual([]);
@@ -170,7 +175,7 @@ describe('validator', () => {
     expectError(withTangents({ a: cat('amber'), b: cat('amber') }), /tangent_types\.b\.color "amber" is already the color of a/);
     // An unquoted comma in a flow-style definition becomes a stray key, which fails instead of cutting the definition.
     const cut = yaml.load('{label: L, color: fern, definition: Reacts to cues, without a goal.}') as Record<string, unknown>;
-    expectError(withTangents({ a: cut }), /tangent_types\.a: Unrecognized key/);
+    expectError(withTangents({ a: cut }), /tangent_types\.a: "without a goal\." looks like text cut off by an unquoted comma/);
   });
 
   it('rejects a method block without knowns', () => {

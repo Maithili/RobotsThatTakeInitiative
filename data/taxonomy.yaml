@@ -38,13 +38,13 @@ action_types:                 # GAP paper §II
   ask:      {label: Asks, definition: Actively asks questions.}
 
 observation_modalities:       # ordered, one line each. Per Maithili, Oct 22 2026: object relocations and scene graphs merged into object movements, language removed, activity labels added
-  object_movements: {label: Object movements, definition: Objects moving between locations over time, logged as relocations or as scene-graph changes.}
+  object_movements: {label: Object movements, definition: "Objects moving between locations over time, logged as relocations or as scene-graph changes."}
   activity_labels:  {label: Activity labels, definition: Names of the activity the user is doing at each step.}
   video:            {label: Video, definition: Camera frames of the user and scene.}
 
 stages:
   grounding:    {name: Grounding,    definition: Models the intentional structure behind user actions.}
-  anticipation: {name: Anticipation, definition: Reasons over temporal user behavior to provide an anticipated need, goal, or action.}
+  anticipation: {name: Anticipation, definition: "Reasons over temporal user behavior to provide an anticipated need, goal, or action."}
   planning:     {name: Planning,     definition: Predicts robot actions by optimizing toward an anticipated variable.}
 
 subproblems:                  # GAP paper Table I and §III-A. input/output are TeX.
@@ -138,10 +138,10 @@ net_value:                    # GAP paper §II-A
   headline: '\Delta V - \Delta C'
   counterfactual: Effectiveness compares the trajectory ξ with the robot against the trajectory ξ′ that would unfold without it.
   terms:
-    dV:       {label: "ΔV · value gained",      tex: '\Delta V',        definition: Achieving goals the user would otherwise leave uncompleted, or freeing time for other valued goals.}
+    dV:       {label: "ΔV · value gained",      tex: '\Delta V',        definition: "Achieving goals the user would otherwise leave uncompleted, or freeing time for other valued goals."}
     dC_saved: {label: "ΔC↓ · human cost saved", tex: '\Delta C_h\downarrow', definition: Reducing the cost of a goal the user would have completed anyway.}
     dC_added: {label: "ΔC↑ · human cost added", tex: '\Delta C_h\uparrow',   definition: An incorrect robot action forces the user to undo or redo actions.}
-    Cr:       {label: "C_r · robot cost",       tex: 'C_r',             definition: Physical wear and charge consumption, often assumed zero.}
+    Cr:       {label: "C_r · robot cost",       tex: 'C_r',             definition: "Physical wear and charge consumption, often assumed zero."}
 
 metric_categories:            # per Maithili, Oct 22 2026. Ordered. Each metric has a `category` (or none, see SPEC §8.6) and an optional `group`.
   change_in_user_actions:     {label: Change in user actions}
@@ -914,7 +914,7 @@ loop_types:                   # ordered. `interaction` places each loop type on 
     interaction: adaptive_humans   # real people adapt too
 
 captures:                     # GAP paper Appendix I
-  state_drift:     {label: State drift, definition: Robot errors shift the state, which compounds cost (Relaxation 1).}
+  state_drift:     {label: State drift, definition: "Robot errors shift the state, which compounds cost (Relaxation 1)."}
   goal_adaptation: {label: Goal adaptation, definition: The user reallocates effort to new goals in response to the robot (Relaxation 2).}
   values: [yes, partial, no]
 

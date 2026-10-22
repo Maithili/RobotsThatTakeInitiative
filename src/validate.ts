@@ -98,6 +98,19 @@ export function buildDb(input: BuildInput): BuildResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
+  // An unquoted comma inside a YAML flow mapping ({label: X, definition: A, b}) cuts the text short and leaves the
+  // rest as a stray key with no value. Catch that before the schema drops the stray key.
+  const strayKeys = (o: unknown, at: string): string[] =>
+    Array.isArray(o)
+      ? o.flatMap((v, i) => strayKeys(v, `${at}.${i}`))
+      : o && typeof o === 'object'
+        ? Object.entries(o as Record<string, unknown>).flatMap(([k, v]) =>
+            v === null && /\s/.test(k) ? [`${at}: "${k}" looks like text cut off by an unquoted comma; quote the value`] : strayKeys(v, at ? `${at}.${k}` : k),
+          )
+        : [];
+  const cut = strayKeys(input.taxonomy, '');
+  if (cut.length) return { errors: cut.map((m) => `taxonomy.yaml: ${m.replace(/^: /, '')}`), warnings, db: null };
+
   const tx = TaxonomySchema.safeParse(input.taxonomy);
   if (!tx.success) return { errors: zodMessages('taxonomy.yaml', tx.error), warnings, db: null };
   const t: Taxonomy = tx.data;
