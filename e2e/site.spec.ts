@@ -662,7 +662,8 @@ test('the datasets table keeps name, kind, sim or real, span, modality, setup, a
   await expect(panel).toContainText('Introduced in: STOT');
   await expect(panel).toContainText('Basis of');
   await expect(panel.getByRole('button', { name: 'HOMER+', exact: true })).toBeVisible();
-  await expect(panel).toContainText('Source:');
+  // No Source line, here or anywhere.
+  await expect(panel).not.toContainText('Source:');
 });
 
 test('the datasets table has an Activity datasets group with six rows between the main and tangential groups, and Used by fills for the linked evaluations', async ({ page }) => {
@@ -678,13 +679,13 @@ test('the datasets table has an Activity datasets group with six rows between th
   // Every activity dataset records video; those whose sources name activity or action labels show them too.
   for (const id of ['ego4d', 'epic-kitchens-100', 'cad-120', 'proact-75']) await expect(ds.getByTestId(`ds-row-${id}`).locator('.chip--input'), id).toHaveText(['Activity labels', 'Video']);
   for (const id of ['50-salads', 'vidhoi']) await expect(ds.getByTestId(`ds-row-${id}`).locator('.chip--input'), id).toHaveText(['Video']);
-  // The main group gains the Watch-And-Help task set, O-WAH and ALFRED; their Used by lists the linked papers.
+  // The main group gains the Watch-And-Help task set and O-WAH; their Used by lists the linked papers. ALFRED is not listed.
   const core = ds.getByTestId('ds-group-core');
-  for (const id of ['wah-task-set', 'o-wah', 'alfred']) await expect(core.getByTestId(`ds-row-${id}`)).toHaveCount(1);
+  for (const id of ['wah-task-set', 'o-wah']) await expect(core.getByTestId(`ds-row-${id}`)).toHaveCount(1);
+  await expect(ds.getByTestId('ds-row-alfred')).toHaveCount(0);
   const users = (id: string) => ds.getByTestId(`ds-users-${id}`).getByRole('button');
   await expect(users('wah-task-set')).toHaveText(['Watch-And-Help']);
   await expect(users('o-wah')).toHaveText(['NOPA']);
-  await expect(users('alfred')).toHaveText(['Courteous Anticipation', 'Talukder 2025']);
   await expect(users('proact-75')).toHaveText(['ProAct']);
   // CAD-120 and VidHOI are used only by L1 papers, which the Evaluations page leaves out (SPEC §6.2); their drawers name them.
   for (const id of ['cad-120', 'vidhoi', 'ego4d']) await expect(ds.getByTestId(`ds-row-${id}`).locator('td').last()).toHaveText('—');
@@ -702,7 +703,7 @@ test('the datasets table has an Activity datasets group with six rows between th
   await expect(page.getByTestId('drawer')).toContainText('CAD-120');
   // The protocols table shows the new datasets beside each paper.
   await page.goto('/#/evaluations');
-  await expect(page.getByTestId('protocol-talukder-2025-anticipatory-planning').locator('td').nth(3)).toHaveText('ALFRED');
+  await expect(page.getByTestId('protocol-watch-and-help').locator('td').nth(3)).toContainText('Watch-And-Help task set');
 });
 
 /** Action space complexity fills (SPEC §8.3), as computed CSS colors, per theme. */

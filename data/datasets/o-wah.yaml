@@ -7,5 +7,5 @@ links:
   home: https://www.tshu.io/online_watch_and_help
 sim_or_real: sim  # VirtualHome-Social (NOPA §IV)
 span: null
-notes: "Simulated household episodes with predicate goals, 6,000 or 300 for training and 100 for testing. Not released yet (\"Dataset coming soon\")"
+notes: "Simulated household episodes with predicate goals, 6,000 or 300 for training and 100 for testing"
 provenance: "Research agent, Oct 22 2026: NOPA §IV, §V-B, Table I (arXiv 2301.05223); github.com/xavierpuigf/online_watch_and_help"

@@ -55,8 +55,7 @@ subproblems:
 evaluations:
   - id: courteous-anticipation-sim
     environment: null
-    datasets:
-      - alfred  # research agent audit, Oct 22 2026: home tasks curated from ALFRED, in ProcTHOR homes (Courteous §VI-A)
+    datasets: []
     loop: offline_replay
     human_model: No human. Each robot's tasks drawn from a fixed distribution
     metrics:

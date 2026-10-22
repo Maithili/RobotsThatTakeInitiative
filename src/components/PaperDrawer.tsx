@@ -305,7 +305,6 @@ function DrawerBody({ p }: { p: DbPaper }) {
       )}
 
       <footer className="drawer__foot">
-        <p className="small muted">Source: {p.provenance}</p>
         <div className="drawer__foot-actions">
           <a className="btn btn--sm" href={fixUrl(p)} target="_blank" rel="noreferrer">
             Suggest a correction ↗

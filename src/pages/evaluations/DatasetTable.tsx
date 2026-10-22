@@ -142,7 +142,6 @@ export function DatasetTable({ datasets = db.datasets }: { datasets?: DbDataset[
                     </>
                   )}
                 </p>
-                <p className="muted">Source: {d.provenance}</p>
               </div>
             </td>
           </tr>

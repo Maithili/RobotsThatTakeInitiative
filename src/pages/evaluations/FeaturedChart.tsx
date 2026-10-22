@@ -103,7 +103,6 @@ export function FeaturedChart() {
           ))}
         </ul>
       </div>
-      <p className="small muted">Source: {fc.source}.</p>
     </section>
   );
 }
