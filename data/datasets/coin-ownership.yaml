@@ -15,6 +15,6 @@ environment: gazebo
 based_on:
   - id: homer
     relation: extends
-notes: HOMER schedules turned into 3,425 user-object events over 34 objects, with manually assigned ownership labels
+notes: 3,425 user-object events over 34 objects, with manually assigned ownership labels
 tangent: true
 provenance: COIN §5.1–5.2

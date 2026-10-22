@@ -15,5 +15,5 @@ environment: virtualhome
 based_on:
   - id: homer
     relation: extends
-notes: Modifies HOMER; 24 activities and 93 entities; activity labels per step
+notes: 24 activities and 93 entities; activity labels per step
 provenance: GAP paper §IV-A1; SLaTe-PRO §6, App. A.3

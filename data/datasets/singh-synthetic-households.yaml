@@ -10,5 +10,5 @@ executable: null
 based_on:
   - id: homer
     relation: validates_against
-notes: Generated layouts, object inventories, activity schedules, and dialogues; no simulator named; compared to HOMER by cosine similarity
+notes: Generated layouts, object inventories, activity schedules, and dialogues; no simulator named
 provenance: Singh et al., Methodology and Real-World Alignment Validation

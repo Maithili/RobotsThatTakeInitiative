@@ -19,6 +19,6 @@ human_models:
 loops:
   - offline_replay
   - closed_scripted
-notes: 803,680 tasks. Activity labels are hidden from agents. HOMER+ is one of six sources, giving only activity-order and end-state priors
+notes: 803,680 tasks. Activity labels are hidden from agents
 tangent: true
 provenance: Librarian Oct 2026, A-4 EvolvingNav A8; EvolvingNav §4, App. B.1–B.2
