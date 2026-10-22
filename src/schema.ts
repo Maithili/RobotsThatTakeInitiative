@@ -110,7 +110,7 @@ export const TaxonomySchema = z.object({
     counterfactual: z.string(),
     terms: z.record(z.object({ label: z.string(), tex: z.string(), definition: z.string() })),
   }),
-  /** Ordered. The Evaluations page shows one tab per category and hides metrics with none (SPEC §8.6). */
+  /** Ordered. The Evaluations page shows one box per category and hides metrics with none (SPEC §8.6). */
   metric_categories: z
     .record(z.object({ label: z.string() }).strict())
     .nullish()

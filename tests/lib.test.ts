@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { matchesGlobal, matchesQuery, parseYears, readGlobalFilters } from '../src/lib/filters.ts';
 import { ancestry, subproblemFlow } from '../src/lib/graph.ts';
 import { scorePaper, search } from '../src/lib/search.ts';
-import { categoryItems, itemSummary } from '../src/lib/metrics.ts';
+import { categoryItems, itemServes, itemSummary, metricKeyMembers } from '../src/lib/metrics.ts';
 import { categoriesOf, closest, furthestLoop, mergePaper, rowMatches, strongest } from '../src/pages/evaluations/merge.ts';
 import { applyParams, toggleInList } from '../src/state/url.ts';
 import type { DbPaper } from '../src/schema.ts';
@@ -188,9 +188,16 @@ describe('protocols table rows', () => {
     expect(rowMatches(row, { ...f, category: 'task' })).toBe(false);
     expect(rowMatches(row, { ...f, category: 'user_actions', loop: 'offline_replay' })).toBe(false);
   });
+  it('matches a metric group when any entry uses any of its members', () => {
+    const f = { loop: null, term: null, metric: null, dataset: null, metricTerms: () => [] };
+    const members = (m: string) => (m === 'grp' ? ['nas', 'other'] : [m]);
+    expect(rowMatches(row, { ...f, metric: 'grp', metricMembers: members })).toBe(true);
+    expect(rowMatches(row, { ...f, metric: 'grp', metricMembers: members, loop: 'offline_replay' })).toBe(false);
+    expect(rowMatches(row, { ...f, metric: 'grp' })).toBe(false);
+  });
 });
 
-describe('metric tabs', () => {
+describe('metric category boxes', () => {
   const M = (category: string | undefined, group: string | undefined, terms: string[], direction: 'higher' | 'lower' = 'higher', unit = '%') => ({
     category,
     group,
@@ -225,5 +232,17 @@ describe('metric tabs', () => {
     const [f1, used] = categoryItems('obj', metrics);
     expect(itemSummary(f1, metrics, TERMS)).toEqual({ terms: ['dC_saved', 'dC_added'], direction: 'higher', units: ['fraction'] });
     expect(itemSummary(used, metrics, TERMS)).toEqual({ terms: ['dC_saved', 'dC_added'], direction: null, units: ['%'] });
+  });
+  it('dims a row only when no member serves the term', () => {
+    const [f1, used, objectF1] = categoryItems('obj', metrics);
+    expect(itemServes(used, metrics, 'dC_saved')).toBe(true);
+    expect(itemServes(objectF1, metrics, 'dC_saved')).toBe(false);
+    expect(itemServes(f1, metrics, 'Cr')).toBe(false);
+    expect(itemServes(f1, metrics, null)).toBe(true);
+  });
+  it('reads metric= as a metric id or a group id', () => {
+    expect(metricKeyMembers('f1', metrics)).toEqual(['f1']);
+    expect(metricKeyMembers('used', metrics)).toEqual(['used_correct', 'used_wrong']);
+    expect(metricKeyMembers('ghost', metrics)).toEqual(['ghost']);
   });
 });

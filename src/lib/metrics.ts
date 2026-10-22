@@ -21,7 +21,7 @@ interface CategorizedMetric {
   group?: string;
 }
 
-/** One item in a metrics tab (SPEC §8.6): a metric on its own (`group` null, one member), or a group of metrics. */
+/** One row in a metric category box (SPEC §8.6): a metric on its own (`group` null, one member), or a group of metrics. */
 export interface MetricItem {
   /** The metric id, or the group id. */
   id: string;
@@ -57,4 +57,17 @@ export function itemSummary(item: MetricItem, metrics: Record<string, Categorize
   const terms = termOrder.filter((t) => ms.some((m) => m.terms.includes(t)));
   const dirs = [...new Set(ms.map((m) => m.direction))];
   return { terms, direction: dirs.length === 1 ? dirs[0] : null, units: [...new Set(ms.map((m) => m.unit))] };
+}
+
+/** Whether a row serves a net value term: any member measures it. With no term, every row does (SPEC §8.1, §8.6). */
+export function itemServes(item: MetricItem, metrics: Record<string, CategorizedMetric>, term: string | null): boolean {
+  return !term || item.members.some((id) => metrics[id]?.terms.includes(term));
+}
+
+/** The metrics a `metric=` value stands for: a metric id is itself, and a group id is its members in taxonomy order.
+ *  A metric id wins over a group id of the same name. */
+export function metricKeyMembers(key: string, metrics: Record<string, CategorizedMetric>): string[] {
+  if (Object.prototype.hasOwnProperty.call(metrics, key)) return [key];
+  const members = Object.keys(metrics).filter((id) => metrics[id].group === key);
+  return members.length ? members : [key];
 }

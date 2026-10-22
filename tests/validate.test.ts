@@ -417,6 +417,11 @@ describe('metric categories, metric groups, and evaluations_exclude', () => {
     expect(t.metric_groups.goal_prf.label).toBe('Goal precision, recall, and F1');
     expect(Object.keys(t.metrics).filter((m) => t.metrics[m].group === 'goal_prf')).toEqual(['goal_predicate_precision', 'goal_predicate_recall', 'goal_predicate_f1']);
     expect(t.metrics.goal_predicate_f1.category).toBe('task_performance');
+    // Groups added for the metric boxes (Oct 22 2026). F1 and object F1 stay apart: their definitions differ.
+    expect(Object.keys(t.metrics).filter((m) => t.metrics[m].group === 'task_cost')).toEqual(['avg_task_cost', 'cost_reduction']);
+    expect(Object.keys(t.metrics).filter((m) => t.metrics[m].group === 'user_ratings')).toEqual(['rated_goal_knowledge', 'rated_helpfulness', 'rated_trust']);
+    expect(t.metrics.f1.group).toBeUndefined();
+    expect(t.metrics.object_f1.group).toBeUndefined();
     expect(t.metrics.relation_accuracy.category).toBeUndefined();
     expect(t.metrics.search_success_rate.category).toBeUndefined();
     for (const m of ['training_time', 'training_samples', 'inference_time', 'planning_time', 'saved_steps_rate', 'saved_steps']) expect(t.metrics[m]).toBeUndefined();

@@ -1,11 +1,12 @@
-import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { LoopPill, TermDot } from '../../components/Chip.tsx';
 import { EmptyState } from '../../components/EmptyState.tsx';
 import { FilterBar } from '../../components/FilterBar.tsx';
 import { Math as TeX } from '../../components/Math.tsx';
 import { datasetById, db, FRAMEWORK_PAPER, onEvaluations, paperById, paperLabel, papers, RTI_URL, tx } from '../../data.ts';
 import { matchesGlobal } from '../../lib/filters.ts';
-import { categoryItems, DIRECTION, itemSummary, metricTooltip, type MetricItem } from '../../lib/metrics.ts';
+import { categoryItems, DIRECTION, itemServes, itemSummary, metricKeyMembers, type MetricItem } from '../../lib/metrics.ts';
+import type { DbPaper } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
 import { DatasetTable } from './DatasetTable.tsx';
 import { FeaturedChart } from './FeaturedChart.tsx';
@@ -39,15 +40,26 @@ const paperRows: PaperEvalRow[] = papers
 const papersUsing = new Map(METRICS.map((m) => [m, new Set((db.metric_used_by[m] ?? []).filter(inScope).map((r) => r.paper))]));
 /** Metrics the page lists: those with a category that a paper on the page uses (SPEC §8.6). */
 const LISTED = new Set(METRICS.filter((m) => categoryOf(m) && papersUsing.get(m)!.size > 0));
-/** One tab per category that a paper on the page uses, in category order. */
-const TABS = CATEGORIES.filter((c) => METRICS.some((m) => LISTED.has(m) && categoryOf(m) === c));
-const ITEMS = new Map(TABS.map((c) => [c, categoryItems(c, tx.metrics, (m) => LISTED.has(m))]));
+/** One box per category that a paper on the page uses, in category order. */
+const BOXES = CATEGORIES.filter((c) => METRICS.some((m) => LISTED.has(m) && categoryOf(m) === c));
+const ITEMS = new Map(BOXES.map((c) => [c, categoryItems(c, tx.metrics, (m) => LISTED.has(m))]));
+/** Papers on this page that use any metric in a row, by year and then short name. Keyed by metric or group id. */
+const ROW_PAPERS = new Map<string, DbPaper[]>(
+  [...ITEMS.values()].flat().map((it) => {
+    const ids = new Set(it.members.flatMap((m) => [...papersUsing.get(m)!]));
+    const ps = [...ids].map((id) => paperById.get(id)!).sort((a, b) => a.year - b.year || a.short_name.localeCompare(b.short_name));
+    return [it.id, ps];
+  }),
+);
+
+/** The metrics a `metric=` value stands for (a group id stands for its members), and their shared category. */
+const keyMembers = (k: string) => metricKeyMembers(k, tx.metrics);
+const keyCategory = (k: string) => categoryOf(keyMembers(k)[0]);
+const keyLabel = (k: string) => tx.metrics[k]?.label ?? tx.metric_groups[k]?.label ?? k;
 
 function metricsForTerm(term: string) {
   return METRICS.filter((m) => LISTED.has(m) && tx.metrics[m].terms.includes(term));
 }
-
-const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
 
 // ---------- 8.1 net value navigator ----------
 
@@ -137,10 +149,10 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
   const cols: [PSort, string][] = [
     ['paper', 'Paper'],
     ['year', 'Year'],
+    ['categories', 'Metric categories'],
     ['env', 'Environment and datasets'],
     ['loop', 'Loop types'],
     ['human', 'Human models'],
-    ['categories', 'Metric categories'],
     ['baselines', 'Baselines'],
   ];
   if (!rows.length) return <EmptyState>No evaluation matches these filters.</EmptyState>;
@@ -195,6 +207,34 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
                 </td>
                 <td className="num">{r.paper.year}</td>
                 <td>
+                  <span className="chips">
+                    {r.categories.length ? (
+                      r.categories.map((c) => {
+                        const on = category === c;
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            className={`chip chip--category${on ? ' chip--on' : ''}`}
+                            aria-pressed={on}
+                            data-category={c}
+                            title={on ? 'Clear the category filter' : 'Filter protocols by this category and highlight its metrics'}
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              selectCategory(url, on ? null : c);
+                              if (!on) revealBox(c);
+                            }}
+                          >
+                            {tx.metric_categories[c].label}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
+                  </span>
+                </td>
+                <td>
                   {r.environments.map((d) => (
                     <span key={d} className="chip chip--dataset">
                       {datasetById.get(d)?.name ?? d}
@@ -211,33 +251,6 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
                   <span className="chips">{r.loops.length ? r.loops.map((l) => <LoopPill key={l} loop={l} />) : <span className="muted">—</span>}</span>
                 </td>
                 <td>{r.humans.length ? r.humans.join('; ') : <span className="muted">—</span>}</td>
-                <td>
-                  <span className="chips">
-                    {r.categories.length ? (
-                      r.categories.map((c) => {
-                        const on = category === c;
-                        return (
-                          <button
-                            key={c}
-                            type="button"
-                            className={`chip chip--category${on ? ' chip--on' : ''}`}
-                            aria-pressed={on}
-                            data-category={c}
-                            title={on ? 'Clear the category filter' : 'Filter protocols by this category and show its metrics'}
-                            onClick={(ev) => {
-                              ev.stopPropagation();
-                              selectCategory(url, on ? null : c);
-                            }}
-                          >
-                            {tx.metric_categories[c].label}
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <span className="muted">—</span>
-                    )}
-                  </span>
-                </td>
                 <td>
                   {nb ? (
                     <>
@@ -294,199 +307,181 @@ function ProtocolTable({ rows }: { rows: PaperEvalRow[] }) {
   );
 }
 
-// ---------- 8.6 metrics: one tab per category ----------
+// ---------- 8.6 metrics: one box per category, one row per metric or group ----------
 
 /** Sets `category=`, and drops a `metric=` outside that category, so the two filters never contradict. */
 function selectCategory(url: ReturnType<typeof useUrl>, c: string | null) {
   const metric = url.get('metric');
-  url.set({ category: c, ...(c && metric && categoryOf(metric) !== c ? { metric: null } : {}) });
+  url.set({ category: c, ...(c && metric && keyCategory(metric) !== c ? { metric: null } : {}) });
 }
 
-function TermDots({ terms }: { terms: string[] }) {
+/** Scrolls a category's box into view and pulses it once (SPEC §8.6). */
+function revealBox(c: string) {
+  window.requestAnimationFrame(() => {
+    const el = document.getElementById(`metric-box-${c}`);
+    if (!el) return;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
+    el.classList.remove('pulse');
+    void el.offsetWidth;
+    el.classList.add('pulse');
+    window.setTimeout(() => el.classList.remove('pulse'), 1200);
+  });
+}
+
+function Direction({ direction, testId }: { direction: 'higher' | 'lower' | null; testId: string }) {
+  const d = direction ? DIRECTION[direction] : { glyph: '↕', label: 'Direction differs by metric' };
   return (
-    <span className="metric-row__terms">
+    <span className="metric-row__arrow" role="img" aria-label={d.label} title={d.label} data-testid={testId}>
+      {d.glyph}
+    </span>
+  );
+}
+
+/** Terms as dots with their symbols, or "No term". */
+function TipTerms({ terms }: { terms: string[] }) {
+  if (!terms.length) return <span className="muted">No term</span>;
+  return (
+    <span className="metric-tip__terms">
       {terms.map((t) => (
-        <TermDot key={t} term={t} />
+        <span key={t} className="metric-tip__term">
+          <TermDot term={t} />
+          <TeX tex={tx.net_value.terms[t].tex} />
+        </span>
       ))}
     </span>
   );
 }
 
-function Direction({ direction, units, testId }: { direction: 'higher' | 'lower' | null; units: string[]; testId: string }) {
-  const d = direction ? DIRECTION[direction] : { glyph: '↕', label: 'Direction differs by metric' };
+/** The hover card of a row: term dots and units, per member for a group (SPEC §8.6). */
+function MetricTip({ id, item }: { id: string; item: MetricItem }) {
+  if (!item.group) {
+    const M = tx.metrics[item.id];
+    return (
+      <span className="metric-tip" role="tooltip" id={id} data-testid={`metric-tip-${item.id}`}>
+        <span className="metric-tip__row">
+          <TipTerms terms={M.terms} />
+          <span className="metric-tip__unit">{M.unit}</span>
+        </span>
+        {M.mapping_note && <span className="metric-tip__note">{M.mapping_note}</span>}
+      </span>
+    );
+  }
   return (
-    <span className="metric-row__dir small" data-testid={testId}>
-      <span className="metric-row__arrow" role="img" aria-label={d.label} title={d.label}>
-        {d.glyph}
-      </span>{' '}
-      <span className="muted">{units.join(', ')}</span>
+    <span className="metric-tip" role="tooltip" id={id} data-testid={`metric-tip-${item.id}`}>
+      {item.members.map((m) => {
+        const M = tx.metrics[m];
+        const d = DIRECTION[M.direction];
+        return (
+          <span key={m} className="metric-tip__row">
+            <span className="metric-tip__name">
+              {M.label}{' '}
+              <span role="img" aria-label={d.label}>
+                {d.glyph}
+              </span>
+            </span>
+            <TipTerms terms={M.terms} />
+            <span className="metric-tip__unit">{M.unit}</span>
+          </span>
+        );
+      })}
     </span>
   );
 }
 
-function MetricItemRow({ item, onHoverTerms }: { item: MetricItem; onHoverTerms: (t: string[]) => void }) {
+function MetricRow({ item, onHoverTerms }: { item: MetricItem; onHoverTerms: (t: string[]) => void }) {
   const url = useUrl();
   const metric = url.get('metric');
+  const category = url.get('category');
+  const term = url.get('term');
+  const key = item.id;
+  const { label, definition } = item.group ? tx.metric_groups[key] : tx.metrics[key];
   const sum = itemSummary(item, tx.metrics, TERMS);
-  const used = new Set(item.members.flatMap((m) => [...papersUsing.get(m)!])).size;
+  const users = ROW_PAPERS.get(key) ?? [];
+  const on = metric === key;
+  // Under a term filter, rows that do not serve it dim rather than hide (SPEC §8.6).
+  const dim = !itemServes(item, tx.metrics, term);
   const enter = () => onHoverTerms(sum.terms);
   const leave = () => onHoverTerms([]);
-  const pick = (m: string) => url.set({ metric: metric === m ? null : m });
-
-  if (!item.group) {
-    const id = item.id;
-    const M = tx.metrics[id];
-    const on = metric === id;
-    return (
-      <li>
-        <button
-          type="button"
-          className={on ? 'metric-row is-on' : 'metric-row'}
-          aria-pressed={on}
-          onClick={() => pick(id)}
-          onMouseEnter={enter}
-          onMouseLeave={leave}
-          onFocus={enter}
-          onBlur={leave}
-          title={M.mapping_note ? `${M.kind}: ${M.mapping_note}` : M.kind}
-          data-testid={`metric-${id}`}
-        >
-          <span className="metric-row__head">
-            <strong className="metric-row__label">{M.label}</strong>
-            <Direction direction={M.direction} units={[M.unit]} testId={`metric-dir-${id}`} />
-          </span>
-          <span className="metric-row__def small">{M.definition}</span>
-          <TermDots terms={sum.terms} />
-          <span className="metric-row__used small muted">{plural(used, 'paper')}</span>
-        </button>
-      </li>
-    );
-  }
-
-  const G = tx.metric_groups[item.group];
+  const pick = () => {
+    const c = keyCategory(key);
+    url.set({ metric: on ? null : key, ...(!on && category && category !== c ? { category: null } : {}) });
+  };
   return (
-    <li>
-      <div
-        className={`metric-row metric-row--group${item.members.includes(metric ?? '') ? ' is-on' : ''}`}
-        onMouseEnter={enter}
-        onMouseLeave={leave}
-        data-testid={`metric-group-${item.group}`}
-      >
-        <span className="metric-row__head">
-          <strong className="metric-row__label">{G.label}</strong>
-          <Direction direction={sum.direction} units={sum.units} testId={`metric-dir-${item.group}`} />
+    <li
+      className={`metric-row${on ? ' is-on' : ''}${dim ? ' is-dim' : ''}`}
+      onClick={pick}
+      onMouseEnter={enter}
+      onMouseLeave={leave}
+      data-testid={`metric-row-${key}`}
+      data-dim={dim ? 'true' : 'false'}
+    >
+      <button type="button" className="metric-row__main" aria-pressed={on} aria-describedby={`metric-tip-${key}`} onFocus={enter} onBlur={leave}>
+        <span className="metric-row__name">
+          <strong>{label}</strong> <Direction direction={sum.direction} testId={`metric-dir-${key}`} />
         </span>
-        <span className="metric-row__def small">{G.definition}</span>
-        <TermDots terms={sum.terms} />
-        <span className="metric-row__used small muted">{plural(used, 'paper')}</span>
-        <span className="metric-row__members chips" role="group" aria-label={`Metrics in ${G.label}`}>
-          {item.members.map((m) => {
-            const M = tx.metrics[m];
-            const on = metric === m;
-            const d = DIRECTION[M.direction];
-            return (
-              <button
-                key={m}
-                type="button"
-                className={`chip chip--member${on ? ' chip--on' : ''}`}
-                aria-pressed={on}
-                title={metricTooltip(M)}
-                onClick={() => pick(m)}
-                onMouseEnter={() => onHoverTerms(M.terms)}
-                onMouseLeave={enter}
-                onFocus={() => onHoverTerms(M.terms)}
-                onBlur={leave}
-                data-testid={`metric-${m}`}
-              >
-                {M.terms.map((t) => (
-                  <TermDot key={t} term={t} />
-                ))}
-                {M.label}
-                {!sum.direction && (
-                  <span className="metric-row__arrow" role="img" aria-label={d.label}>
-                    {d.glyph}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </span>
-      </div>
+        <span className="metric-row__def">{definition}</span>
+      </button>
+      <span className="metric-row__papers" role="group" aria-label={`Papers that use ${label}`}>
+        {users.map((p, i) => (
+          <Fragment key={p.id}>
+            {i > 0 && ', '}
+            <button
+              type="button"
+              className="linkish metric-row__paper"
+              onClick={(ev) => {
+                ev.stopPropagation();
+                url.openPaper(p.id);
+              }}
+            >
+              {p.short_name}
+            </button>
+          </Fragment>
+        ))}
+      </span>
+      <MetricTip id={`metric-tip-${key}`} item={item} />
     </li>
   );
 }
 
-function MetricsTabs({ onHoverTerms }: { onHoverTerms: (t: string[]) => void }) {
+function MetricsList({ onHoverTerms }: { onHoverTerms: (t: string[]) => void }) {
   const url = useUrl();
   const term = url.get('term');
-  const metric = url.get('metric');
   const category = url.get('category');
-  const tabRefs = useRef(new Map<string, HTMLButtonElement>());
-  const itemsOf = (c: string) => (ITEMS.get(c) ?? []).filter((it) => !term || it.members.some((m) => tx.metrics[m].terms.includes(term)));
-  // Under a term filter, tabs with no matching metric hide, except the selected one.
-  const tabs = TABS.filter((c) => c === category || itemsOf(c).length > 0);
-  const metricTab = metric ? categoryOf(metric) : undefined;
-  const active = category && tabs.includes(category) ? category : metricTab && tabs.includes(metricTab) ? metricTab : tabs[0];
-  const items = active ? itemsOf(active) : [];
-
-  const onKey = (ev: KeyboardEvent<HTMLButtonElement>) => {
-    const i = tabs.indexOf(active);
-    const next = ({ ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 } as Record<string, number>)[ev.key];
-    if (next === undefined) return;
-    ev.preventDefault();
-    const c = tabs[(next + tabs.length) % tabs.length];
-    selectCategory(url, c);
-    tabRefs.current.get(c)?.focus();
-  };
-
   return (
     <section aria-labelledby="metrics-title" className="stack-sm">
       <div className="section-title">
         <h2 id="metrics-title">Metrics</h2>
-        <span className="small muted">Metrics by category, with the terms of ΔV − ΔC each one measures. Pick a category or a metric to filter protocols.</span>
+        <span className="small muted">Metrics by category, with the papers that use them. Hover a metric for its terms of ΔV − ΔC and its units. Click it to filter the protocols.</span>
       </div>
-      {!active ? (
-        <EmptyState>No metric in the database measures this term yet.</EmptyState>
+      {!BOXES.length ? (
+        <EmptyState>No paper on this page uses a categorized metric.</EmptyState>
       ) : (
-        <>
-          <div className="metric-tabs" role="tablist" aria-label="Metric categories" data-testid="metric-tabs">
-            {tabs.map((c) => {
-              const on = c === active;
-              return (
-                <button
-                  key={c}
-                  ref={(el) => {
-                    if (el) tabRefs.current.set(c, el);
-                    else tabRefs.current.delete(c);
-                  }}
-                  type="button"
-                  role="tab"
-                  id={`metric-tab-${c}`}
-                  aria-selected={on}
-                  aria-controls="metric-tabpanel"
-                  tabIndex={on ? 0 : -1}
-                  className={on ? 'metric-tab is-active' : 'metric-tab'}
-                  onClick={() => selectCategory(url, c)}
-                  onKeyDown={onKey}
-                  data-testid={`metric-tab-${c}`}
-                >
+        <div className="metric-boxes" data-testid="metric-boxes">
+          {BOXES.map((c) => {
+            const items = ITEMS.get(c) ?? [];
+            const on = category === c;
+            const dim = !items.some((it) => itemServes(it, tx.metrics, term));
+            return (
+              <section
+                key={c}
+                id={`metric-box-${c}`}
+                className={`metric-box${on ? ' is-on' : ''}${dim ? ' is-dim' : ''}`}
+                aria-labelledby={`metric-box-title-${c}`}
+                data-testid={`metric-box-${c}`}
+              >
+                <h3 id={`metric-box-title-${c}`} className="metric-box__title">
                   {tx.metric_categories[c].label}
-                </button>
-              );
-            })}
-          </div>
-          <div role="tabpanel" id="metric-tabpanel" aria-labelledby={`metric-tab-${active}`} data-testid="metric-tabpanel">
-            {items.length ? (
-              <ul className="metrics" data-testid="metrics-list">
-                {items.map((it) => (
-                  <MetricItemRow key={it.id} item={it} onHoverTerms={onHoverTerms} />
-                ))}
-              </ul>
-            ) : (
-              <EmptyState>No metric in this category measures this term.</EmptyState>
-            )}
-          </div>
-        </>
+                </h3>
+                <ul className="metric-rows">
+                  {items.map((it) => (
+                    <MetricRow key={it.id} item={it} onHoverTerms={onHoverTerms} />
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
       )}
     </section>
   );
@@ -507,7 +502,7 @@ export function EvaluationsPage() {
   const rows = paperRows.filter(
     (r) =>
       matchesGlobal(r.paper, url.filters) &&
-      rowMatches(r, { loop, term, metric, category, dataset, metricTerms: shownTerms, metricCategory: categoryOf }),
+      rowMatches(r, { loop, term, metric, category, dataset, metricTerms: shownTerms, metricCategory: categoryOf, metricMembers: keyMembers }),
   );
   const matches = useMemo(() => new Set(rows.map((r) => r.paper.id)), [rows]);
 
@@ -555,7 +550,7 @@ export function EvaluationsPage() {
             )}
             {metric && (
               <span className="chip">
-                <span className="muted">Metric:</span> {tx.metrics[metric]?.label ?? metric}
+                <span className="muted">Metric:</span> {keyLabel(metric)}
                 <button type="button" className="chip__x" aria-label="Remove metric filter" onClick={() => url.set({ metric: null })}>
                   ×
                 </button>
@@ -581,7 +576,7 @@ export function EvaluationsPage() {
         </div>
         <ProtocolTable rows={rows} />
       </section>
-      <MetricsTabs onHoverTerms={setHover} />
+      <MetricsList onHoverTerms={setHover} />
       <DatasetTable />
     </div>
   );
