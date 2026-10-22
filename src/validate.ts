@@ -62,6 +62,11 @@ export function searchString(p: Pick<Paper, 'short_name' | 'title' | 'authors' |
   return [p.short_name, p.title, p.authors.join(' '), p.venue ?? '', String(p.year)].join(' ').toLowerCase();
 }
 
+/** Ids that appear more than once in a list, each named once. */
+function repeated(xs: readonly string[] | null | undefined): string[] {
+  return [...new Set((xs ?? []).filter((x, i, all) => all.indexOf(x) !== i))];
+}
+
 /** Returns one cycle (as a list of ids) if the graph has any, else null. */
 export function findCycle(edges: Map<string, string[]>): string[] | null {
   const state = new Map<string, 1 | 2>();
@@ -165,6 +170,7 @@ export function buildDb(input: BuildInput): BuildResult {
       }
       for (const a of m.action_types ?? []) if (!inSet(t.action_types, a)) errors.push(`${at}: unknown action type "${a}"`);
       for (const i of m.inputs ?? []) if (!inSet(t.observation_modalities, i)) errors.push(`${at}: unknown input modality "${i}"`);
+      for (const i of repeated(m.inputs)) errors.push(`${at}: input modality "${i}" is listed twice`);
       for (const b of m.builds_on ?? []) {
         referenced.add(b);
         const target = paperById.get(b);
@@ -287,6 +293,7 @@ export function buildDb(input: BuildInput): BuildResult {
     for (const o of d.observations ?? []) {
       if (!inSet(t.observation_modalities, o)) errors.push(`${at}: unknown observation modality "${o}"`);
     }
+    for (const o of repeated(d.observations)) errors.push(`${at}: observation modality "${o}" is listed twice`);
   }
 
   // ---- taxonomy cross-references ----

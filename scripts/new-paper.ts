@@ -31,7 +31,7 @@ method:
   knowns: {goal: unknown, human_policy: unknown}   # known | unknown. Drop the method block if the paper has no level
   family: null            # L2 only: goal_inference | temporal_imitation, or null
   action_types: []        # act | timing | initiate | inform | ask
-  inputs: []              # object_relocations | scene_graph | video | language
+  inputs: []              # object_movements | activity_labels | video (what the method takes in at run time)
   core_strength: null     # one line (≤ 120 chars)
   builds_on: []           # paper ids this paper extends. Maithili fills these
 themes: []

@@ -75,12 +75,23 @@ describe('validator', () => {
     expectError(run([base('a', { tangent: 'gossip' })]), /unknown tangent type "gossip"/);
     expectError(run([base('a', { method: { ...L2K, action_types: ['dance'] } })]), /unknown action type/);
     expectError(run([base('a', { method: { ...L2K, inputs: ['smell'] } })]), /unknown input modality/);
+    // Retired ids (Oct 22 2026): object relocations and scene graphs became object movements, and language left.
+    for (const old of ['object_relocations', 'scene_graph', 'language']) {
+      expectError(run([base('a', { method: { ...L2K, inputs: [old] } })]), new RegExp(`unknown input modality "${old}"`));
+      expectError(run([], { datasets: [sim, { ...ds, observations: [old] }] }), new RegExp(`unknown observation modality "${old}"`));
+    }
     expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'vibes' }] })]), /unknown loop type/);
     expectError(run([base('a', { evaluations: [{ id: 'e', loop: 'offline_replay', metrics: ['bleu'] }] })]), /unknown metric/);
     expectError(
       run([base('a', { subproblems: { A2: { status: 'addresses', relation: 'direct', approach: 'hierarchical', note: 'x' } } })]),
       /not an approach of A2/,
     );
+  });
+
+  it('rejects an input or observation modality listed twice', () => {
+    expectError(run([base('a', { method: { ...L2K, inputs: ['object_movements', 'video', 'object_movements'] } })]), /input modality "object_movements" is listed twice/);
+    expectError(run([], { datasets: [sim, { ...ds, observations: ['activity_labels', 'activity_labels'] }] }), /observation modality "activity_labels" is listed twice/);
+    expect(run([base('a', { method: { ...L2K, inputs: ['object_movements', 'activity_labels', 'video'] } })]).errors).toEqual([]);
   });
 
   it('rejects ablations listed as baselines', () => {

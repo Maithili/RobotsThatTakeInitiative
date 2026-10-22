@@ -8,7 +8,8 @@ sim_or_real: sim
 span: Several weeks
 households_or_users: 3
 observations:
-  - object_relocations
+  - object_movements
+  - activity_labels  # notes: "activity labels per step" (SLaTe-PRO App. A.3, per data/SEED_REPORT.md)
 goal_annotations: "yes"
 executable: "yes"
 environment: virtualhome

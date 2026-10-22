@@ -22,7 +22,7 @@ export const SYNTHETIC_FAMILIES: Record<string, { name: string; definition: stri
 
 const FAMILIES = [...Object.keys(SYNTHETIC_FAMILIES)];
 const ACTIONS = ['act', 'timing', 'initiate', 'inform', 'ask'];
-const INPUTS = ['object_relocations', 'scene_graph', 'video', 'language'];
+const INPUTS = ['object_movements', 'activity_labels', 'video'];
 export const SYNTHETIC_COUNT = 300;
 export const SYNTHETIC_UNCLUSTERED = 8;
 export const SYNTHETIC_TANGENTS = 30;

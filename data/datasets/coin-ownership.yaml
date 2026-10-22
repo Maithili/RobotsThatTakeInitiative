@@ -7,8 +7,7 @@ links:
 sim_or_real: sim
 span: Seven days
 households_or_users: 3 users
-observations:
-  - language
+observations: []  # was language (events as natural-language descriptions, COIN §5.1–5.2). Language left the vocabulary per Maithili, Oct 22 2026
 goal_annotations: null
 executable: null
 environment: gazebo

@@ -20,7 +20,7 @@ method:
   action_types:
     - act
   inputs:
-    - object_relocations
+    - object_movements
   core_strength: null
   builds_on: []
 themes:

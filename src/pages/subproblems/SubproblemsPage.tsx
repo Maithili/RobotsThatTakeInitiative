@@ -252,7 +252,6 @@ export function SubproblemsPage() {
   const raw = url.get('sub');
   const sub = isSub(raw) ? raw : null;
   const view = url.get('view') === 'matrix' ? 'matrix' : 'detail';
-  const themes = url.filters.theme;
   // Level scope (SPEC §6.2): papers at a focus level plus papers with no level. Never L1 papers.
   const visible = papers.filter((p) => inSubproblems(p) && matchesGlobal(p, url.filters));
   const counts = Object.fromEntries(SUBS.map((s) => [s, visible.filter((p) => solves(p, s)).length]));
@@ -263,16 +262,8 @@ export function SubproblemsPage() {
         <h1>Subproblems</h1>
       </div>
       <SubproblemNavigator selected={sub} counts={counts} onSelect={(s) => url.set({ sub: s, ...(s && view === 'matrix' ? { view: null } : {}) })} />
-      <div className="themes" role="group" aria-label="Themes">
-        <span className="small muted">Cross-cutting themes</span>
-        {Object.entries(tx.themes).map(([id, t]) => (
-          <Chip key={id} pressed={themes.includes(id)} onClick={() => url.set({ theme: toggleInList(themes, id) })} title={t.definition}>
-            {t.label}
-          </Chip>
-        ))}
-      </div>
       <FilterBar
-        controls={['family', 'action', 'input']}
+        controls={['input']}
         extra={
           <span className="filterbar__extra">
             <span className="seg seg--sm" role="group" aria-label="View">

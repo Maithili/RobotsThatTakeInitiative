@@ -8,7 +8,7 @@ sim_or_real: sim
 span: 50+ days
 households_or_users: 5
 observations:
-  - object_relocations
+  - object_movements
 goal_annotations: null
 executable: null
 environment: virtualhome

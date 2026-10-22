@@ -4,18 +4,12 @@ import { GLOBAL_LIST_KEYS, hasActiveFilters, type GlobalListKey } from '../lib/f
 import { toggleInList, useUrl } from '../state/url.ts';
 import { Chip } from './Chip.tsx';
 
-const LABELS: Record<GlobalListKey, string> = { family: 'Family', action: 'Action', input: 'Input', theme: 'Theme' };
+const LABELS: Record<GlobalListKey, string> = { input: 'Input' };
 
 function optionsFor(k: GlobalListKey): [string, string][] {
   switch (k) {
-    case 'family':
-      return Object.entries(tx.families).map(([id, f]) => [id, f.name]);
-    case 'action':
-      return Object.entries(tx.action_types).map(([id, a]) => [id, a.label]);
     case 'input':
       return Object.entries(tx.observation_modalities).map(([id, a]) => [id, a.label]);
-    case 'theme':
-      return Object.entries(tx.themes).map(([id, a]) => [id, a.label]);
   }
 }
 
@@ -79,7 +73,7 @@ export function FilterBar({
           <button
             type="button"
             className="btn btn--sm btn--ghost"
-            onClick={() => url.set({ family: null, action: null, input: null, theme: null, years: null, q: null, ...Object.fromEntries(pageFilters.map((k) => [k, null])) })}
+            onClick={() => url.set({ ...Object.fromEntries(GLOBAL_LIST_KEYS.map((k) => [k, null])), years: null, q: null, ...Object.fromEntries(pageFilters.map((k) => [k, null])) })}
           >
             Clear all
           </button>

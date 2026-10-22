@@ -58,11 +58,11 @@ body:
     id: inputs
     attributes:
       label: Input modalities
+      description: What the method takes in at run time. Activity labels it only predicts are output, not input.
       options:
-        - label: object_relocations
-        - label: scene_graph
-        - label: video
-        - label: language
+        - label: object_movements — objects moving between locations, as relocation logs or scene-graph changes
+        - label: activity_labels — names of the activity the user is doing at each step
+        - label: video — camera frames of the user and scene
   - type: textarea
     id: subproblems
     attributes:

@@ -40,11 +40,10 @@ action_types:                 # GAP paper §II
   inform:   {label: Informs, definition: Provides extra information.}
   ask:      {label: Asks, definition: Actively asks questions.}
 
-observation_modalities:       # extend as papers need, one line each
-  object_relocations: {label: Object relocations, definition: Timestamped moves of objects between locations.}
-  scene_graph:        {label: Scene graphs, definition: Graphs of objects and their spatial relations over time.}
-  video:              {label: Video, definition: Camera frames of the user and scene.}
-  language:           {label: Language, definition: Spoken or written user input.}
+observation_modalities:       # ordered, one line each. Per Maithili, Oct 22 2026: object relocations and scene graphs merged into object movements, language removed, activity labels added
+  object_movements: {label: Object movements, definition: Objects moving between locations over time, logged as relocations or as scene-graph changes.}
+  activity_labels:  {label: Activity labels, definition: Names of the activity the user is doing at each step.}
+  video:            {label: Video, definition: Camera frames of the user and scene.}
 
 stages:
   grounding:    {name: Grounding,    definition: Models the intentional structure behind user actions.}

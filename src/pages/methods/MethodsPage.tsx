@@ -174,7 +174,7 @@ export function MethodsPage() {
       </div>
 
       <FilterBar
-        controls={['family', 'action', 'input', 'theme']}
+        controls={['input']}
         years={yearSpan}
         extra={
           <span className="filterbar__extra">

@@ -86,19 +86,19 @@ test('1. each page loads with no console errors', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('2. a family filter set on Methods survives switching to Subproblems, Back restores it, and no L1 paper shows outside the top band', async ({ page }) => {
+test('2. an input filter set on Methods survives switching to Subproblems, Back restores it, and no L1 paper shows outside the top band', async ({ page }) => {
   await page.goto('/#/methods?view=graph');
   await page.getByRole('button', { name: /^Filters/ }).click();
-  await page.getByRole('group', { name: 'Family' }).getByRole('button', { name: 'Goal Inference' }).click();
-  await expect.poll(() => params(page).get('family')).toBe('goal_inference');
+  await page.getByRole('group', { name: 'Input' }).getByRole('button', { name: 'Object movements' }).click();
+  await expect.poll(() => params(page).get('input')).toBe('object_movements');
   await page.getByRole('link', { name: 'Subproblems' }).click();
   await expect(page).toHaveURL(/#\/subproblems/);
-  expect(params(page).get('family')).toBe('goal_inference');
-  await expect(page.getByRole('button', { name: 'Remove filter Family: Goal Inference' })).toBeVisible();
+  expect(params(page).get('input')).toBe('object_movements');
+  await expect(page.getByRole('button', { name: 'Remove filter Input: Object movements' })).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/#\/methods/);
-  expect(params(page).get('family')).toBe('goal_inference');
-  await expect(page.getByRole('button', { name: 'Remove filter Family: Goal Inference' })).toBeVisible();
+  expect(params(page).get('input')).toBe('object_movements');
+  await expect(page.getByRole('button', { name: 'Remove filter Input: Object movements' })).toBeVisible();
 
   // L1 papers sit in the Methods top band only (SPEC §6.2 Level scope).
   await page.goto('/#/methods?view=graph');
@@ -124,6 +124,54 @@ test('2. a family filter set on Methods survives switching to Subproblems, Back 
     await page.goto(`/#/subproblems?sub=${sub}`);
     await expect(page.getByTestId('sub-detail')).toBeVisible();
     await none((id) => `[data-testid="work-${id}"]`, `the ${sub} detail`);
+  }
+});
+
+test('the Filters dropdown offers Object movements, Activity labels, and Video as inputs, with no Family, Action, or Theme section; old family=, action=, and theme= links filter nothing', async ({ page }) => {
+  // Per Maithili, Oct 22 2026 (SPEC §16).
+  const legends = (p: Page) => p.locator('.filterbar__panel legend').allTextContents();
+  await page.goto('/#/methods?view=graph');
+  await page.getByRole('button', { name: /^Filters/ }).click();
+  expect(await legends(page)).toEqual(['Input', 'Years']);
+  const input = page.getByRole('group', { name: 'Input' });
+  await expect(input.getByRole('button')).toHaveText(['Object movements', 'Activity labels', 'Video']);
+  for (const name of ['Family', 'Action', 'Theme']) await expect(page.getByRole('group', { name })).toHaveCount(0);
+  await expect(page.locator('.filterbar__panel')).not.toContainText(/Object relocations|Scene graphs|Language|Goal Inference|Acts|Continual learning/);
+
+  // Object movements keeps the papers that take them in and dims the rest.
+  await input.getByRole('button', { name: 'Object movements' }).click();
+  await expect.poll(() => params(page).get('input')).toBe('object_movements');
+  for (const id of ['gap', 'stot', 'slate-pro', 'streak']) await expect(page.getByTestId(`node-${id}`)).not.toHaveClass(/is-dim/);
+  for (const id of ['nopa', 'watch-and-help', 'din-2025-proactivity']) await expect(page.getByTestId(`node-${id}`)).toHaveClass(/is-dim/);
+  await page.mouse.move(1, 1);
+  await page.getByTestId('node-gap').hover();
+  await expect(page.locator('.litg .hovercard .chip--input')).toHaveText(['Object movements']);
+
+  // The Subproblems page offers the same inputs and nothing else, and no theme chips.
+  await page.goto('/#/subproblems');
+  await page.getByRole('button', { name: /^Filters/ }).click();
+  expect(await legends(page)).toEqual(['Input']);
+  await expect(page.getByRole('group', { name: 'Input' }).getByRole('button')).toHaveText(['Object movements', 'Activity labels', 'Video']);
+  await expect(page.getByRole('group', { name: 'Themes' })).toHaveCount(0);
+
+  // An old link with a removed param shows and filters exactly what a bare link does.
+  const counts = async (qs: string) => {
+    await page.goto(`/#/methods?view=graph${qs}`);
+    await expect(page.getByTestId('node-gap')).toBeVisible();
+    const graph = await page.locator('[data-testid^="node-"]').count();
+    const dim = await page.locator('[data-testid^="node-"].is-dim').count();
+    const chips = await page.locator('.filterbar .chip').count();
+    await page.goto(`/#/methods?view=list${qs}`);
+    const list = await page.getByTestId('methods-list').locator('tr[data-locate]').count();
+    await page.goto(`/#/subproblems?view=matrix${qs}`);
+    const matrix = await page.getByTestId('matrix').locator('[data-locate]').count();
+    return { graph, dim, chips, list, matrix };
+  };
+  const bare = await counts('');
+  expect(bare.dim).toBe(0);
+  for (const qs of ['&family=goal_inference', '&theme=continual_learning', '&action=act', '&family=temporal_imitation&theme=user_interaction&action=ask']) {
+    expect(await counts(qs), qs).toEqual(bare);
+    await expect(page.getByRole('region', { name: 'Filters' })).toContainText('No filters');
   }
 });
 

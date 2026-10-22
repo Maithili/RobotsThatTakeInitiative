@@ -651,7 +651,6 @@ export function EvaluationsPage() {
       </div>
       <RealismPlot rows={paperRows} matches={matches} />
       <FilterBar
-        controls={['family', 'theme']}
         pageFilters={PAGE_PARAMS.filter((k) => active[k])}
         extra={
           <span className="filterbar__extra chips">

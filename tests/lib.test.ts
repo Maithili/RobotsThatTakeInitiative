@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchesGlobal, matchesQuery, parseYears, readGlobalFilters } from '../src/lib/filters.ts';
+import { hasActiveFilters, matchesGlobal, matchesQuery, parseYears, readGlobalFilters } from '../src/lib/filters.ts';
 import { ancestry, subproblemFlow } from '../src/lib/graph.ts';
 import { scorePaper, search } from '../src/lib/search.ts';
 import { categoryItems, itemServes, itemSummary, metricKeyMembers, termTags, unitText } from '../src/lib/metrics.ts';
@@ -12,10 +12,7 @@ describe('URL state', () => {
   it('round-trips global filters', () => {
     const qs = applyParams('', {
       level: ['L1', 'L2'],
-      family: 'temporal_imitation',
-      action: ['act', 'ask'],
-      input: [],
-      theme: 'continual_learning',
+      input: ['object_movements', 'activity_labels'],
       years: '2015-2026',
       q: 'goal inference',
       paper: 'gap',
@@ -25,10 +22,7 @@ describe('URL state', () => {
     const f = readGlobalFilters(new URLSearchParams(qs));
     // `level` selects a Methods level card; it is not a global filter (SPEC §6.2).
     expect(f).toEqual({
-      family: ['temporal_imitation'],
-      action: ['act', 'ask'],
-      input: [],
-      theme: ['continual_learning'],
+      input: ['object_movements', 'activity_labels'],
       years: [2015, 2026],
       q: 'goal inference',
     });
@@ -94,14 +88,21 @@ describe('search scoring', () => {
 });
 
 describe('filters', () => {
-  const m = P('m', 'M', { level: 'L2', method: { knowns: { goal: 'unknown', human_policy: 'unknown' }, family: 'temporal_imitation', action_types: ['act'], inputs: ['scene_graph'] }, search: 'm predicting routine 2023' });
+  const m = P('m', 'M', { level: 'L2', method: { knowns: { goal: 'unknown', human_policy: 'unknown' }, family: 'temporal_imitation', action_types: ['act'], inputs: ['object_movements'] }, themes: ['continual_learning'], search: 'm predicting routine 2023' });
   const s = P('s', 'S', { subproblems: { G1: { status: 'addresses', relation: 'direct', note: '' } } });
   const f = (q: string) => readGlobalFilters(new URLSearchParams(q));
-  it('fails method filters for papers without a method block', () => {
-    expect(matchesGlobal(s, f('family=temporal_imitation'))).toBe(false);
-    expect(matchesGlobal(s, f('action=act'))).toBe(false);
-    expect(matchesGlobal(m, f('action=ask'))).toBe(false);
-    expect(matchesGlobal(m, f('family=temporal_imitation&input=scene_graph'))).toBe(true);
+  it('matches any selected input, and fails the input filter for papers without a method block', () => {
+    expect(matchesGlobal(m, f('input=object_movements'))).toBe(true);
+    expect(matchesGlobal(m, f('input=activity_labels,object_movements'))).toBe(true);
+    expect(matchesGlobal(m, f('input=video'))).toBe(false);
+    expect(matchesGlobal(s, f('input=object_movements'))).toBe(false);
+  });
+  it('ignores the removed family, action, and theme params, so an old link applies no hidden filter (SPEC §16, Oct 22 2026)', () => {
+    const old = f('family=goal_inference&action=ask&theme=user_interaction');
+    expect(old).toEqual(f(''));
+    expect(hasActiveFilters(old)).toBe(false);
+    expect(matchesGlobal(m, old)).toBe(true);
+    expect(matchesGlobal(s, old)).toBe(true);
   });
   it('ignores level=, which only highlights a Methods timeline row', () => {
     expect(matchesGlobal(m, f('level=L1'))).toBe(true);

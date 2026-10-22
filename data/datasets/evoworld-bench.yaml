@@ -9,7 +9,7 @@ sim_or_real: sim
 span: 90 days per scene
 households_or_users: 54 scenes
 observations:
-  - object_relocations
+  - object_movements
   - video
 goal_annotations: partial
 executable: "no"

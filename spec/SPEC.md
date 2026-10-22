@@ -124,11 +124,10 @@ action_types:                 # GAP paper §II
   inform:   {label: Informs, definition: Provides extra information.}
   ask:      {label: Asks, definition: Actively asks questions.}
 
-observation_modalities:       # extend as papers need, one line each
-  object_relocations: {label: Object relocations, definition: Timestamped moves of objects between locations.}
-  scene_graph:        {label: Scene graphs, definition: Graphs of objects and their spatial relations over time.}
-  video:              {label: Video, definition: Camera frames of the user and scene.}
-  language:           {label: Language, definition: Spoken or written user input.}
+observation_modalities:       # ordered, one line each. Per Maithili, Oct 22 2026: object relocations and scene graphs merged into object movements, language removed, activity labels added
+  object_movements: {label: Object movements, definition: Objects moving between locations over time, logged as relocations or as scene-graph changes.}
+  activity_labels:  {label: Activity labels, definition: Names of the activity the user is doing at each step.}
+  video:            {label: Video, definition: Camera frames of the user and scene.}
 
 stages:
   grounding:    {name: Grounding,    definition: Models the intentional structure behind user actions.}
@@ -365,12 +364,12 @@ featured_comparison:          # drives the chart in §8.2
 | `provenance` | string ≤ 140 | yes | Where the tags come from, such as "GAP paper §III-B, Table I" or "Read by MP, Oct 2026". |
 | `method` | object | no | Its presence puts the paper on the Methods page. |
 | `method.knowns` | `{goal, human_policy}`, each `known` or `unknown` | yes, in a method block | Level is derived (§5.4). A paper without a level gets no method block, so the Methods page shows only classified works. |
-| `method.family` | family id | no | L2 only. |
-| `method.action_types` | action type id[] | no | Output side. |
-| `method.inputs` | modality id[] | no | Input side. |
+| `method.family` | family id | no | L2 only. Sets the paper's cluster in the graph. Not a filter (§16). |
+| `method.action_types` | action type id[] | no | Output side. Shown in the drawer, the graph hover card, the list, and the compare view. Not a filter (§16). |
+| `method.inputs` | modality id[] | no | Input side: what the method takes in at run time, from `observation_modalities` (object movements, activity labels, video). Activity labels the method only predicts are output, not input. Each id at most once. |
 | `method.core_strength` | string ≤ 120 | no | One line. |
 | `method.builds_on` | paper id[] | no | Solid "builds on" edges (§5.5). This paper extends those papers. Only Maithili adds these. |
-| `themes` | theme id[] | no | |
+| `themes` | theme id[] | no | Kept in the data. No page filters or shows them since the theme filter was removed (§16). |
 | `tangent` | tangent type id | no | Marks a tangential work. It needs no method block and shows in the literature graph in its category's color at 60% opacity (§7.2). |
 | `subproblems` | map from G1…P2 to `{status, relation, approach?, note}` | no | `note` ≤ 140 says what part of the subproblem the work solves. `approach` must be one of that subproblem's approaches. |
 | `evaluations` | list of evaluation entries | no | Their presence puts the paper on the Evaluations page. |
@@ -409,7 +408,7 @@ method:
   knowns: {goal: unknown, human_policy: unknown}
   family: temporal_imitation
   action_types: [act]
-  inputs: [scene_graph]
+  inputs: [object_movements]
   core_strength: null
   builds_on: [stot]
 subproblems:
@@ -432,7 +431,7 @@ evaluations:
 | `sim_or_real` | `sim`, `real`, or `both` | |
 | `span` | string ≤ 40 or null | Such as "Several weeks". |
 | `households_or_users` | int, string, or null | |
-| `observations` | modality id[] | |
+| `observations` | modality id[] | The same ids as `method.inputs`, each at most once. |
 | `goal_annotations` | `yes`, `partial`, `no`, or null | Goal-inference methods need these. |
 | `executable` | `yes`, `no`, or null | Whether user actions can run in a simulator so robot actions change the state. Closed loop needs this. |
 | `environment` | simulator id or null | The simulator it runs in. |
@@ -454,6 +453,7 @@ The build fails on any of these errors.
 - A link path ends in `.pdf` (ignore case and query string), or any `.pdf` file exists in the repo.
 - `knowns` is `{goal: unknown, human_policy: known}`. That combination is not a level in the formalism.
 - `family` is set on a paper whose level is not L2.
+- `method.inputs` or `observations` lists a modality twice.
 - `builds_on` contains a cycle.
 
 The build prints these warnings and passes.
@@ -510,10 +510,7 @@ Site name (links to Methods), tabs for Methods, Evaluations, and Subproblems, th
 | Param | Scope | Example | Meaning |
 |---|---|---|---|
 | `level` | Methods | `L1` | Selected level card. It highlights that card's timeline row only. |
-| `family` | global | `temporal_imitation` | Family filter |
-| `action` | global | `act,ask` | Action type filter |
-| `input` | global | `scene_graph` | Input modality filter |
-| `theme` | global | `continual_learning` | Theme filter |
+| `input` | global | `object_movements` | Input modality filter |
 | `years` | global | `2015-2026` | Year range |
 | `q` | global | `goal` | Text filter |
 | `paper` | global | `gap` | Open drawer |
@@ -536,10 +533,11 @@ Rules.
   - Methods bottom half (graph and list) and the whole Evaluations page (protocols table, realism plot, dataset "used by" counts): only papers at a focus level. Papers with no level stay out, with one exception: tangential works stay in the graph and list (§7.2).
   - Subproblems page (lists, counts, matrix): papers at a focus level plus papers with no level, such as related works from other fields. Never L1 papers.
   - L1 papers otherwise appear only in the drawer, when opened from the L1 timeline row or from search.
-- Global filters apply on every page. A paper with no method block fails any `family`, `action`, or `input` filter.
+- Global filters apply on every page. A paper with no method block fails the `input` filter.
+- The family, action type, and theme filters were removed on Oct 22, 2026 (§16). Their params (`family`, `action`, `theme`) are ignored, so an old link applies no hidden filter.
 - Page params stay in the URL when the reader switches pages, so coming back restores the view. Each page ignores params that are not its own.
 - Filter changes use `replaceState`. Opening a paper or switching pages uses `pushState`, so Back closes the drawer.
-- Every page has a filter bar that shows active global filters as removable chips, with "Clear all".
+- Every page has a filter bar that shows active global filters as removable chips, with "Clear all". Its Filters dropdown offers only Input (Object movements, Activity labels, Video, in taxonomy order) and, on Methods, Years. A text filter sits beside it.
 - On graphs, filters dim non-matching items to 20% opacity. In lists and tables, filters hide them.
 
 ### 6.3 Search
@@ -619,7 +617,7 @@ Left to right: level cards, then the condensed timeline across the remaining wid
 - **Hover or focus** on a node fades everything except that paper and its direct neighbors, colors its edges with its family's dark stop, and shows a card with short name and year, title, core strength, inputs → action types, and knowns chips.
 - **Click** on a node highlights its ancestors and descendants through the edge types currently shown, dims the rest, sets `focus=`, and opens the drawer. Clicking empty canvas or pressing Esc clears the focus.
 - **Rendering.** SVG. Keep the element count per node small, so 330 nodes stay smooth.
-- **Filter bar**: family, action type, input modality, theme, years. Selecting a level card affects only the top band.
+- **Filter bar**: input modality, years, and text. No family, action type, or theme filter (§16). Selecting a level card affects only the top band.
 - **View toggle**, Graph or List. The list covers the same papers as the graph: L2 methods grouped by family, then tangential works grouped by tangent type, with sortable columns for short name, year, title, inputs, action types, core strength, and count of subproblems addressed. List is the default under 640 px.
 - The graph fits its container width and scales down on narrow screens. The page itself never scrolls horizontally.
 
@@ -702,7 +700,7 @@ With nothing selected, the panel lists all seven subproblems with the count of w
 
 ### 9.3 Themes
 
-Filter chips for the four themes, bound to the global `theme=`.
+None. The theme chips left with the theme filter on Oct 22, 2026 (§16). Themes stay in the paper data.
 
 ### 9.4 Matrix view
 
@@ -740,12 +738,12 @@ Filter chips for the four themes, bound to the global `theme=`.
 
 **npm scripts**: `dev`, `build` (runs `build-data` first), `validate`, `test`, `e2e`, `new-paper`, `preview`.
 
-**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, an `evaluations_exclude` id that is not a paper, an unknown `action_space_complexity` level, an `action_space_complexity` scale with no levels or more than four, an `opacity` on a realism level, an old human level, a loop type with no or an unknown `interaction`, an `interaction` filled on an evaluation, and a non-boolean `secondary`), the `evaluations_exclude` scope, the loop type to interaction mapping, the realism dot taken from main entries only (secondary entries stay in the row), the most complex action space level across a paper's entries and its ramp color, metric box rows (a group as one row, at its first member, dimmed only when no member measures the selected term, tagged ΔV or ΔC by the union of its members' terms), the category filter, `metric=` with a group id, URL state round trip, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
+**Unit tests (Vitest)**: level derivation, every validator rule with a failing fixture (including a metric with an unknown category or group, a group whose members span categories, a group definition over 140 characters, an `evaluations_exclude` id that is not a paper, an unknown `action_space_complexity` level, an `action_space_complexity` scale with no levels or more than four, an `opacity` on a realism level, an old human level, a loop type with no or an unknown `interaction`, an `interaction` filled on an evaluation, a non-boolean `secondary`, and an input or observation modality listed twice), the `evaluations_exclude` scope, the loop type to interaction mapping, the realism dot taken from main entries only (secondary entries stay in the row), the most complex action space level across a paper's entries and its ramp color, metric box rows (a group as one row, at its first member, dimmed only when no member measures the selected term, tagged ΔV or ΔC by the union of its members' terms), the category filter, `metric=` with a group id, URL state round trip, removed `family`, `action`, and `theme` params applying no filter, search scoring, subproblem upstream and downstream sets, ancestry traversal, edge precedence and merging, and `fetch-citations` resolution against mocked API responses (DOI match, arXiv match, exact title match, near-miss title rejected).
 
 **End-to-end tests (Playwright)** on the seed data:
 
 1. Each page loads with no console errors.
-2. Setting the Goal Inference family filter on Methods and switching to Subproblems keeps the filter. Back restores the previous view. No L1 paper appears in the graph, the list view, the protocols table, the realism plot, or the Subproblems page.
+2. Setting the Object movements input filter on Methods and switching to Subproblems keeps the filter. Back restores the previous view. No L1 paper appears in the graph, the list view, the protocols table, the realism plot, or the Subproblems page.
 3. `?paper=gap` opens the drawer, and Esc closes it.
 4. Hovering a timeline chip highlights the same node in the graph. GAP's node sits outside both cluster hulls.
 5. ΔC↑ counts 10 metrics, all categorized. Clicking it keeps all seven metric boxes, dims every row in the Implicit need detection and Coordination fluency boxes, and hides the protocol rows of papers with no ΔC↑ metric, such as ProAct and Anticipatory TAMP. Net actions saved, perturbed actions, and F1 stay at full strength.
@@ -809,8 +807,11 @@ Realism plot axes, revised per Maithili (Oct 22, 2026): "the environment axis sh
 
 Subproblems page, per Maithili (Oct 22, 2026): a subproblem lists only works that solve it, even toward a goal other than proactivity, and never works that assume it away or do not actually solve it. The page applies this as a display rule (§9). A tag counts only when it is `addresses` and names an approach from the taxonomy, so the "Other" group is gone. The seed mapped "partly", "implicitly", and "indirectly" to `addresses`, and those tags name no approach. The paper data is unchanged. The rule takes ten papers off the page: GAP (it names no approach on any subproblem), the five object search papers (SGM, FlowMaps, EvolvingNav, TAP, Mullen 2025), Din 2025, and the three anticipatory planning papers. This supersedes the Oct 22 note above that the object search papers appear on the page. In the same change, the relation tags became a full moon for direct and a half moon for adjacent.
 
+Inputs and filters, per Maithili (Oct 22, 2026): "for inputs combine object relocations and scene graphs into object movements. remove language. add activity labels. remove the action. remove the family and action filters and theme; they aren't doing anything." The input vocabulary is now Object movements, Activity labels, Video. STOT, SLaTe-PRO, STREAK and GAP take object movements. HOMER, HOMER+, HOMER-Noise and EvoWorld-Bench record object movements, and HOMER+ and HOMER-Noise also record activity labels, as their notes state. A paper gets `activity_labels` only when its file or its dataset files say the method takes them in at run time, and no paper file says so yet. COIN's dataset lost `language` and has no observation modality left. The Family, Action and Theme filters, their URL params, and the Subproblems theme chips are gone. They did filter correctly (the graph dimmed and the list, matrix and protocols table hid non-matching papers), but most options matched no paper in the graph: no L2 paper is tagged Times, Initiates, Informs or Asks, and only Continual learning has papers among the themes. Families still set the graph clusters, and action types still show in the drawer, hover cards, list and compare view.
+
 
 1. **Realism levels** in `realism` (§5.1) adapt the levels from that figure to proactive assistance. Maithili reviews them.
 2. **Action space complexity.** Levels set on Oct 22, 2026. STOT, STREAK, SLaTe-PRO, GAP and NOPA are high, derived from counts the papers state (HOMER's 108 objects; HOMER+'s 59 dynamic objects × 93 entities; NOPA uses Watch-And-Help's action space of 167 actions per step on average). Watch-And-Help's help and user-study entries are high from that stated count. Maithili tagged the rest: GLOBE low, ProAct low, the Watch-And-Help watch stage medium, and Talukder 2025, Anticipatory TAMP and Courteous Anticipation high. Din 2025 and the SLaTe-PRO query setting stay null.
 3. **Credit link.** Set `realism.source_url` to the paper this organization comes from once it is public. Until then the plot shows no credit line.
 4. **Tangential works.** Maithili lists them. Candidates from the GAP paper references that fit the two tangent types: Peng et al. 2019 [16] (a CHI design and evaluation of service-robot proactivity), and the works that ask questions [17] and [18]. Both left the database earlier. ADAPT [19] stays on the Subproblems page only and is not tangential, per Maithili.
+5. **"Remove the action."** The action type filter is gone. Action types still show in the drawer, the graph hover card, the Methods list column, and the compare view. Maithili confirms whether those go too. She also confirms the papers left without `activity_labels` whose files mention activities (SLaTe-PRO's activity queries, GLOBE, GAP).

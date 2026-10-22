@@ -19,7 +19,7 @@ method:
     human_policy: unknown
   family: temporal_imitation
   inputs:
-    - scene_graph
+    - object_movements
   core_strength: null
   builds_on:
     - stot

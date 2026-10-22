@@ -6,7 +6,8 @@ links:
   home: null
 sim_or_real: sim
 observations:
-  - object_relocations
+  - object_movements
+  - activity_labels  # notes: "with activity labels" (provenance GLOBE §I, §III-D)
 goal_annotations: "yes"
 based_on:
   - id: homer-plus
