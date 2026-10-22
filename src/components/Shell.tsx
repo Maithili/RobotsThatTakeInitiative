@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { issueUrl, REPO, PAPER_URL } from '../data.ts';
 import { Search } from './Search.tsx';
@@ -96,8 +96,35 @@ const TABS = [
 
 const SITE_TITLE = 'Robots That Take Initiative';
 
+/** Keeps the header on one row in whatever font the reader has, measured rather than guessed from a breakpoint: when
+ *  the tools would wrap under the tabs, the subtitle hides (`data-fit="nosub"`), then the search box narrows too
+ *  (`"tight"`). Phones keep their two-row layout (app.css). */
+function useHeaderFit() {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const tabs = el?.querySelector('.tabs');
+    const tools = el?.querySelector('.header__tools');
+    if (!el || !tabs || !tools) return;
+    const fit = () => {
+      for (const step of ['', 'nosub', 'tight']) {
+        if (step) el.dataset.fit = step;
+        else delete el.dataset.fit;
+        if (tools.getBoundingClientRect().top < tabs.getBoundingClientRect().bottom) return;
+      }
+    };
+    fit();
+    // The header spans the window, so only a window resize or a late font changes what fits.
+    window.addEventListener('resize', fit);
+    void document.fonts?.ready.then(fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+  return ref;
+}
+
 export function Shell({ children }: { children: ReactNode }) {
   const { pathname, search } = useLocation();
+  const headerRef = useHeaderFit();
   // Each page names itself in the tab title, so history entries and bookmarks say which page they are.
   useEffect(() => {
     const tab = TABS.find((t) => t.path === pathname);
@@ -112,7 +139,7 @@ export function Shell({ children }: { children: ReactNode }) {
         Skip to content
       </a>
       <header className="header">
-        <div className="header__inner">
+        <div className="header__inner" ref={headerRef}>
           <Link to={{ pathname: '/methods', search }} className="brand" aria-label="Robots That Take Initiative: Methods">
             <span className="brand__mark" aria-hidden="true" />
             <span className="brand__name">

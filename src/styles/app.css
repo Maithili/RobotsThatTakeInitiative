@@ -1220,10 +1220,14 @@ tr.clickable:hover td {
 }
 
 /* ---------- responsive ---------- */
-/* Below this the brand's subtitle would push the header tools onto a second row. */
-@media (max-width: 1099px) {
-  .brand__sub {
+/* Set by Shell when the header tools would wrap under the tabs in the reader's font: first the subtitle goes, then
+   the search box narrows. Phones (below) have their own two-row header. */
+@media (min-width: 761px) {
+  .header__inner[data-fit] .brand__sub {
     display: none;
+  }
+  .header__inner[data-fit='tight'] .search__input {
+    width: 160px;
   }
 }
 @media (max-width: 980px) {
@@ -1857,23 +1861,23 @@ tr.clickable:hover td {
 .subnav__node.is-dim {
   opacity: 0.35;
 }
-/* Narrow nodes (phones): the name takes the full width and may break inside a long word rather than overflow; the
-   badge sits on the corner. */
+/* Narrow nodes (phones): the name takes the full width, smaller, and may break inside a long word rather than
+   overflow; the badge has its own row at the bottom right, so no font can push the name under it. */
 .subnav__canvas.is-compact .subnav__node {
-  padding: 6px 7px;
+  padding: 5px 6px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
 }
 .subnav__canvas.is-compact .subnav__name {
   grid-column: 1 / -1;
-  font-size: 11.5px;
+  grid-row: 1;
+  font-size: 11px;
   hyphens: auto;
   overflow-wrap: anywhere;
 }
 .subnav__canvas.is-compact .subnav__badge {
-  position: absolute;
-  top: -8px;
-  right: -6px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
+  grid-column: 2;
+  grid-row: 2;
 }
 .themes {
   display: flex;

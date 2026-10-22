@@ -14,8 +14,14 @@ const HEAD = 30;
 const HEAD_V = 44;
 /** SPEC §9.1: left to right on wide screens, top to bottom under 900 px. */
 const WIDE = '(min-width: 900px)';
-/** Top to bottom, nodes narrower than this move their badge to the corner so the name has the full width. */
+/** Top to bottom, nodes narrower than this go compact (phones): the name gets the node's full width, whatever the
+ *  reader's font, and the badge moves to its own row at the bottom of a taller node. Narrower gaps between nodes and
+ *  stage edges leave the names more room. */
 const COMPACT = 120;
+const NODE_H_COMPACT = 80;
+const STACK_COMPACT = 20;
+const MARGIN = 20;
+const MARGIN_COMPACT = 12;
 
 type Flow = 'up' | 'down' | 'dim' | 'none';
 const ARROW: Record<Flow, string> = { up: 'subnav-arrow-up', down: 'subnav-arrow-down', dim: 'subnav-arrow', none: 'subnav-arrow' };
@@ -33,6 +39,7 @@ function layout(width: number, horizontal: boolean) {
   let input: Box;
   let output: Box;
   let height: number;
+  let compact = false;
   if (horizontal) {
     const maxN = Math.max(...stages.map((s) => s.subs.length));
     const stageW = (width - 2 * IO - 4 * GAP) / stages.length;
@@ -48,21 +55,24 @@ function layout(width: number, horizontal: boolean) {
     input = { x: 0, y: height / 2 - 20, w: IO - 8, h: 40 };
     output = { x: width - IO + 8, y: height / 2 - 20, w: IO - 8, h: 40 };
   } else {
+    const maxN = Math.max(...stages.map((s) => s.subs.length));
+    compact = (width - MARGIN - STACK * (maxN - 1)) / maxN < COMPACT;
+    const [nodeH, stack, margin] = compact ? [NODE_H_COMPACT, STACK_COMPACT, MARGIN_COMPACT] : [NODE_H, STACK, MARGIN];
     let y = 48;
     input = { x: width / 2 - 28, y: 0, w: 56, h: 34 };
     for (const st of stages) {
       const n = st.subs.length;
-      const nodeW = Math.min((width - 20 - STACK * (n - 1)) / n, 200);
-      const rowW = n * nodeW + (n - 1) * STACK;
-      const h = HEAD_V + NODE_H + GAP;
+      const nodeW = Math.min((width - margin - stack * (n - 1)) / n, 200);
+      const rowW = n * nodeW + (n - 1) * stack;
+      const h = HEAD_V + nodeH + GAP;
       stageBoxes.push({ id: st.id, name: st.name, x: 0, y, w: width, h });
-      st.subs.forEach((s, j) => nodes.set(s, { x: (width - rowW) / 2 + j * (nodeW + STACK), y: y + HEAD_V, w: nodeW, h: NODE_H }));
+      st.subs.forEach((s, j) => nodes.set(s, { x: (width - rowW) / 2 + j * (nodeW + stack), y: y + HEAD_V, w: nodeW, h: nodeH }));
       y += h + GAP;
     }
     output = { x: width / 2 - 28, y, w: 56, h: 34 };
     height = y + 34;
   }
-  return { nodes, stageBoxes, input, output, height };
+  return { nodes, stageBoxes, input, output, height, compact };
 }
 
 /**
@@ -110,7 +120,7 @@ export function SubproblemNavigator({ selected, onSelect, counts }: { selected: 
   // Read on every render: a viewport resize changes the canvas width, which re-renders through the observer above.
   const horizontal = typeof matchMedia === 'undefined' ? width >= 840 : matchMedia(WIDE).matches;
   const L = useMemo(() => layout(width, horizontal), [width, horizontal]);
-  const compact = !horizontal && Math.min(...[...L.nodes.values()].map((b) => b.w)) < COMPACT;
+  const { compact } = L;
   const dependsOn = useMemo(() => Object.fromEntries(SUBS.map((s) => [s, tx.subproblems[s].depends_on])), []);
   const flow = selected ? subproblemFlow(selected, dependsOn) : null;
   const role = (s: SubproblemId) => (!flow ? '' : s === selected ? 'is-selected' : flow.upstream.has(s) ? 'is-up' : flow.downstream.has(s) ? 'is-down' : 'is-dim');
