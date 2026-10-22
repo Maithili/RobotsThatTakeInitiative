@@ -10,7 +10,11 @@ import type { DbPaper, LevelId } from '../../schema.ts';
 import { useUrl } from '../../state/url.ts';
 import { BAND_LEVELS, FOCUS_LEVELS, TIMELINE_START } from './constants.ts';
 
-const PRE_W = 86;
+/** The "Before" band's width: this share of a year band's, within PRE_W_MIN and PRE_W_MAX. It stays narrower than
+ *  a year band but wide enough for a short name, where the timeline has room. */
+const PRE_SHARE = 0.8;
+const PRE_W_MIN = 96;
+const PRE_W_MAX = 124;
 const BREAK_W = 12;
 const CHIP_H = 20;
 const CHIP_GAP = 3;
@@ -31,10 +35,11 @@ export function makeBands(width: number, minYear: number, maxYear: number): Band
   const last = Math.max(maxYear, TIMELINE_START);
   const hasPre = minYear < TIMELINE_START;
   const nYears = last - TIMELINE_START + 1;
-  const start = hasPre ? PRE_W + BREAK_W : 0;
+  const preW = Math.max(PRE_W_MIN, Math.min(PRE_W_MAX, (PRE_SHARE * (width - BREAK_W)) / (nYears + PRE_SHARE)));
+  const start = hasPre ? preW + BREAK_W : 0;
   const bw = Math.max(1, (width - start) / nYears);
   const bands: Band[] = [];
-  if (hasPre) bands.push({ key: 'pre', x0: 0, x1: PRE_W, from: minYear, to: TIMELINE_START - 1, label: `Before ${TIMELINE_START}`, pre: true });
+  if (hasPre) bands.push({ key: 'pre', x0: 0, x1: preW, from: minYear, to: TIMELINE_START - 1, label: `Before ${TIMELINE_START}`, pre: true });
   for (let i = 0; i < nYears; i++) {
     const y = TIMELINE_START + i;
     bands.push({ key: String(y), x0: start + i * bw, x1: start + (i + 1) * bw, from: y, to: y, label: String(y), pre: false });
@@ -172,7 +177,8 @@ function TimelineRow({
               onClick={() => url.set({ paper: p.id, focus: inGraph ? p.id : null }, { push: true })}
             >
               <span className="tl__chip-name">{p.short_name}</span>
-              {band.pre && <span className="tl__chip-year">{p.year}</span>}
+              {/* In the shared "Before" band each chip names its year, unless its short name already does. */}
+              {band.pre && !p.short_name.includes(String(p.year)) && <span className="tl__chip-year">{p.year}</span>}
             </button>
           );
         })}

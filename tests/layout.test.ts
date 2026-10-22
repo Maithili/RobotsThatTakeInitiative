@@ -15,6 +15,7 @@ import {
   layoutLiterature,
   layoutPapers,
   linkedPapers,
+  pickTipSpot,
   placeGroupLabels,
   placeLabels,
   shapeInside,
@@ -268,5 +269,28 @@ describe('graph nodes and labels', () => {
     ];
     expect([...placeLabels(row.map((d) => ({ ...d, w: d.id === 'a' ? 60 : 40, tier: 2 as const })), row, 1)].sort()).toEqual(['a', 'b']);
     expect([...placeLabels(row.map((d) => ({ ...d, w: d.id === 'a' ? 64 : 40, tier: 2 as const })), row, 1)]).toEqual(['b']);
+  });
+});
+
+describe('hover card placement', () => {
+  const W = 400;
+  const H = 300;
+  it('takes the spot that covers least, the earlier one on a tie, and counts a spot\'s own cost', () => {
+    const dot = { x0: 0, y0: 0, x1: 20, y1: 20, cost: 1000 };
+    expect(pickTipSpot([[0, 0], [200, 100]], 100, 50, W, H, [dot])).toEqual([200, 100]);
+    expect(pickTipSpot([[150, 10], [200, 100]], 100, 50, W, H, [dot])).toEqual([150, 10]);
+    expect(pickTipSpot([[150, 10, 50], [200, 100]], 100, 50, W, H, [])).toEqual([200, 100]);
+  });
+  it('keeps the card inside the viewport, and avoids spots that leave it', () => {
+    expect(pickTipSpot([[350, 280]], 100, 50, W, H, [])).toEqual([W - 100 - 6, H - 50 - 6]);
+    expect(pickTipSpot([[350, 10], [100, 10]], 100, 50, W, H, [{ x0: 100, y0: 0, x1: 120, y1: 20, cost: 300 }])).toEqual([100, 10]);
+  });
+  it('costs an edge by the share of it covered, and a partial box by the share of it covered', () => {
+    const line = Array.from({ length: 10 }, (_, i) => [10 + i * 20, 100] as [number, number]);
+    // Covering the whole line (150) costs more than covering a 100-cost box.
+    expect(pickTipSpot([[10, 80], [10, 200]], 250, 50, W, H, [{ x0: 10, y0: 200, x1: 20, y1: 210, cost: 100 }], [line])).toEqual([10, 200]);
+    // Clipping a tenth of a partial 150-cost name costs 15, less than a 30-cost dot.
+    const name = { x0: 90, y0: 10, x1: 290, y1: 20, cost: 150, partial: true };
+    expect(pickTipSpot([[10, 10], [250, 100]], 100, 50, W, H, [name, { x0: 250, y0: 100, x1: 260, y1: 110, cost: 30 }])).toEqual([10, 10]);
   });
 });

@@ -1470,3 +1470,151 @@ test('the overview groups subproblems by stage; the matrix keys its gaps', async
   await page.getByRole('checkbox', { name: 'Gaps' }).check();
   await expect(page.getByTestId('gaps-legend')).toContainText('Gap: a method that does not address the subproblem.');
 });
+
+// QA: Methods
+
+type QaBox = { x0: number; y0: number; x1: number; y1: number };
+const qaMeets = (a: QaBox, b: QaBox) => a.x0 < b.x1 - 0.5 && b.x0 < a.x1 - 0.5 && a.y0 < b.y1 - 0.5 && b.y0 < a.y1 - 0.5;
+const qaInside = (a: QaBox, b: QaBox) => a.x0 >= b.x0 - 0.5 && a.x1 <= b.x1 + 0.5 && a.y0 >= b.y0 - 0.5 && a.y1 <= b.y1 + 0.5;
+
+/** Screen boxes of the graph's hover card, its viewport, every dot by paper id, and every shown paper label. */
+async function qaGraphBoxes(page: Page) {
+  return page.evaluate(() => {
+    const box = (e: Element) => {
+      const b = e.getBoundingClientRect();
+      return { x0: b.left, y0: b.top, x1: b.right, y1: b.bottom };
+    };
+    const card = document.querySelector('.litg .hovercard');
+    return {
+      card: card ? box(card) : null,
+      view: box(document.querySelector('.litg__viewport')!),
+      controls: box(document.querySelector('.litg__controls')!),
+      dots: Object.fromEntries([...document.querySelectorAll('.litg__node')].map((n) => [n.getAttribute('data-id')!, box(n.querySelector('.litg__dot')!)])),
+      labels: Object.fromEntries([...document.querySelectorAll('.litg__label')].map((l) => [l.getAttribute('data-id')!, box(l)])),
+      names: [...document.querySelectorAll('.litg__hull-label, .litg__cat-label')].map((t) => ({ id: t.getAttribute('data-testid')!, box: box(t) })),
+    };
+  });
+}
+
+test('QA: a node card stays inside the graph and off its paper; GAP\'s card leaves the Goal Inference cluster and GAP\'s linked papers in view', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  await settleGraph(page);
+  const card = page.locator('.litg .hovercard');
+  await page.getByTestId('node-gap').hover();
+  await expect(card).toBeVisible();
+  const linked = await page.locator('.litg__node.is-hl').evaluateAll((els) => els.map((e) => e.getAttribute('data-id')!));
+  expect(linked).toContain('nopa');
+  const b = await qaGraphBoxes(page);
+  for (const id of new Set([...linked, 'watch-and-help', 'nopa', 'proact'])) {
+    expect(qaMeets(b.card!, b.dots[id]), `GAP's card covers ${id}`).toBe(false);
+    if (b.labels[id]) expect(qaMeets(b.card!, b.labels[id]), `GAP's card covers the label of ${id}`).toBe(false);
+  }
+  expect(qaInside(b.card!, b.view)).toBe(true);
+
+  const ids = await page.locator('.litg__node').evaluateAll((els) => els.map((e) => e.getAttribute('data-id')!));
+  for (const id of ids) {
+    const node = page.getByTestId(`node-${id}`);
+    const name = (await node.getAttribute('aria-label'))!.split(', ')[0];
+    await node.hover();
+    // The card for this paper, shown once it has its spot (not the previous paper's card).
+    await expect(card.locator('.hovercard__top strong')).toHaveText(name);
+    await expect(card).toBeVisible();
+    const s = await qaGraphBoxes(page);
+    expect(qaInside(s.card!, s.view), `${id}'s card leaves the graph`).toBe(true);
+    expect(qaMeets(s.card!, s.dots[id]), `${id}'s card covers its own dot`).toBe(false);
+    expect(qaMeets(s.card!, s.labels[id]), `${id}'s card covers its own label`).toBe(false);
+  }
+});
+
+test('QA: a family name\'s card stays inside the graph and leaves the family\'s papers in view', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  await settleGraph(page);
+  const card = page.locator('.litg .hovercard');
+  for (const [fam, members] of [
+    ['goal_inference', ['watch-and-help', 'nopa', 'proact']],
+    ['temporal_imitation', ['stot', 'slate-pro', 'streak', 'globe', 'saavedra-2026-scene-graphs']],
+  ] as const) {
+    await page.getByTestId(`hull-label-${fam}`).hover();
+    await expect(card.locator('strong').first()).toHaveText(fam === 'goal_inference' ? 'Goal Inference' : 'Temporal Imitation');
+    await expect(card).toBeVisible();
+    const b = await qaGraphBoxes(page);
+    expect(qaInside(b.card!, b.view), `${fam} card leaves the graph`).toBe(true);
+    for (const id of members) expect(qaMeets(b.card!, b.dots[id]), `${fam} card covers ${id}`).toBe(false);
+    await page.mouse.move(1, 1);
+  }
+});
+
+test('QA: one Esc after clicking a node closes the drawer and clears the focus', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  await settleGraph(page);
+  await page.getByTestId('node-stot').click();
+  await expect(page.getByTestId('drawer')).toBeVisible();
+  expect(params(page).get('focus')).toBe('stot');
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('drawer')).toBeHidden();
+  await expect.poll(() => params(page).get('focus')).toBeNull();
+  await expect(page.locator('.litg__node.is-dim')).toHaveCount(0);
+});
+
+test('QA: family names and category labels never overlap, at 390 px or zoomed out, and the zoom controls cover no paper', async ({ page }) => {
+  const check = async (where: string) => {
+    const b = await qaGraphBoxes(page);
+    b.names.forEach((a, i) => b.names.slice(i + 1).forEach((c) => expect(qaMeets(a.box, c.box), `${where}: ${a.id} / ${c.id}`).toBe(false)));
+    return b;
+  };
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/#/methods?view=graph');
+  await settleGraph(page);
+  const b = await check('390 px');
+  for (const [id, box] of [...Object.entries(b.dots), ...Object.entries(b.labels)]) expect(qaMeets(box, b.controls), `the zoom controls cover ${id}`).toBe(false);
+
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('/#/methods?view=graph');
+  await settleGraph(page);
+  const scale = async () => Number((await page.locator('.litg__svg > g').first().getAttribute('transform'))!.match(/scale\(([\d.]+)\)/)![1]);
+  const fitted = await scale();
+  for (let i = 0; i < 4; i++) {
+    await page.getByTestId('zoom-out').click();
+    await settleGraph(page);
+  }
+  // Zooming out stops at half the fitted zoom.
+  expect(await scale()).toBeCloseTo(fitted / 2, 2);
+  await check('zoomed out');
+});
+
+test('QA: the "Before 2021" band shows whole short names and does not repeat a year the name holds', async ({ page }) => {
+  await page.goto('/#/methods');
+  for (const id of ['huang-2016-anticipatory', 'koppula-2016-anticipating']) {
+    const chip = page.getByTestId(`tchip-${id}`);
+    await expect(chip.locator('.tl__chip-name')).toHaveText(/\b2016$/);
+    await expect(chip.locator('.tl__chip-year')).toHaveCount(0);
+    expect(await chip.locator('.tl__chip-name').evaluate((e) => e.scrollWidth - e.clientWidth), `${id} is cut off`).toBeLessThanOrEqual(0);
+  }
+});
+
+test('QA: hovering an edge highlights it; a hidden focused tangential work dims nothing; list text keeps proportional numerals', async ({ page }) => {
+  await page.goto('/#/methods?view=graph');
+  await settleGraph(page);
+  await page.getByTestId('node-stot').scrollIntoViewIfNeeded();
+  const hit = page.locator('[data-edge="slate-pro|stot"], [data-edge="stot|slate-pro"]').first();
+  const mid = await hit.evaluate((p: SVGPathElement) => {
+    const q = p.getPointAtLength(p.getTotalLength() / 2);
+    const m = p.getScreenCTM()!;
+    return { x: q.x * m.a + q.y * m.c + m.e, y: q.x * m.b + q.y * m.d + m.f };
+  });
+  await page.mouse.move(mid.x, mid.y);
+  await expect(page.locator('.litg .hovercard')).toContainText('SLaTe-PRO builds on STOT');
+  await expect(page.getByTestId('edge-stot-slate-pro')).toHaveClass(/\bis-hl\b/);
+  await page.mouse.move(1, 1);
+  await expect(page.getByTestId('edge-stot-slate-pro')).not.toHaveClass(/\bis-hl\b/);
+
+  await page.goto('/#/methods?view=graph&focus=flowmaps&tangents=0');
+  await expect(page.getByTestId('node-flowmaps')).toHaveCount(0);
+  await expect(page.locator('.litg__node')).not.toHaveCount(0);
+  await expect(page.locator('.litg__node.is-dim')).toHaveCount(0);
+
+  await page.goto('/#/methods?view=list');
+  const row = page.locator('[data-testid="methods-list"] tr[data-locate="watch-and-help"]');
+  await expect(row.locator('.title-cell')).toHaveCSS('font-variant-numeric', 'normal');
+  await expect(row.locator('td.num').first()).toHaveCSS('font-variant-numeric', 'tabular-nums');
+});

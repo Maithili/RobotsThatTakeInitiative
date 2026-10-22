@@ -1024,6 +1024,66 @@ export function placeLabels(
   return shown;
 }
 
+// ---------- hover cards ----------
+
+/** Space kept between a hover card and the edges of the graph's viewport. */
+export const TIP_PAD = 6;
+/** What covering a whole highlighted edge costs a hover card; covering part of one costs that share of it. */
+const TIP_LINE_COST = 150;
+
+/** A screen box with the cost of covering it with a hover card. */
+export interface CoverBox {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  cost: number;
+  /** Costs only the share of it that is covered, as for a long name a card may clip at one end. */
+  partial?: boolean;
+}
+
+/**
+ * Picks where a hover card of size w × h goes in a viewport of size W × H, in screen pixels. Each candidate is a
+ * left and top, with an optional cost of its own (a less natural side). A spot also costs what it covers: boxes by
+ * their cost, and each edge (given as sample points) by the share of its points it covers, plus a large cost per
+ * pixel it leaves the viewport. The cheapest wins, ties going to the earlier candidate, and the result is clamped
+ * into the viewport.
+ */
+export function pickTipSpot(
+  cands: [number, number, number?][],
+  w: number,
+  h: number,
+  W: number,
+  H: number,
+  covers: CoverBox[],
+  lines: [number, number][][] = [],
+): [number, number] {
+  let best: [number, number] = cands[0] ? [cands[0][0], cands[0][1]] : [TIP_PAD, TIP_PAD];
+  let bestCost = Infinity;
+  cands.forEach(([x, y, own = 0], i) => {
+    const x1 = x + w;
+    const y1 = y + h;
+    let c = own + 1e4 * (Math.max(0, TIP_PAD - x) + Math.max(0, x1 - (W - TIP_PAD)) + Math.max(0, TIP_PAD - y) + Math.max(0, y1 - (H - TIP_PAD)));
+    for (const b of covers) {
+      if (!(b.x0 < x1 && x < b.x1 && b.y0 < y1 && y < b.y1)) continue;
+      const share = b.partial ? ((Math.min(x1, b.x1) - Math.max(x, b.x0)) * (Math.min(y1, b.y1) - Math.max(y, b.y0))) / Math.max(1, (b.x1 - b.x0) * (b.y1 - b.y0)) : 1;
+      c += b.cost * share;
+    }
+    for (const pts of lines) {
+      if (!pts.length) continue;
+      const inside = pts.filter(([px, py]) => px > x && px < x1 && py > y && py < y1).length;
+      c += (TIP_LINE_COST * inside) / pts.length;
+    }
+    c += i * 0.01;
+    if (c < bestCost) {
+      bestCost = c;
+      best = [x, y];
+    }
+  });
+  const fit = (v: number, size: number, room: number) => Math.max(TIP_PAD, Math.min(v, room - size - TIP_PAD));
+  return [fit(best[0], w, W), fit(best[1], h, H)];
+}
+
 // ---------- tangential category labels ----------
 
 /** A box in screen pixels at the current zoom. */
@@ -1072,6 +1132,8 @@ function segmentMeetsBox(ax: number, ay: number, bx: number, by: number, b: Scre
 }
 
 const meets = (a: ScreenBox, b: ScreenBox) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+/** True if two screen boxes overlap. */
+export const boxesMeet = meets;
 
 /**
  * Places one text label per tangential category, near its papers (SPEC §7.2), at zoom k in screen space. Each
