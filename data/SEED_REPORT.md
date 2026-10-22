@@ -240,7 +240,7 @@ FlowMaps' CEG baseline is cited to Wang et al., and its TAP-LGX baseline is TAP.
 
 ### Metrics
 
-80 metrics are new, and the existing three gained direction and unit. `data/METRIC_MAPPING_REVIEW.md` lists each with its papers and the proposed terms and kind, and flags the mappings that are a stretch.
+80 metrics were added, and the existing three gained direction and unit. Maithili reviewed the mapping on Oct 22, 2026. She sorted the metrics into seven categories and dropped computational metrics and ProAct's saved steps, leaving 77. The thread-entropy metrics moved to ProAct's offline entry with the rest of its coordination metrics.
 
 ### Judgment calls
 
@@ -251,17 +251,15 @@ FlowMaps' CEG baseline is cited to Wang et al., and its TAP-LGX baseline is TAP.
 
 ### Could not place
 
-- **SGM's link.** SGM prints no landing page, arXiv id, or DOI, so `links.paper` is null. EvolvingNav's reference list prints arXiv 2305.17537 for SGM, which Maithili may want to confirm and use.
 - **Din 2025's link.** The thesis prints only a ProQuest number, so `links.paper` is null.
 - **TAP's code.** The only code link is an anonymous review link, so it is left out.
 - **EvolvingNav's external benchmarks.** FindingDory, GOAT-Bench, and the cross-environment navigation tasks follow their own protocols, and the paper does not define their metrics, so they have no entry.
 - **Rudra et al., Dhakal et al. 2023, and Wang et al.** These are cited or used as baselines often but are not in the database.
-- **GLOBE's venue.** The librarian read the RO-MAN 2026 (IEEE) version. The file still says arXiv with the arXiv link, since no DOI was given.
 
-### Open questions for Maithili
+### Answers from Maithili (Oct 22, 2026)
 
-1. Should the search metrics map to ΔC↓ at all, given that no search paper has a user (`data/METRIC_MAPPING_REVIEW.md`, item 1)?
-2. Should Talukder 2025 and Courteous Anticipation take `inputs: [scene_graph]`? Both encode the planner state as a scene graph, but it is not an observed modality.
-3. Should Courteous Anticipation list Talukder 2025 in `baselines` for its Selfish A.P. baseline?
-4. Should GLOBE's venue become IEEE RO-MAN 2026?
-5. Should partial `addresses` tags on the search papers become `skips`, to keep them off the Subproblems page?
+1. Search metrics stay in the data with their mapping. The search papers are tangential and off the Evaluations page, and PredictiveGraphs is excluded from it as an object search paper.
+2. Inputs for the anticipatory planning papers stay empty (not decided).
+3. No `baselines` link from Courteous Anticipation to Talukder 2025.
+4. GLOBE's venue is IEEE RO-MAN 2026, and SGM uses the arXiv id 2305.17537 from EvolvingNav's reference list.
+5. Search papers stay on the Subproblems page: every relevant paper appears there.

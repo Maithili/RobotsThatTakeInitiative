@@ -204,8 +204,8 @@ metrics:                      # RTI §IV-A2. Add more as papers come in.
     direction: higher
     unit: fraction
 
-  # ---- Added Oct 21, 2026 from the librarian's answers. Terms and kinds are proposals for Maithili's
-  # ---- review (data/METRIC_MAPPING_REVIEW.md). Grouped by the papers that use them.
+  # ---- Added Oct 21, 2026 from the librarian's answers. Categories per Maithili, Oct 22, 2026.
+  # ---- Grouped by the papers that use them.
 
   # Activity and object prediction, offline (GLOBE)
   activity_f1:
