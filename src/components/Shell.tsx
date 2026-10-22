@@ -94,8 +94,15 @@ const TABS = [
   { path: '/subproblems', label: 'Subproblems' },
 ];
 
+const SITE_TITLE = 'Robots That Take Initiative';
+
 export function Shell({ children }: { children: ReactNode }) {
-  const { search } = useLocation();
+  const { pathname, search } = useLocation();
+  // Each page names itself in the tab title, so history entries and bookmarks say which page they are.
+  useEffect(() => {
+    const tab = TABS.find((t) => t.path === pathname);
+    document.title = tab ? `${tab.label} · ${SITE_TITLE}` : SITE_TITLE;
+  }, [pathname]);
   return (
     <>
       <a href="#main" className="skip-link" onClick={(e) => {

@@ -1313,3 +1313,160 @@ test.describe('QA: Evaluations', () => {
     expect(ratio).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+// QA: Subproblems and site
+
+test('the drawer marks "assumes given" with its own glyph, not the half moon, and keys the strip with a legend', async ({ page }) => {
+  await page.goto('/#/subproblems?paper=nopa');
+  const drawer = page.getByTestId('drawer');
+  const strip = drawer.locator('.sub-strip');
+  // NOPA assumes goal space given, addresses goal inference, and skips goal anticipation.
+  const cell = strip.getByRole('listitem').filter({ hasText: 'Goal space' });
+  await expect(cell).toHaveAttribute('title', 'Goal-space representation: assumes given');
+  const assumes = cell.getByRole('img', { name: 'Assumes given' });
+  await expect(assumes).toBeVisible();
+  // A ring with a center dot: two circles and no half-disc path, unlike the adjacent half moon.
+  await expect(assumes.locator('circle')).toHaveCount(2);
+  await expect(assumes.locator('path')).toHaveCount(0);
+  await expect(strip.getByRole('listitem').filter({ hasText: 'Goal inference' }).getByRole('img', { name: 'Addresses' })).toBeVisible();
+  await expect(strip.getByRole('listitem').filter({ hasText: 'Cost model' })).toHaveAttribute('title', 'Cost modeling: not tagged');
+  // Every glyph in the strip sits on one line, however many lines its label takes.
+  const tops = await strip.locator('[data-status]').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+  expect(new Set(tops).size).toBe(1);
+  const legend = drawer.getByRole('list', { name: 'Status legend' });
+  for (const label of ['Addresses', 'Assumes given', 'Skips', 'Blank: not tagged']) await expect(legend).toContainText(label);
+  // The compare view shows the same legend.
+  await page.goto('/#/subproblems?compare=nopa,stot');
+  await page.getByTestId('compare-tray').getByRole('button', { name: /^Compare/ }).click();
+  await expect(page.getByRole('dialog', { name: 'Compare papers' }).getByRole('list', { name: 'Status legend' })).toContainText('Assumes given');
+});
+
+test('closing the drawer with the close button returns focus to the row that opened it, every time', async ({ page }) => {
+  await page.goto('/#/subproblems?sub=A2');
+  await page.getByTestId('work-proact').click();
+  await page.getByTestId('drawer').getByRole('button', { name: 'Close' }).click();
+  await expect(page.getByTestId('drawer')).toHaveCount(0);
+  await expect(page.getByTestId('work-proact')).toBeFocused();
+  // A later close goes back to the new opener, not a stale one.
+  await page.getByTestId('work-nopa').click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('work-nopa')).toBeFocused();
+  // Opening another paper from the page while the drawer is open makes that row the opener.
+  await page.getByTestId('work-proact').click();
+  await page.getByTestId('work-nopa').click();
+  await expect.poll(() => params(page).get('paper')).toBe('nopa');
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('work-nopa')).toBeFocused();
+});
+
+test('the drawer sends readers to the subproblem and to the paper on the Subproblems page', async ({ page }) => {
+  // From the matrix, a subproblem link leaves the matrix to show that subproblem.
+  await page.goto('/#/subproblems?view=matrix&paper=nopa');
+  await page.getByTestId('drawer').locator('.sub-rows').getByRole('link', { name: 'Goal inference' }).click();
+  await expect(page.getByTestId('sub-detail')).toContainText('Goal inference');
+  expect(params(page).get('view')).toBeNull();
+  // "Appears on" selects a subproblem that lists the paper, so its row is on screen.
+  await page.goto('/#/methods?paper=nopa');
+  await page.getByTestId('drawer').getByRole('link', { name: 'Subproblems', exact: true }).click();
+  await expect.poll(() => params(page).get('sub')).toBe('A2');
+  await expect(page.getByTestId('work-nopa')).toBeVisible();
+  await page.goto('/#/subproblems?sub=G2&paper=saycan');
+  await page.getByTestId('drawer').getByRole('link', { name: 'Subproblems', exact: true }).click();
+  await expect.poll(() => params(page).get('sub')).toBe('G1');
+  await expect(page.getByTestId('work-saycan')).toBeVisible();
+});
+
+test("relation chips that empty a list say so once, with a way back; database statements ignore the reader's filters", async ({ page }) => {
+  // Goal-space representation has only adjacent works.
+  await page.goto('/#/subproblems?sub=G1&relation=direct');
+  const detail = page.getByTestId('sub-detail');
+  await expect(detail).toContainText('No work in the database addresses goal-space representation directly.');
+  await expect(detail.getByRole('link', { name: /Suggest a paper/ })).toHaveCount(1);
+  await detail.getByRole('button', { name: 'Show all relations' }).click();
+  await expect.poll(() => params(page).get('relation')).toBeNull();
+  await expect(page.getByTestId('work-saycan')).toBeVisible();
+  // Goal inference has direct works: a text filter that leaves only adjacent ones must not say the database has none.
+  await page.goto('/#/subproblems?sub=A2&q=amado');
+  await expect(page.getByTestId('work-amado-2018-lstm')).toBeVisible();
+  await expect(detail).not.toContainText('directly');
+  await page.goto('/#/subproblems?sub=A2&q=amado&relation=direct');
+  await expect(page.getByTestId('relation-empty')).toHaveText('No direct work addresses it under these filters. Show all relations.');
+  await expect(detail.getByRole('link', { name: /Suggest a paper/ })).toHaveCount(0);
+});
+
+test('the subproblem map stays legible top to bottom: arrowheads clear the stage names, names fit their nodes', async ({ page }) => {
+  for (const width of [360, 600, 899]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/#/subproblems?sub=A1');
+    const canvas = page.locator('.subnav__canvas');
+    await expect(canvas).toHaveClass(/is-vertical/);
+    const problems = await canvas.evaluate((c) => {
+      const box = c.getBoundingClientRect();
+      const out: string[] = [];
+      const labels = [...c.querySelectorAll('.subnav__stage-name')].map((l) => ({ name: l.textContent, r: l.getBoundingClientRect() }));
+      for (const e of c.querySelectorAll<SVGPathElement>('.subnav__edges path')) {
+        const len = e.getTotalLength();
+        // The arrowhead: the last 12 px of the edge. The line before it may pass behind a name.
+        for (let d = 0; d <= 12; d += 2) {
+          const p = e.getPointAtLength(Math.max(0, len - d));
+          const x = box.left + p.x;
+          const y = box.top + p.y;
+          for (const l of labels) if (x >= l.r.left && x <= l.r.right && y >= l.r.top && y <= l.r.bottom) out.push(`arrowhead on ${l.name}`);
+        }
+      }
+      for (const n of c.querySelectorAll<HTMLElement>('.subnav__node')) {
+        const name = n.querySelector<HTMLElement>('.subnav__name')!;
+        const badge = n.querySelector<HTMLElement>('.subnav__badge')!.getBoundingClientRect();
+        const nr = n.getBoundingClientRect();
+        const tr = document.createRange();
+        tr.selectNodeContents(name);
+        for (const r of tr.getClientRects()) {
+          if (r.right > nr.right - 1 || r.bottom > nr.bottom - 1) out.push(`${name.textContent} overflows its node`);
+          if (r.left < badge.right && badge.left < r.right && r.top < badge.bottom && badge.top < r.bottom) out.push(`${name.textContent} under its badge`);
+        }
+      }
+      return [...new Set(out)];
+    });
+    expect(problems, `at ${width} px`).toEqual([]);
+  }
+  // From 900 px the map runs left to right (SPEC §9.1).
+  await page.setViewportSize({ width: 900, height: 900 });
+  await page.goto('/#/subproblems');
+  await expect(page.locator('.subnav__canvas')).not.toHaveClass(/is-vertical/);
+});
+
+test('shell: page titles, a one-row header at 1024 px, and search results that stay on screen with the year once', async ({ page }) => {
+  for (const [path, title] of [['methods', 'Methods'], ['evaluations', 'Evaluations'], ['subproblems', 'Subproblems']]) {
+    await page.goto(`/#/${path}`);
+    await expect(page).toHaveTitle(`${title} · Robots That Take Initiative`);
+  }
+  await page.setViewportSize({ width: 1024, height: 800 });
+  await page.goto('/#/subproblems');
+  const tabs = (await page.locator('.tabs').boundingBox())!;
+  const tools = (await page.locator('.header__tools').boundingBox())!;
+  expect(Math.abs(tabs.y + tabs.height / 2 - (tools.y + tools.height / 2))).toBeLessThan(4);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/#/subproblems');
+  await page.keyboard.press('/');
+  await page.keyboard.type('amado');
+  const results = page.getByRole('listbox', { name: 'Search results' });
+  const box = (await results.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(390);
+  const first = results.getByRole('option').first();
+  await expect(first.locator('.search__name')).toHaveText('Amado 2018a');
+  await expect(first.locator('.search__year')).toHaveCount(0);
+});
+
+test('the overview groups subproblems by stage; the matrix keys its gaps', async ({ page }) => {
+  await page.goto('/#/subproblems');
+  await expect(page.locator('.overview__stage-name')).toHaveText(['Grounding', 'Anticipation', 'Planning']);
+  const planning = page.getByRole('region', { name: 'Planning' });
+  await expect(planning.locator('.overview__row')).toHaveCount(2);
+  await expect(planning).toContainText('Coordinated action selection');
+  await page.goto('/#/subproblems?view=matrix');
+  await expect(page.getByTestId('gaps-legend')).toHaveCount(0);
+  await page.getByRole('checkbox', { name: 'Gaps' }).check();
+  await expect(page.getByTestId('gaps-legend')).toContainText('Gap: a method that does not address the subproblem.');
+});

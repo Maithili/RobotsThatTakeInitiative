@@ -129,7 +129,7 @@ tangent_types:                # works next to the algorithmic core. Maithili add
 
 statuses:
   addresses: {glyph: "●", label: Addresses}
-  assumes:   {glyph: "◐", label: Assumes given}
+  assumes:   {glyph: "⊙", label: Assumes given}   # not ◐: the Subproblems page uses the half moon for "adjacent"
   skips:     {glyph: "○", label: Skips}
 
 relations:

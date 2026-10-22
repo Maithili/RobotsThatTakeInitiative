@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { datasetById, fixUrl, pagesFor, paperById, paperLabel, SUBS, tx } from '../data.ts';
+import { datasetById, fixUrl, pagesFor, paperById, paperLabel, solves, SUBS, tx } from '../data.ts';
 import { citationSourceText } from '../lib/citations.ts';
 import { inMethodsGraph } from '../lib/scope.ts';
 import type { DbPaper } from '../schema.ts';
-import { applyParams, useUrl } from '../state/url.ts';
+import { applyParams, useUrl, type ParamUpdates, type UrlState } from '../state/url.ts';
 import { ActionChip, InputChip, KnownsChips, LevelChip, LoopPill, MetricChip, TangentTag } from './Chip.tsx';
 import { Missing } from './EmptyState.tsx';
-import { CaptureGlyph, StatusGlyph } from './StatusGlyph.tsx';
+import { locatePaper } from './Search.tsx';
+import { CaptureGlyph, StatusGlyph, StatusLegend } from './StatusGlyph.tsx';
 
 export const MAX_COMPARE = 3;
 
@@ -87,6 +88,19 @@ function CopyBibtex({ bibtex }: { bibtex: string }) {
 }
 
 const PAGE_LABEL = { methods: 'Methods', evaluations: 'Evaluations', subproblems: 'Subproblems' } as const;
+
+/** URL params that focus a page on the paper (SPEC §6.4 item 8). On Methods, its graph node. On Subproblems, a
+ *  subproblem that lists it (the selected one if it does, else the first), or its row when the matrix is showing. */
+function focusParams(pg: keyof typeof PAGE_LABEL, p: DbPaper, url: UrlState): ParamUpdates {
+  if (pg === 'methods') return inMethodsGraph(p) ? { focus: p.id } : {};
+  if (pg === 'subproblems' && url.get('view') !== 'matrix') {
+    const cur = url.get('sub');
+    if (SUBS.some((s) => s === cur && solves(p, s))) return {};
+    const first = SUBS.find((s) => solves(p, s));
+    return first ? { sub: first } : {};
+  }
+  return {};
+}
 
 function DrawerBody({ p }: { p: DbPaper }) {
   const url = useUrl();
@@ -182,20 +196,25 @@ function DrawerBody({ p }: { p: DbPaper }) {
       {subs.length > 0 && (
         <Section title="Subproblems">
           <div className="sub-strip" role="list">
-            {SUBS.map((s) => (
-              <span key={s} className="sub-strip__cell" role="listitem" title={tx.subproblems[s].name}>
-                <span className="sub-strip__id">{tx.subproblems[s].short}</span>
-                <StatusGlyph status={p.subproblems?.[s]?.status} />
-              </span>
-            ))}
+            {SUBS.map((s) => {
+              const st = p.subproblems?.[s]?.status;
+              return (
+                <span key={s} className="sub-strip__cell" role="listitem" title={`${tx.subproblems[s].name}: ${st ? tx.statuses[st].label.toLowerCase() : 'not tagged'}`}>
+                  <span className="sub-strip__id">{tx.subproblems[s].short}</span>
+                  <StatusGlyph status={st} />
+                </span>
+              );
+            })}
           </div>
+          <StatusLegend className="sub-legend" />
           <ul className="sub-rows">
             {subs.map((s) => {
               const t = p.subproblems![s]!;
               return (
                 <li key={s}>
                   <StatusGlyph status={t.status} />
-                  <Link to={{ pathname: '/subproblems', search: applyParams(url.search, { sub: s }) }} className="sub-rows__id" title={tx.subproblems[s].name}>
+                  {/* The matrix view has no detail panel, so the link leaves it to show the subproblem. */}
+                  <Link to={{ pathname: '/subproblems', search: applyParams(url.search, { sub: s, ...(url.get('view') === 'matrix' ? { view: null } : {}) }) }} className="sub-rows__id" title={tx.subproblems[s].name}>
                     {tx.subproblems[s].short}
                   </Link>
                   <span className="sub-rows__note">{t.note}</span>
@@ -275,10 +294,8 @@ function DrawerBody({ p }: { p: DbPaper }) {
             {pages.map((pg) => (
               <Link
                 key={pg}
-                to={{
-                  pathname: `/${pg}`,
-                  search: applyParams(url.search, pg === 'methods' && inMethodsGraph(p) ? { focus: p.id } : {}),
-                }}
+                to={{ pathname: `/${pg}`, search: applyParams(url.search, focusParams(pg, p, url)) }}
+                onClick={pg === 'subproblems' ? () => locatePaper(p.id) : undefined}
               >
                 {PAGE_LABEL[pg]}
               </Link>
@@ -309,29 +326,40 @@ export function PaperDrawer() {
 
   useEffect(() => {
     if (!p) return;
-    if (!returnFocus.current) returnFocus.current = document.activeElement as HTMLElement;
+    // The opener: the element that had focus, unless the paper was opened from inside the drawer (a lineage link).
+    const a = document.activeElement as HTMLElement | null;
+    if (a && a !== document.body && !panel.current?.contains(a)) returnFocus.current = a;
+    else returnFocus.current ??= a;
     panel.current?.focus({ preventScroll: true });
     panel.current?.scrollTo({ top: 0 });
   }, [p]);
 
+  // However the drawer closes (Esc, the close button, Back), focus goes back to what opened it, unless the reader has
+  // already moved focus elsewhere. The target is cleared either way, so a later close never jumps to a stale one.
+  useEffect(() => {
+    if (id) return;
+    const el = returnFocus.current;
+    returnFocus.current = null;
+    const lost = !document.activeElement || document.activeElement === document.body;
+    if (lost && el && document.contains(el)) el.focus({ preventScroll: true });
+  }, [id]);
+
+  const { set } = url;
+  const close = useCallback(() => set({ paper: null }), [set]);
+
   useEffect(() => {
     if (!id) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented) {
-        url.set({ paper: null });
-        const el = returnFocus.current;
-        returnFocus.current = null;
-        if (el && document.contains(el)) el.focus({ preventScroll: true });
-      }
+      if (e.key === 'Escape' && !e.defaultPrevented) close();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [id, url]);
+  }, [id, close]);
 
   if (!id) return null;
   return (
     <aside ref={panel} className="drawer" role="dialog" aria-modal="false" aria-labelledby="drawer-title" tabIndex={-1} data-testid="drawer">
-      <button type="button" className="drawer__close icon-btn" aria-label="Close" onClick={() => url.set({ paper: null })}>
+      <button type="button" className="drawer__close icon-btn" aria-label="Close" onClick={close}>
         ×
       </button>
       {p ? (

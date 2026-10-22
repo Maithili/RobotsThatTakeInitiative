@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { papers } from '../data.ts';
 import { search } from '../lib/search.ts';
+import { yearAfterName } from '../lib/year.ts';
 import { useUrl } from '../state/url.ts';
 import { LevelChip } from './Chip.tsx';
 
@@ -106,7 +107,8 @@ export function Search() {
               onMouseEnter={() => setActive(i)}
             >
               <span className="search__name">{p.short_name}</span>
-              <span className="search__year">{p.year}</span>
+              {/* The year once: short names such as "Amado 2018a" already carry it. */}
+              {yearAfterName(p) !== null && <span className="search__year">{p.year}</span>}
               <LevelChip level={p.level} />
               <span className="search__title">{p.title}</span>
             </li>

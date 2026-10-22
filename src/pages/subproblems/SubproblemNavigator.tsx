@@ -10,6 +10,12 @@ const GAP = 14;
 /** Space between nodes of one stage, wide enough for the arrow between them. */
 const STACK = 24;
 const HEAD = 30;
+/** Top to bottom, edges into a stage cross its name strip. It is tall enough that their arrowheads land below the name. */
+const HEAD_V = 44;
+/** SPEC §9.1: left to right on wide screens, top to bottom under 900 px. */
+const WIDE = '(min-width: 900px)';
+/** Top to bottom, nodes narrower than this move their badge to the corner so the name has the full width. */
+const COMPACT = 120;
 
 type Flow = 'up' | 'down' | 'dim' | 'none';
 const ARROW: Record<Flow, string> = { up: 'subnav-arrow-up', down: 'subnav-arrow-down', dim: 'subnav-arrow', none: 'subnav-arrow' };
@@ -46,11 +52,11 @@ function layout(width: number, horizontal: boolean) {
     input = { x: width / 2 - 28, y: 0, w: 56, h: 34 };
     for (const st of stages) {
       const n = st.subs.length;
-      const nodeW = Math.min((width - 24 - STACK * (n - 1)) / n, 200);
+      const nodeW = Math.min((width - 20 - STACK * (n - 1)) / n, 200);
       const rowW = n * nodeW + (n - 1) * STACK;
-      const h = HEAD + NODE_H + GAP;
+      const h = HEAD_V + NODE_H + GAP;
       stageBoxes.push({ id: st.id, name: st.name, x: 0, y, w: width, h });
-      st.subs.forEach((s, j) => nodes.set(s, { x: (width - rowW) / 2 + j * (nodeW + STACK), y: y + HEAD, w: nodeW, h: NODE_H }));
+      st.subs.forEach((s, j) => nodes.set(s, { x: (width - rowW) / 2 + j * (nodeW + STACK), y: y + HEAD_V, w: nodeW, h: NODE_H }));
       y += h + GAP;
     }
     output = { x: width / 2 - 28, y, w: 56, h: 34 };
@@ -101,8 +107,10 @@ export function SubproblemNavigator({ selected, onSelect, counts }: { selected: 
     setWidth(el.clientWidth);
     return () => ro.disconnect();
   }, []);
-  const horizontal = width >= 860;
+  // Read on every render: a viewport resize changes the canvas width, which re-renders through the observer above.
+  const horizontal = typeof matchMedia === 'undefined' ? width >= 840 : matchMedia(WIDE).matches;
   const L = useMemo(() => layout(width, horizontal), [width, horizontal]);
+  const compact = !horizontal && Math.min(...[...L.nodes.values()].map((b) => b.w)) < COMPACT;
   const dependsOn = useMemo(() => Object.fromEntries(SUBS.map((s) => [s, tx.subproblems[s].depends_on])), []);
   const flow = selected ? subproblemFlow(selected, dependsOn) : null;
   const role = (s: SubproblemId) => (!flow ? '' : s === selected ? 'is-selected' : flow.upstream.has(s) ? 'is-up' : flow.downstream.has(s) ? 'is-down' : 'is-dim');
@@ -132,7 +140,7 @@ export function SubproblemNavigator({ selected, onSelect, counts }: { selected: 
           <span className="swatch swatch--down" aria-hidden="true" /> Downstream (feeds)
         </span>
       </div>
-      <div ref={ref} className={`subnav__canvas${horizontal ? '' : ' is-vertical'}`} style={{ height: L.height }}>
+      <div ref={ref} className={`subnav__canvas${horizontal ? '' : ' is-vertical'}${compact ? ' is-compact' : ''}`} style={{ height: L.height }}>
         {L.stageBoxes.map((st) => (
           <div key={st.id} className={`subnav__stage subnav__stage--${st.id}`} style={{ left: st.x, top: st.y, width: st.w, height: st.h }} title={tx.stages[st.id].definition}>
             <span className="subnav__stage-name">{st.name}</span>

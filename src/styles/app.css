@@ -394,13 +394,6 @@ button.chip:hover {
 .glyph--empty::before {
   content: '';
 }
-.glyph--box {
-  width: 10px;
-  height: 10px;
-  border: 1px dashed var(--border-strong);
-  border-radius: 2px;
-  vertical-align: -1px;
-}
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -932,6 +925,8 @@ tr.clickable:hover td {
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* Glyphs share one line at the bottom, however many lines a label takes. */
+  justify-content: space-between;
   gap: 2px;
   background: var(--surface-2);
   border-radius: 4px;
@@ -947,6 +942,10 @@ tr.clickable:hover td {
   padding: 0 2px;
   hyphens: auto;
   overflow-wrap: anywhere;
+}
+.sub-legend {
+  font-size: 11.5px;
+  color: var(--text-2);
 }
 .sub-rows {
   list-style: none;
@@ -1085,6 +1084,9 @@ tr.clickable:hover td {
 .modal__head .icon-btn {
   margin-left: auto;
 }
+.compare__legend {
+  margin-bottom: 8px;
+}
 .compare-table {
   border-collapse: collapse;
   width: 100%;
@@ -1218,6 +1220,12 @@ tr.clickable:hover td {
 }
 
 /* ---------- responsive ---------- */
+/* Below this the brand's subtitle would push the header tools onto a second row. */
+@media (max-width: 1099px) {
+  .brand__sub {
+    display: none;
+  }
+}
 @media (max-width: 980px) {
   .search__input {
     width: 160px;
@@ -1239,6 +1247,11 @@ tr.clickable:hover td {
   }
   .search__input {
     width: 100%;
+  }
+  /* The box starts at the left edge here, so the results open rightward and stay on screen. */
+  .search__results {
+    left: 0;
+    right: auto;
   }
   .header {
     position: static;
@@ -1732,8 +1745,13 @@ tr.clickable:hover td {
 }
 .subnav__stage-name {
   position: absolute;
-  left: 10px;
+  left: 6px;
   top: 6px;
+  /* Above the edges, on the stage's own color: top to bottom, edges into the stage pass behind the name. */
+  z-index: 2;
+  background: inherit;
+  padding: 0 4px;
+  border-radius: 3px;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1839,11 +1857,45 @@ tr.clickable:hover td {
 .subnav__node.is-dim {
   opacity: 0.35;
 }
+/* Narrow nodes (phones): the name takes the full width and may break inside a long word rather than overflow; the
+   badge sits on the corner. */
+.subnav__canvas.is-compact .subnav__node {
+  padding: 6px 7px;
+}
+.subnav__canvas.is-compact .subnav__name {
+  grid-column: 1 / -1;
+  font-size: 11.5px;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+.subnav__canvas.is-compact .subnav__badge {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+}
 .themes {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+}
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.overview__stage {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.overview__stage-name {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
 }
 .overview__list {
   display: flex;
@@ -2044,7 +2096,8 @@ tr.clickable:hover td {
 .matrix__btn:hover {
   background: var(--surface-2);
 }
-.matrix.is-gaps .matrix__cell.is-filled {
+/* Dim the dot, not the cell, so the row's rule stays unbroken. */
+.matrix.is-gaps .matrix__cell.is-filled .matrix__btn {
   opacity: 0.25;
 }
 .matrix.is-gaps .matrix__cell.is-empty.is-method .matrix__btn {
@@ -2095,7 +2148,37 @@ tr.clickable:hover td {
   border-radius: 6px;
 }
 .matrix__legend {
-  margin: 0 0 6px;
+  margin: 0;
+  padding: 8px 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  align-items: center;
+}
+.matrix__gap-key {
+  display: inline-block;
+  width: 18px;
+  height: 12px;
+  margin-right: 2px;
+  outline: 2px dashed var(--downstream);
+  outline-offset: -2px;
+  border-radius: 4px;
+  vertical-align: -2px;
+}
+/* Names, not figures: tabular figures would widen their hyphens in some fonts. */
+.matrix__paper,
+.matrix__col .th-sort {
+  font-variant-numeric: normal;
+}
+@media (max-width: 639px) {
+  /* The sticky paper column leaves room for the subproblem columns. */
+  .matrix__corner {
+    min-width: 0;
+  }
+  .matrix__paper {
+    white-space: normal;
+    min-width: 120px;
+  }
 }
 
 

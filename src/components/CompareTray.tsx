@@ -3,7 +3,7 @@ import { paperById, SUBS, tx } from '../data.ts';
 import type { DbPaper } from '../schema.ts';
 import { useUrl } from '../state/url.ts';
 import { ActionChip, InputChip, KnownsChips, LevelChip, LoopPill, MetricChip } from './Chip.tsx';
-import { StatusGlyph } from './StatusGlyph.tsx';
+import { StatusGlyph, StatusLegend } from './StatusGlyph.tsx';
 
 interface Row {
   label: string;
@@ -97,6 +97,7 @@ function CompareView({ ps, onClose }: { ps: DbPaper[]; onClose: () => void }) {
             ×
           </button>
         </header>
+        <StatusLegend className="sub-legend compare__legend" />
         <div className="scroll-x">
           <table className="compare-table">
             <thead>

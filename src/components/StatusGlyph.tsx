@@ -2,27 +2,41 @@ import { tx } from '../data.ts';
 
 type Status = 'addresses' | 'assumes' | 'skips';
 
+/** Status shapes, drawn so all three have the same size whatever font the reader has: a filled disc for addresses, a
+ *  ring with a center dot (⊙) for assumes given, and an empty ring for skips. "Assumes given" is not a half moon,
+ *  since the Subproblems page uses the half moon for the adjacent relation. */
+function StatusShape({ status }: { status: Status }) {
+  return (
+    <svg className="moon" viewBox="0 0 10 10" aria-hidden="true">
+      <circle cx="5" cy="5" r="4.2" fill={status === 'addresses' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.3" />
+      {status === 'assumes' && <circle cx="5" cy="5" r="1.7" fill="currentColor" />}
+    </svg>
+  );
+}
+
 export function StatusGlyph({ status, className }: { status: Status | null | undefined; className?: string }) {
   if (!status) return <span className={['glyph', 'glyph--empty', className].filter(Boolean).join(' ')} aria-label="Not tagged" />;
   const s = tx.statuses[status];
   return (
-    <span className={['glyph', `glyph--${status}`, className].filter(Boolean).join(' ')} role="img" aria-label={s.label} title={s.label}>
-      {s.glyph}
+    <span className={['glyph', `glyph--${status}`, className].filter(Boolean).join(' ')} role="img" aria-label={s.label} title={s.label} data-status={status}>
+      <StatusShape status={status} />
     </span>
   );
 }
 
+/** The key to the status glyphs, for every view that shows them (SPEC §11): the drawer strip and the compare view. */
 export function StatusLegend({ className }: { className?: string }) {
   return (
     <ul className={['legend', className].filter(Boolean).join(' ')} aria-label="Status legend">
       {(Object.keys(tx.statuses) as Status[]).map((k) => (
         <li key={k}>
-          <StatusGlyph status={k} /> {tx.statuses[k].label}
+          <span className={`glyph glyph--${k}`} aria-hidden="true">
+            <StatusShape status={k} />
+          </span>{' '}
+          {tx.statuses[k].label}
         </li>
       ))}
-      <li>
-        <span className="glyph glyph--empty glyph--box" aria-hidden="true" /> Not tagged
-      </li>
+      <li className="muted">Blank: not tagged</li>
     </ul>
   );
 }

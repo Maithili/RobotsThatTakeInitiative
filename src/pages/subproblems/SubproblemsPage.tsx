@@ -5,7 +5,7 @@ import { FilterBar } from '../../components/FilterBar.tsx';
 import { Math as TeX } from '../../components/Math.tsx';
 import { RelationGlyph, StatusGlyph } from '../../components/StatusGlyph.tsx';
 import { papers, solves, solvesAny, SUBS, tx } from '../../data.ts';
-import { matchesGlobal } from '../../lib/filters.ts';
+import { hasActiveFilters, matchesGlobal } from '../../lib/filters.ts';
 import { yearAfterName } from '../../lib/year.ts';
 import { inSubproblems } from '../../lib/scope.ts';
 import { SUBPROBLEM_IDS, type DbPaper, type SubproblemId, type SubproblemTag } from '../../schema.ts';
@@ -23,27 +23,35 @@ function isSub(s: string | null): s is SubproblemId {
 // the taxonomy.
 
 function Overview({ visible, onSelect }: { visible: DbPaper[]; onSelect: (s: SubproblemId) => void }) {
+  // Grouped by stage, in the order of the map above it.
   return (
     <div className="overview">
-      <ul className="plain overview__list">
-        {SUBS.map((s) => {
-          const n = visible.filter((p) => solves(p, s)).length;
-          const S = tx.subproblems[s];
-          return (
-            <li key={s}>
-              <button type="button" className="overview__row" onClick={() => onSelect(s)}>
-                <span className="overview__name">
-                  <strong>{S.name}</strong>
-                  <span className="small muted">{S.challenge}</span>
-                </span>
-                <span className="overview__counts small">
-                  {n} {n === 1 ? 'work' : 'works'}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      {Object.entries(tx.stages).map(([st, stage]) => (
+        <section key={st} className="overview__stage" aria-labelledby={`overview-${st}`}>
+          <h2 id={`overview-${st}`} className="overview__stage-name">
+            {stage.name}
+          </h2>
+          <ul className="plain overview__list">
+            {SUBS.filter((s) => tx.subproblems[s].stage === st).map((s) => {
+              const n = visible.filter((p) => solves(p, s)).length;
+              const S = tx.subproblems[s];
+              return (
+                <li key={s}>
+                  <button type="button" className="overview__row" onClick={() => onSelect(s)}>
+                    <span className="overview__name">
+                      <strong>{S.name}</strong>
+                      <span className="small muted">{S.challenge}</span>
+                    </span>
+                    <span className="overview__counts small">
+                      {n} {n === 1 ? 'work' : 'works'}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))}
     </div>
   );
 }
@@ -51,15 +59,25 @@ function Overview({ visible, onSelect }: { visible: DbPaper[]; onSelect: (s: Sub
 function Detail({ sub, visible }: { sub: SubproblemId; visible: DbPaper[] }) {
   const url = useUrl();
   const S = tx.subproblems[sub];
+  const name = S.name.toLowerCase();
   const relations = url.list('relation');
-  const tagged = visible
-    .filter((p) => solves(p, sub))
-    .map((p) => ({ p, t: p.subproblems![sub]! }))
-    .filter((x) => !relations.length || relations.includes(x.t.relation));
+  const listed = visible.filter((p) => solves(p, sub)).map((p) => ({ p, t: p.subproblems![sub]! }));
+  const tagged = listed.filter((x) => !relations.length || relations.includes(x.t.relation));
   const groups = Object.entries(S.approaches)
     .map(([id, label]) => ({ id, label, rows: tagged.filter((x) => x.t.approach === id) }))
     .filter((g) => g.rows.length);
-  const anyDirect = visible.some((p) => solves(p, sub) && p.subproblems?.[sub]?.relation === 'direct');
+  // Statements about the database ignore the reader's filters; statements about the list follow them.
+  const inDb = papers.filter((p) => inSubproblems(p) && solves(p, sub));
+  const anyDirect = inDb.some((p) => p.subproblems?.[sub]?.relation === 'direct');
+  const globalFilters = hasActiveFilters(url.filters);
+  // Only the relation chips empty the list: say so once, with a way back, instead of a second "Suggest a paper".
+  const showAll =
+    relations.length > 0 && listed.length > 0 && tagged.length === 0 ? (
+      <button type="button" className="linkish" onClick={() => url.set({ relation: null })}>
+        Show all relations
+      </button>
+    ) : null;
+  const relLabels = relations.map((r) => tx.relations[r as SubproblemTag['relation']]?.label.toLowerCase() ?? r).join(' or ');
 
   return (
     <div className="detail" data-testid="sub-detail">
@@ -84,9 +102,23 @@ function Detail({ sub, visible }: { sub: SubproblemId; visible: DbPaper[] }) {
           ))}
         </span>
       </div>
-      {!anyDirect && <EmptyState compact>No work in the database addresses {S.name.toLowerCase()} directly.</EmptyState>}
+      {inDb.length > 0 && !anyDirect && (
+        <EmptyState compact>
+          No work in the database addresses {name} directly.{showAll && <> {showAll}.</>}
+        </EmptyState>
+      )}
       {groups.length === 0 ? (
-        <EmptyState>No work that addresses it matches these filters.</EmptyState>
+        inDb.length === 0 ? (
+          <EmptyState>No work in the database addresses {name} yet.</EmptyState>
+        ) : showAll ? (
+          anyDirect && (
+            <p className="empty empty--compact" data-testid="relation-empty">
+              No {relLabels} work addresses it{globalFilters ? ' under these filters' : ''}. {showAll}.
+            </p>
+          )
+        ) : (
+          <EmptyState>No work that addresses it matches these filters.</EmptyState>
+        )
       ) : (
         groups.map((g) => (
           <section key={g.id} className="approach">
@@ -135,7 +167,14 @@ function Matrix({ visible }: { visible: DbPaper[] }) {
   return (
     <div className="matrix-wrap" data-testid="matrix">
       <p className="small muted matrix__legend">
-        <StatusGlyph status="addresses" /> Addresses the subproblem. Blank otherwise.
+        <span>
+          <StatusGlyph status="addresses" /> Addresses the subproblem. Blank otherwise.
+        </span>
+        {gaps && (
+          <span data-testid="gaps-legend">
+            <span className="matrix__gap-key" aria-hidden="true" /> Gap: a method that does not address the subproblem.
+          </span>
+        )}
       </p>
       <table className={`matrix${gaps ? ' is-gaps' : ''}`}>
         <thead>
