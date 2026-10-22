@@ -353,7 +353,7 @@ featured_comparison:          # drives the chart in §8.2
 | `method.core_strength` | string ≤ 120 | no | One line. |
 | `method.builds_on` | paper id[] | no | Solid "builds on" edges (§5.5). This paper extends those papers. Only Maithili adds these. |
 | `themes` | theme id[] | no | |
-| `tangent` | tangent type id | no | Marks a tangential work. It needs no method block and shows in the literature graph at half opacity (§7.2). |
+| `tangent` | tangent type id | no | Marks a tangential work. It needs no method block and shows in the literature graph in its category's color at 60% opacity (§7.2). |
 | `subproblems` | map from G1…P2 to `{status, relation, approach?, note}` | no | `note` ≤ 140 says what part of the subproblem the work solves. `approach` must be one of that subproblem's approaches. |
 | `evaluations` | list of evaluation entries | no | Their presence puts the paper on the Evaluations page. |
 
@@ -552,7 +552,7 @@ Every list, graph, and panel has an empty state that says what is missing and li
 
 ## 7. Methods page
 
-The page has two parts. A top band holds the level cards, a condensed timeline, and the legend. Below it, the main graphic is an interconnected literature graph.
+The page has two parts. A top band holds the level cards and a condensed timeline. Below it, the main graphic is an interconnected literature graph, with its legend directly above it.
 
 ### 7.1 Top band
 
@@ -728,7 +728,7 @@ Filter chips for the four themes, bound to the global `theme=`.
 11. On Methods, the STOT to SLaTe-PRO edge is solid. With "Show all citation lines" off, no dotted edge shows until a node is hovered. The fit button brings every node into view. No drawn edge, in the seed data or the synthetic fixture, passes within clearance of a node that isn't one of its ends. A unit test over the edge geometry checks this; it would catch Watch-And-Help to NOPA passing through ProAct.
 12. On Evaluations, the datasets and evaluation setups table has no VirtualHome row, and VirtualHome appears in the environment column. The protocols table has 12 rows and exactly one GAP row, shaded and first, showing three loop-type pills and the categories Change in user actions and Object movement prediction, and it stays first after sorting by year, name, metric categories, and loop type.
 13. The realism plot shows GAP's dot at task-specific policy and adaptive simulated user, at simulator opacity. Hovering it shows a card with a working Paper link.
-14. With a fixture tangential paper, its graph node renders at half opacity, and unchecking "Show tangential works" removes it and its edges.
+14. With a fixture tangential paper, its graph node renders in its category's color at 60% opacity, and unchecking "Show tangential works" removes it and its edges.
 15. The protocols table shows category labels, one chip per category in category order, and no metric names. The Task performance tab lists "Goal precision, recall, and F1" as one item with its three member names, and selecting the tab sets `category=` and filters the table. A category chip in the table selects its tab, and `metric=speedup` opens the Task performance tab and filters the table. PredictiveGraphs has no row and no realism dot but stays on the graph and the Subproblems page. ProAct has no closed-loop pill.
 
 **CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes: `npm ci`, validate, typecheck, unit tests, build, end-to-end tests.
