@@ -841,6 +841,10 @@ test('the legend sits in the graph panel directly above the graph; the top band 
   expect(gb.y - (lb.y + lb.height)).toBeLessThan(4);
   // The timeline takes the width the legend left.
   const band = (await page.locator('.mtop').boundingBox())!;
+  // The graph panel has its title above the legend, and the page has no lede.
+  await expect(page.getByTestId('graph-title')).toHaveText('Literature that addresses and is tangentially related to Unprompted Proactivity');
+  expect((await page.getByTestId('graph-title').boundingBox())!.y).toBeLessThan(lb.y);
+  await expect(page.locator('.page__intro .lede')).toHaveCount(0);
   // The graph comes first; the band with the level cards and timeline sits below it.
   expect(band.y).toBeGreaterThanOrEqual(gb.y + gb.height);
   const axis = (await page.locator('.mtop__axis').boundingBox())!;

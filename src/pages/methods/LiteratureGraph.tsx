@@ -39,6 +39,9 @@ import { familyHue, FOCUS_LEVELS, FRAMEWORK_HUE, tangentHue, TANGENTS_IN_GRAPH, 
 import { GraphLegend } from './GraphLegend.tsx';
 import { CAT_DY, HULL_DY, LABEL_DX, LABEL_DY, measureLabels, sameMetrics, YEAR_DX, type LabelMetrics, type MeasureInput } from './labelMetrics.ts';
 
+/** Graph panel title (SPEC §7.2), per Maithili, Oct 22 2026. */
+export const GRAPH_TITLE = 'Literature that addresses and is tangentially related to Unprompted Proactivity';
+
 /** Screen margin kept around the content when fitting. */
 const FIT_MARGIN = 20;
 /** Extra room kept on the right when fitting, for the zoom controls in the top right corner, so they cover no
@@ -935,8 +938,12 @@ export function LiteratureGraph({
     <div
       className={`litg${hl ? ' is-hovering' : ''}`}
       data-testid="literature-graph"
+      aria-labelledby="litg-title"
       style={hotInk ? ({ '--hot': hotInk } as CSSProperties) : undefined}
     >
+      <h2 className="litg__title" id="litg-title" data-testid="graph-title">
+        {GRAPH_TITLE}
+      </h2>
       <GraphLegend framework={nodes.has(FRAMEWORK_PAPER)} />
       <div
         className="litg__viewport"

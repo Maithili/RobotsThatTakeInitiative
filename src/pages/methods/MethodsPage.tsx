@@ -171,9 +171,6 @@ export function MethodsPage() {
     <div className="page page--wide">
       <div className="page__intro">
         <h1>Methods</h1>
-        <p className="lede">
-          Proactive methods by level of proactivity: what the robot knows about the goal g and the human policy π<sup>h</sup>.
-        </p>
       </div>
 
       <FilterBar

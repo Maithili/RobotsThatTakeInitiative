@@ -588,6 +588,7 @@ Left to right: level cards, then the condensed timeline across the remaining wid
 
 - **Scope.** The core of the graph is algorithmic: every paper at a level in `FOCUS_LEVELS` (L2) with a method block and no `tangent`. L1 papers appear only in the top band (§6.2 Level scope).
 - **Semi-tangential families.** A family with `semi_tangential: true` (Implicit Cues to start) gets its own cluster like any family, drawn at 75% opacity: dots, hull, label, and its edges. Hover brings it to full opacity. Its papers count as L2 everywhere else.
+- **Title.** The graph panel opens with the heading "Literature that addresses and is tangentially related to Unprompted Proactivity" (per Maithili, Oct 22 2026). The page itself has no lede under its h1.
 - **Legend**, directly above the graph inside the graph panel (a compact row that wraps on narrow screens), per Maithili. It shows:
   - the three edge styles with checkboxes bound to `edges=` (builds on and benchmarks on by default, "Show all citation lines" off)
   - the framework-paper ring

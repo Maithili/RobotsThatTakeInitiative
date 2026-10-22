@@ -2782,6 +2782,13 @@ tr.clickable:hover td {
 }
 
 /* legend: a compact row directly above the graph, inside its panel, that wraps on narrow screens (SPEC §7.2) */
+.litg__title {
+  margin: 0;
+  padding: 10px 12px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
 .litg__legend {
   display: flex;
   flex-wrap: wrap;
