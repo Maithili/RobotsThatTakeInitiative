@@ -58,7 +58,7 @@ evaluations:
   - id: anticipatory-tamp-sim
     environment: pybullet
     datasets: []
-    loop: closed_scripted
+    loop: offline_replay
     human_model: No human. Tasks sampled from a fixed P(τ)
     metrics:
       - avg_task_cost
@@ -68,12 +68,12 @@ evaluations:
     provenance: "Librarian Oct 2026, A-7 A9–A11; Dhakal §V-A–D, Table I, Fig. 6. Each task starts from the last one's end state"
     realism:
       robot: task_specific
-      human: scripted
+      human: recorded
       environment: simulator
   - id: anticipatory-tamp-fetch
     environment: null
     datasets: []
-    loop: closed_scripted
+    loop: offline_replay
     human_model: No human. A fixed two-task sequence
     metrics:
       - task_time
@@ -83,5 +83,5 @@ evaluations:
     provenance: "Librarian Oct 2026, A-7 A9–A10; Dhakal §V-E, Fig. 8. One demonstration on a Fetch robot. Lab or home is not stated"
     realism:
       robot: task_specific
-      human: scripted
+      human: recorded
       environment: null

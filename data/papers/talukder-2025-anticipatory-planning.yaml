@@ -55,7 +55,7 @@ evaluations:
   - id: talukder-2025-anticipatory-planning-sim
     environment: null
     datasets: []
-    loop: closed_scripted
+    loop: offline_replay
     human_model: No human. Tasks sampled from a fixed P(τ)
     metrics:
       - avg_task_cost
@@ -65,5 +65,5 @@ evaluations:
     provenance: "Librarian Oct 2026, A-8a A9–A11; Talukder 2025 §V-B–C, Table I. Symbolic PDDL on ProcTHOR homes and a restaurant"
     realism:
       robot: task_specific
-      human: scripted
+      human: recorded
       environment: simulator

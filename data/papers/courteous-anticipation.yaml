@@ -56,7 +56,7 @@ evaluations:
   - id: courteous-anticipation-sim
     environment: null
     datasets: []
-    loop: closed_scripted
+    loop: offline_replay
     human_model: No human. Each robot's tasks drawn from a fixed distribution
     metrics:
       - avg_task_cost
@@ -67,5 +67,5 @@ evaluations:
     provenance: "Librarian Oct 2026, A-8b A9–A11; Courteous §VI, Table II. Symbolic PDDL on ProcTHOR bases, 1 to 3 robots"
     realism:
       robot: task_specific
-      human: scripted
+      human: recorded
       environment: simulator
