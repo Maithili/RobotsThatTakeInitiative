@@ -441,7 +441,6 @@ function MetricsList({ onHoverTerms }: { onHoverTerms: (t: string[]) => void }) 
     <section aria-labelledby="metrics-title" className="stack-sm">
       <div className="section-title">
         <h2 id="metrics-title">Metrics</h2>
-        <span className="small muted">Metrics by category, with the papers that use them and the terms of ΔV − ΔC they serve.</span>
         {BOXES.length > 0 && (
           <button type="button" className="linkish small section-title__end" data-testid="metric-collapse-all" onClick={() => setCollapsed(new Set(allCollapsed ? [] : BOXES))}>
             {allCollapsed ? 'Expand all' : 'Collapse all'}

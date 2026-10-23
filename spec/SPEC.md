@@ -804,6 +804,8 @@ The three anticipatory planning papers (Anticipatory TAMP, Talukder 2025, Courte
 
 Taxonomy text in YAML flow mappings must quote any value with a comma: an unquoted comma cut five definitions short (object movements, the anticipation stage, ΔV, C_r, state drift). They are quoted now, and the validator rejects a stray key with no value. The Methods list calls the L2 group with no family "Framework paper" when it holds only GAP, and "No family" otherwise.
 
+Removed per Maithili (Oct 23, 2026): Ravichandar et al. 2020 (the learning-from-demonstration review) is gone from the database, its citations included; the Metrics section has no subtitle.
+
 Methods layout, per Maithili (Oct 22, 2026): the literature graph comes first, and the band with the L2 and L1 level cards and the timeline sits below it. The L0 card is removed so it is not confusing.
 
 Realism plot axes, per Maithili (Oct 22, 2026): x is environment and y is human. Robot realism leaves the plot because every evaluation uses a task-specific policy; it stays in the data and the hover card. Environment no longer sets opacity. Color shows action space complexity, as a way to show policy complexity. Maithili's definition: "Action space combinatorial complexity is the number of options the policy has at a given point in time." Under 50 fixed options (such as activity labels) is low, up to 100 (such as 10 objects on any of 10 locations) is medium, more is high, and a generative, unbounded set is very high. This replaced an earlier three-level task complexity scale.
